@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="docs/logo.png" alt="Cooffy Logo" width="200" />
-
-# ☕ Cooffy
+<img src="docs/cup-name-logo.svg" alt="Cooffy Logo" width="200" />
 
 **Sistema Gestor de Comedores Escolares**
 
@@ -17,15 +15,11 @@
 [![Docker](https://img.shields.io/badge/Docker-✓-2496ED?logo=docker)](https://www.docker.com/)
 </div>
 
----
-
-## 📖 Descripción
+# 📖 Descripción
 
 Cooffy es un servicio web que conecta a **estudiantes y personal** con el **área de cocina** de una cafetería escolar. Permite realizar pedidos anticipados antes del receso, eliminando las filas y reduciendo la presión operativa en cocina. El sistema es responsive y accesible desde computadora, tablet o teléfono.
 
----
-
-## ⚡ Funcionalidades principales
+# ⚡ Funcionalidades principales
 
 - **Pedidos anticipados** — Los estudiantes piden su comida antes del receso
 - **Gestión de menús** — Platillos con foto, descripción, precio y promociones
@@ -35,18 +29,16 @@ Cooffy es un servicio web que conecta a **estudiantes y personal** con el **áre
 - **Dashboard administrativo** — Métricas de ventas, pedidos y platillos más vendidos por sucursal
 - **Gestión multi-sucursal** — Administración centralizada de sucursales, usuarios y roles
 
----
+# 🚀 Setup
 
-## 🚀 Setup
-
-### Requisitos
+## Requisitos
 
 - Node.js ≥ 20
 - pnpm ≥ 9
 - Python ≥ 3.12
 - Docker y Docker Compose
 
-### Instalación
+## Instalación
 
 ```bash
 # Clonar el repo
@@ -70,7 +62,7 @@ python manage.py migrate
 python manage.py runserver  # http://localhost:8000
 ```
 
-### Postgres con Docker
+## Postgres con Docker
 
 ```bash
 docker-compose up -d
@@ -78,7 +70,7 @@ docker-compose up -d
 
 ---
 
-## 📁 Estructura
+# 📁 Estructura
 
 ```
 cooffy/
@@ -94,3 +86,9 @@ cooffy/
 └── docker-compose.yml
 ```
 
+# ⚙️ Diagrama de Base de datos
+
+La especificación de este diagrama se encuentra en [Tablas](docs/database/db_tables.md), el diagrama en `dbml` en [docs/DBML](docs/database/database.dbml) y fue hecho en [ChartDB](https://chartdb.neyzt.org)
+
+
+<img src="docs/database/db_diagram.png" alt="Database Diagram" width="800" />
