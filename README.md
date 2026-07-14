@@ -92,3 +92,67 @@ La especificación de este diagrama se encuentra en [Tablas](docs/database/db_ta
 
 
 <img src="docs/database/db_diagram.png" alt="Database Diagram" width="800" />
+
+---
+
+# 🌿 Flujo de ramas
+
+El proyecto utiliza un flujo de trabajo basado en Git para mantener un desarrollo organizado y facilitar la colaboración entre los integrantes del equipo.
+
+### Ramas principales
+
+- **main**: Contiene las versiones estables listas para producción.
+- **develop**: Rama principal de desarrollo donde se integran todas las nuevas funcionalidades.
+
+### Ramas de trabajo
+
+Cada nueva tarea debe crearse a partir de `develop` utilizando alguno de los siguientes prefijos:
+
+| Tipo | Ejemplo | Descripción |
+|------|---------|-------------|
+| `feature/` | `feature/login` | Nueva funcionalidad |
+| `fix/` | `fix/login-validation` | Corrección de errores |
+| `docs/` | `docs/update-readme` | Cambios en documentación |
+| `chore/` | `chore/docker-compose` | Configuración, dependencias o CI/CD |
+| `refactor/` | `refactor/auth-service` | Mejoras internas sin cambiar funcionalidad |
+| `hotfix/` | `hotfix/login-crash` | Corrección urgente en producción |
+
+### Flujo de trabajo
+
+1. Actualizar la rama `develop`.
+2. Crear una nueva rama para la tarea.
+3. Realizar los cambios correspondientes.
+4. Crear un Pull Request hacia `develop`.
+5. Esperar la revisión y aprobación.
+6. Hacer merge.
+7. Eliminar la rama utilizada.
+
+---
+
+# 📝 Convención de commits
+
+Este proyecto utiliza **Conventional Commits** para mantener un historial claro y consistente.
+
+| Prefijo | Descripción |
+|---------|-------------|
+| `feat:` | Nueva funcionalidad |
+| `fix:` | Corrección de errores |
+| `docs:` | Cambios en documentación |
+| `chore:` | Configuración, dependencias o tareas de mantenimiento |
+| `refactor:` | Refactorización del código |
+| `test:` | Agregar o modificar pruebas |
+| `style:` | Cambios de formato sin afectar la lógica |
+
+### Ejemplos
+
+```bash
+feat: add login page
+
+fix: validate empty email
+
+docs: update README
+
+chore: configure docker compose
+
+refactor: simplify authentication service
+```
