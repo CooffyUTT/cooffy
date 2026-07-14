@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: cooffy-postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+
+    container_name: cooffy-backend
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - ./backend:/app
+
+    depends_on:
+      - postgres
+
+    env_file:
+      - .env
+
+  frontend:
+    build:
+      context: ./frontend
+
+    container_name: cooffy-frontend
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - ./frontend:/app
+
+    depends_on:
+      - backend
+
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
