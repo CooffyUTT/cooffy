@@ -86,3 +86,9 @@ cooffy/
 └── docker-compose.yml
 ```
 
+# ⚙️ Diagrama de Base de datos
+
+La especificación de este diagrama se encuentra en [Tablas](docs/database/db_tables.md), el diagrama en `dbml` en [docs/DBML](docs/database/database.dbml) y fue hecho en [ChartDB](https://chartdb.neyzt.org)
+
+
+<img src="docs/database/db_diagram.png" alt="Database Diagram" width="800" />
