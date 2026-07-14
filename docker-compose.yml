@@ -19,41 +19,41 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  backend:
-    build:
-      context: ./backend
+  # backend:
+  #   build:
+  #     context: ./backend
 
-    container_name: cooffy-backend
+  #   container_name: cooffy-backend
 
-    ports:
-      - "8000:8000"
+  #   ports:
+  #     - "8000:8000"
 
-    volumes:
-      - ./backend:/app
+  #   volumes:
+  #     - ./backend:/app
 
-    depends_on:
-      - postgres
+  #   depends_on:
+  #     - postgres
 
-    env_file:
-      - .env
+  #   env_file:
+  #     - .env
 
-  frontend:
-    build:
-      context: ./frontend
+  # frontend:
+  #   build:
+  #     context: ./frontend
 
-    container_name: cooffy-frontend
+  #   container_name: cooffy-frontend
 
-    ports:
-      - "3000:3000"
+  #   ports:
+  #     - "3000:3000"
 
-    volumes:
-      - ./frontend:/app
+  #   volumes:
+  #     - ./frontend:/app
 
-    depends_on:
-      - backend
+  #   depends_on:
+  #     - backend
 
-    env_file:
-      - .env
+  #   env_file:
+  #     - .env
 
 volumes:
   postgres_data:
