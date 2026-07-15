@@ -42,7 +42,7 @@ Cooffy es un servicio web que conecta a **estudiantes y personal** con el **áre
 
 Clonar el repoitorio
 ```bash
-git clone https://github.com/tu-usuario/cooffy.git
+git clone https://github.com/cooffyutt/cooffy.git
 cd cooffy
 ```
 
