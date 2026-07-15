@@ -98,9 +98,6 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-
----
-
 # 📁 Estructura
 
 ```
@@ -117,16 +114,12 @@ cooffy/
 └── docker-compose.yml
 ```
 
----
-
 # ⚙️ Diagrama de Base de datos
 
 La especificación de este diagrama se encuentra en [Tablas](docs/database/db_tables.md), el diagrama en `dbml` en [docs/DBML](docs/database/database.dbml) y fue hecho en [ChartDB](https://chartdb.neyzt.org)
 
 
 <img src="docs/database/db_diagram.png" alt="Database Diagram" width="800" />
-
----
 
 # 🌿 Flujo de ramas
 
@@ -159,8 +152,6 @@ Cada nueva tarea debe crearse a partir de `develop` utilizando alguno de los sig
 5. Esperar la revisión y aprobación.
 6. Hacer merge.
 7. Eliminar la rama utilizada.
-
----
 
 # 📝 Convención de commits
 
