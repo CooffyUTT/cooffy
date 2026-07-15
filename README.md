@@ -40,35 +40,63 @@ Cooffy es un servicio web que conecta a **estudiantes y personal** con el **áre
 
 ## Instalación
 
+Clonar el repoitorio
 ```bash
-# Clonar el repo
-git clone https://github.com/tu-usuario/cooffy.git
+git clone https://github.com/cooffyutt/cooffy.git
 cd cooffy
-
-# Variables de entorno
-cp .env.example .env
-
-# Frontend
-cd frontend
-pnpm install
-pnpm dev          # http://localhost:3000
-
-# Backend
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver  # http://localhost:8000
 ```
 
-## Postgres con Docker
+Se necesita crear el archivo `.env` para las variables de entorno
+```bash
+cp .env.example .env
+```
+
+Iniciar PostgreSQL con docker
 
 ```bash
 docker-compose up -d
 ```
 
----
+Iniciar el Frontend (NextJS)
+```bash
+cd frontend
+pnpm install
+pnpm dev
+```
+Iniciar el backend (DJango)
+1. Activar entorno Virtual
+
+Linux/Mac
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate
+```
+
+Windows Powershell
+
+```PowerShell
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+Windows CMD
+
+```cmd
+cd backend
+python -m venv venv
+venv\Scripts\activate.bat
+```
+
+2. Instalar dependencias e iniciar
+
+```bash
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
 
 # 📁 Estructura
 
@@ -92,8 +120,6 @@ La especificación de este diagrama se encuentra en [Tablas](docs/database/db_ta
 
 
 <img src="docs/database/db_diagram.png" alt="Database Diagram" width="800" />
-
----
 
 # 🌿 Flujo de ramas
 
@@ -126,8 +152,6 @@ Cada nueva tarea debe crearse a partir de `develop` utilizando alguno de los sig
 5. Esperar la revisión y aprobación.
 6. Hacer merge.
 7. Eliminar la rama utilizada.
-
----
 
 # 📝 Convención de commits
 
