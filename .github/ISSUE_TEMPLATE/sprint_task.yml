@@ -1,0 +1,60 @@
+name: Task
+description: Tarea de desarrollo para un RF
+title: "[RF-XX] Nombre"
+labels: ["task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Completa la información necesaria para realizar la tarea.
+
+  - type: dropdown
+    id: rf
+    attributes:
+      label: Requerimiento Funcional
+      options:
+        - RF-01 Autenticación
+        - RF-02 Gestión de usuarios
+        - RF-03 Gestión de sucursales
+        - RF-04 Dashboard e indicadores
+        - RF-05 Gestión del menú
+        - RF-06 Disponibilidad de productos
+        - RF-07 Gestión de pedidos
+        - RF-08 Consulta del menú
+        - RF-09 Gestión del carrito
+        - RF-10 Registro de pedidos
+        - RF-11 Gestión de pagos
+        - RF-12 Estado del pedido
+    validations:
+      required: true
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objetivo
+      description: ¿Qué debe quedar implementado?
+      placeholder: >
+        Implementar el endpoint POST /auth/login para autenticar usuarios.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceptación
+      description: Marca los criterios que deben cumplirse.
+      value: |
+        - [ ] Funcionalidad implementada
+        - [ ] Validaciones realizadas
+        - [ ] Sin errores de compilación
+        - [ ] Probado manualmente
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notas
+      description: Información adicional, dependencias o comentarios.
+      placeholder: |
+        Depende de RF-01: Configurar JWT
