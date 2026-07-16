@@ -39,19 +39,6 @@ body:
       required: true
 
   - type: textarea
-    id: acceptance
-    attributes:
-      label: Criterios de aceptación
-      description: Marca los criterios que deben cumplirse.
-      value: |
-        - [ ] Funcionalidad implementada
-        - [ ] Validaciones realizadas
-        - [ ] Sin errores de compilación
-        - [ ] Probado manualmente
-    validations:
-      required: true
-
-  - type: textarea
     id: notes
     attributes:
       label: Notas
