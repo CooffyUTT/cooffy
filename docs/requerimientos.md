@@ -8,12 +8,13 @@
 | Empleados | Realizar los pedidos. | Cajeros, cocineros o cualquier empleado de operación que está de lleno en hacer los pedidos de los clientes. |
 | Supervisores | Gestionar sucursal única | Encargado de supervisar y gestionar la operación de una sucursal. |
 | Gerentes | Gestionar todo el negocio | Encargado o dueño de una o muchas sucursales. |
+| Admin Escolar | Gestionar tiendas en su escuela | Encargado de gestionar las sucursales de su escuela, y configuración de las cuentas de los alumnos. |
 
 # Requerimientos
 
 ## Funcionales (RF)
 
-Ciertos requisitos son detallados en[Especificación de requesitos](Requerimientos%20y%20Restricciones/Especificaci%C3%B3n%20de%20requesitos.md)
+Ciertos requisitos son detallados en [Requerimientos](requeriments/)
 
 | ID  | Actor | Funcionalidad |
 | --- | --- | --- |
@@ -29,6 +30,7 @@ Ciertos requisitos son detallados en[Especificación de requesitos](Requerimient
 | RF-10 | Cliente | Registro de pedidos |
 | RF-11 | Cliente | Gestión de pagos |
 | RF-12 | Cliente | Consulta del estado del pedido |
+| RF-13 | Admin Escolar | Gestionar sucursales de una escuela |
 
 ## No Funcionales (RNF)
 
