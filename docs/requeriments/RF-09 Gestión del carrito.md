@@ -30,14 +30,14 @@ El sistema permitirá al cliente gestionar los productos seleccionados antes de 
 
 Depende de:
 
-- [RF-10](RF-10%20Registro%20de%20pedidos.md) Registro de pedidos
-- [RF-11](RF-11%20Gesti%C3%B3n%20de%20pagos.md) Gestion de pagos
+- [RF-10 Registro de pedidos](/s/general/p/rf-10-registro-de-pedidos-AnhdwQ9kep)
+- [RF-05 Gestión de menú](/s/general/p/rf-05-gestion-del-menu-fmzuLKDVsI)
 
-**RESTRICCIONES**
+**Restricciones**
 
 - El cliente únicamente podrá agregar productos que se encuentren disponibles.
 - No se permitirá exceder el límite máximo establecido por producto.
-- El sistema no permitirá continuar con la compra si el usuario posee un pedido activo.
+- No se permite al usuario hacer dos pedidos al mismo tiempo.
 - El subtotal deberá actualizarse automáticamente al modificar el contenido del carrito.
 - Los cambios realizados en el inventario deberán reflejarse en los productos disponibles para agregar al carrito.
 
@@ -45,6 +45,9 @@ Depende de:
 
 | Nombre | Descripcion | Prioridad |
 | --- | --- | --- |
-| Crear modelo del carrito | Implementar los modelos necesarios para almacenar el carrito y sus productos asociados. |     |
-
-Lo siento chavales me dio sueño :’’u
+| Crear modelos para que funcione el carrito | Implementar todos los modelos para almacenar el productos. | Alta |
+| Endpoint GET y POST de productos en el carrito. | Permitir agregar productos disponibles al carrito del cliente y consultar cuales se han agregado. | Alta |
+| Endpoint DELETE para **quitar** un producto del carrtio (endpoint e interfaz) | Eliminar productos específicos del carrito (todas las unidades del prod.) | Alta |
+| Endpoint para modificar cantidades (endpoint e interfaz) | Aumentar o disminuir la cantidad de un producto dentro del carrito. | Alta |
+| Validar límite por pedido y pedidos activos del usuario | Impedir que el usuario exceda la cantidad máxima permitida de un producto y tambien que no tenga un pedido activo. | Alta |
+| Endpoint para vaciar el carrito | eliminar todos los productos del carrito en una sola acción. |     |
