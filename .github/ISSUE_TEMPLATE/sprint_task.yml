@@ -25,6 +25,7 @@ body:
         - RF-10 Registro de pedidos
         - RF-11 Gestión de pagos
         - RF-12 Estado del pedido
+        - RF-13 Gestionar sucursales de una escuela
     validations:
       required: true
 
