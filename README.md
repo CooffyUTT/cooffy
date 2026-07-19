@@ -63,40 +63,65 @@ cd frontend
 pnpm install
 pnpm dev
 ```
-Iniciar el backend (DJango)
-1. Activar entorno Virtual
+Iniciar el backend (Django)
 
-Linux/Mac
+**Requisitos previos:**
+- PostgreSQL debe estar corriendo (ejecutar `docker-compose up -d` desde la raíz del proyecto)
+- El archivo `.env` debe estar configurado en la raíz del proyecto
+
+**Pasos:**
+
+1. **Navegar a la carpeta del backend**
 
 ```bash
 cd backend
+```
+
+2. **Crear el entorno virtual**
+
+Linux/Mac
+```bash
 python -m venv venv
+```
+
+Windows (CMD)
+```cmd
+python -m venv venv
+```
+
+3. **Activar el entorno virtual**
+
+Linux/Mac
+```bash
 source venv/bin/activate
 ```
 
-Windows Powershell
-
-```PowerShell
-cd backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-```
-
-Windows CMD
-
+Windows (CMD)
 ```cmd
-cd backend
-python -m venv venv
 venv\Scripts\activate.bat
 ```
 
-2. Instalar dependencias e iniciar
+4. **Instalar dependencias**
 
 ```bash
 pip install -r requirements.txt
+```
+
+5. **Ejecutar migraciones de base de datos**
+
+```bash
 python manage.py migrate
+```
+
+6. **Iniciar el servidor**
+
+```bash
 python manage.py runserver
 ```
+
+El servidor estará disponible en `http://localhost:8000/`
+
+**Nota:** El entorno virtual debe estar activado cada vez que abras una nueva terminal para trabajar en el backend.
 
 # 📁 Estructura
 
