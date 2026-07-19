@@ -21,7 +21,7 @@ class LoginView(APIView):
             return Response({
                 'message': 'Login exitoso',
                 'access': str(refresh.access_token),
-                'refresh': str(refresh.refresh_token),
+                'refresh': str(refresh),
                 'user': UserSerializer(user).data
             }, status=status.HTTP_200_OK)
 
