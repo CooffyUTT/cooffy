@@ -3,9 +3,10 @@
 // y las acciones relacionadas con el proceso de autenticación.
 
 import { useState } from 'react';
-import { LoginCredentials } from '@/types/auth';
+import { LoginCredentials } from '@/types/auth'; // Interfaz que define la estructura base del login (credentials, password)
 import { toast } from 'sonner';
 
+// Interfaz para el manejo de mensajes de error específicos por campo
 interface FormErrors {
   credentials?: string;
   password?: string;
@@ -13,37 +14,51 @@ interface FormErrors {
 
 export function useLoginForm() {
 
-  // Estado que controla si la contraseña se muestra en texto plano
-  // o permanece oculta dentro del campo de entrada.
+  // --- ESTADOS DEL HOOK ---
+  
+  // Controla el estado visual de carga (loading) para deshabilitar botones y evitar peticiones duplicadas[cite: 2]
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  
+  // Estado que controla si la contraseña se muestra en texto plano o permanece oculta[cite: 2]
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
 
   // Estado que almacena los datos ingresados por el usuario.
-  // Required<LoginCredentials> asegura que todas las propiedades
-  // definidas en la interfaz siempre existan.
+  // Required<LoginCredentials> obliga a que todas las propiedades opcionales del tipo original sean obligatorias aquí[cite: 2].
   const [formData, setFormData] = useState<Required<LoginCredentials>>({
     credentials: '',
     password: '',
   });
+  
+  // Almacena los strings de error arrojados por la validación[cite: 2]
   const [errors, setErrors] = useState<FormErrors>({});
 
-  // Alterna entre mostrar y ocultar la contraseña.
+  // --- MANEJADORES VISUALES Y HELPERS ---
+
+  // Alterna el flag booleano para cambiar el tipo de input entre 'password' y 'text'[cite: 2]
   const togglePasswordVisibility = () =>
     setPasswordVisible((prev) => !prev);
 
-  // Función interna para validar campos de forma individual
+  /**
+   * Validador puro y centralizado por campo.
+   * @param name Nombre del campo a validar ('credentials' | 'password')
+   * @param value Valor actual del campo
+   * @returns Un string con el mensaje de error o un string vacío si es válido[cite: 2]
+   */
   const validateField = (name: string, value: string): string => {
+    // Validación común: Campo vacío o lleno de espacios en blanco
     if (!value.trim()) {
       return "Este campo es requerido.";
     }
 
+    // Reglas de negocio para el usuario/correo institucional
     if (name === 'credentials') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Expresión regular estándar para emails
       if (!emailRegex.test(value)) {
         return "Introduce un correo electrónico válido.";
       }
     }
 
+    // Reglas de negocio para la contraseña (Límite mínimo de seguridad)
     if (name === 'password') {
       if (value.length < 6) {
         return "La contraseña debe tener al menos 6 caracteres.";
@@ -53,17 +68,20 @@ export function useLoginForm() {
     return "";
   };
 
-  // Actualiza dinámicamente el estado del formulario cada vez
-  // que el usuario modifica un campo de entrada.
-  // El atributo "name" del input determina qué propiedad será actualizada.
+  /**
+   * Manejador de cambio dinámico (Controlled Component).
+   * Actualiza el estado del formulario y ejecuta la validación *en tiempo real* a medida que el usuario escribe.
+   */
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
+    // Actualización inmutable del estado del formulario[cite: 2]
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
 
+    // Validación sobre la marcha (Real-time feedback)[cite: 2]
     const fieldError = validateField(name, value);
     setErrors((prev) => ({
       ...prev,
@@ -71,31 +89,36 @@ export function useLoginForm() {
     }));
   };
 
-  // Maneja el envío del formulario utilizando credenciales tradicionales
-  // (correo institucional o matrícula y contraseña).
-  // Se evita el comportamiento por defecto del navegador para controlar
-  // el proceso mediante React.
+  /**
+   * Procesamiento del envío del formulario (Método Tradicional).
+   * Ejecuta validaciones previas al envío y gestiona el flujo asíncrono con el servidor.
+   */
   const handleCredentialsLogin = async (
     e: React.FormEvent<HTMLFormElement>
   ) => {
-   e.preventDefault();
-    if (isLoading) return; // Evita envíos dobles si ya está cargando
+    e.preventDefault(); // Detiene la recarga de página por defecto del navegador[cite: 2]
+    if (isLoading) return; // Guard clause: Evita llamadas concurrentes si ya hay una petición en curso[cite: 2]
 
+    // Forzar validación final de todos los campos antes de disparar la petición[cite: 2]
     const credentialsError = validateField('credentials', formData.credentials);
     const passwordError = validateField('password', formData.password);
 
+    // Si existe algún error en el cliente, frena el flujo y actualiza el estado de errores[cite: 2]
     if (credentialsError || passwordError) {
       setErrors({ credentials: credentialsError, password: passwordError });
       return;
     }
 
-    setIsLoading(true);
+    setIsLoading(true); // Bloquea la UI (ej. loaders en botones)[cite: 2]
 
     try {
       console.log('Enviando credenciales...', formData);
       
-      // Simulación de petición a API de 2 segundos (Reemplazar por tu servicio real)
+      // TODO: REEMPLAZAR ESTE BLOQUE POR LA LLAMADA AL SERVICIO DE AUTENTICACIÓN REAL
+      // Simulación de latencia de red de 2 segundos[cite: 2]
       await new Promise((resolve) => setTimeout(resolve, 2000));
+      
+      // Control simulado para contraseñas inválidas que pasaron el filtro inicial pero fallan en el servidor
       if (formData.password.length < 6) {
         toast.error("Error de autenticación", {
           description: "El usuario o la contraseña introducidos no coinciden con nuestros registros.",
@@ -104,40 +127,40 @@ export function useLoginForm() {
       }
       
       console.log('Login exitoso');
+      // NOTA: Aquí se debería redirigir al usuario (ej. router.push('/dashboard')) o guardar el token de sesión.
     } catch (error) {
       console.error('Error en el login', error);
-      // 2. SIMULACIÓN: Error del Servidor
+      // Captura fallos de red, caídas de servidor (500 status codes), etc.[cite: 2]
       toast.error("Error del sistema", {
         description: "Hubo un problema al conectar con el servidor. Inténtalo de nuevo.",
       });
     } finally {
-      // Importante: Volver a false para desbloquear el botón
+      // Garantiza que la UI se desbloquee sin importar si la petición fue exitosa o fallida[cite: 2]
       setIsLoading(false); 
     }
-    // Aquí deberá integrarse posteriormente la llamada al servicio
-    // de autenticación encargado de validar las credenciales.
-    // Ejemplo:
-    // await authService.login(formData);
   };
 
-  // Punto de entrada para la autenticación mediante Single Sign-On (SSO).
-  // Posteriormente aquí se integrará el proveedor institucional
-  // (OAuth, Azure AD, Google Workspace, etc.).
+  /**
+   * Flujo secundario: Autenticación federada de una sola firma (SSO).
+   * Diseñado para integraciones futuras con OAuth2, Azure AD, o Google Workspace[cite: 2].
+   */
   const handleSSOLogin = () => {
     console.log('Iniciando flujo SSO Institucional');
-    // 3. SIMULACIÓN: Cancelación de Google (Toast informativo/advertencia)
+    // Simulación actual: Avisa al usuario que el flujo interactivo fue cancelado o no completado[cite: 2]
     toast.warning("Autenticación externa", {
       description: "El inicio de sesión con Google se ha cancelado.",
     });
   };
 
-  // Helper dinámico para saber si un campo es totalmente válido (para los iconos)
+  /**
+   * Helper dinámico útil para la UI. Permite renderizar elementos visuales en tiempo real
+   * (como un checkmark verde de validación al lado de los inputs)[cite: 2].
+   */
   const isFieldValid = (name: 'credentials' | 'password') => {
     return formData[name].length > 0 && !errors[name];
   };
 
-  // Se exponen únicamente los estados y funciones que serán utilizados
-  // por los componentes que consuman este hook.
+  // API pública del Hook: Solo se expone lo necesario para el componente consumidor (LoginForm)[cite: 2]
   return {
     formData,
     errors,
