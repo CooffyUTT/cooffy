@@ -1,0 +1,7 @@
+{
+    "scripts": {
+        "front": "pnpm --dir frontend dev",
+        "back": "cd backend &&uv run python manage.py runserver",
+        "dev": "concurrently -n frontend,backend \"pnpm frontend\" \"pnpm backend\""
+    }
+}
