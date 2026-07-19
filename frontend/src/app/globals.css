@@ -1,3 +1,5 @@
+/* ESTE ARCHIVO GLOBALS CSS VA A SOBREESCRIBIR LOS DISENOS QUE SE REALICEN, SI HAY ALGUN CONFLICTO CON CUALQUIER DISENO REVISAR QUE ESTE ARCHIVO NO ESTE GENERANDO CONFLICTO*/
+/* EL PORQUE ESTE ARCHIVO PUEDE HACER CONFLCITOS ES POR LA INSTALACION DE COMPONENTES DE UI SHADCN, LOS CUALES ESTAN DENTRO DE LA CARPETA components/ui/... */
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -5,6 +7,20 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Colores de cooffy y otros elementos */
+  --color-primary: var(--primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-secondary: var(--secondary);
+  --color-surface: var(--surface);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-outline-variant: var(--outline-variant);
+
+  /* Variables nativas que usa shadcn/ui */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -32,9 +48,6 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -46,33 +59,63 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* 3. Definición de espaciados y gaps del diseño original */
+  --spacing-base: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 32px;
+  --spacing-xl: 48px;
+  --spacing-margin-mobile: 16px;
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  /* Fondo y Superficies en Oklch (Tonos crema e institucional del original) */
+  --background: oklch(0.985 0.005 240);       /* #f9f9ff */
+  --foreground: oklch(0.18 0.03 240);          /* #111c2c */
+  --card: oklch(0.985 0.005 240);              /* #f9f9ff */
+  --card-foreground: oklch(0.18 0.03 240);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.18 0.03 240);
+
+  /* Cooffy Brand Colors (Traducidos a Oklch de manera exacta) */
+  --primary: oklch(0.45 0.12 85);              /* #785a00 - Color Café Primario */
+  --primary-foreground: oklch(1 0 0);
+  --primary-container: oklch(0.68 0.15 85);    /* #c59d3f - Dorado Botón */
+  --on-primary-container: oklch(0.28 0.08 85); /* #4a3600 - Texto Botón */
+  
+  --secondary: oklch(0.44 0.06 245);           /* #456082 - Azul botón secundario */
+  --secondary-foreground: oklch(1 0 0);
+
+  /* Superficies y variaciones */
+  --surface: oklch(0.985 0.005 240);           /* #f9f9ff */
+  --surface-container-high: oklch(0.92 0.02 240); /* #dee8ff */
+  --surface-container-low: oklch(0.96 0.01 240);  /* #f0f3ff */
+  --surface-container-lowest: oklch(1 0 0);    /* #ffffff */
+  --on-surface: oklch(0.18 0.03 240);          /* #111c2c */
+  --on-surface-variant: oklch(0.38 0.02 85);   /* #4e4637 */
+  
+  /* Bordes */
+  --border: oklch(0.82 0.02 85);               /* #d1c5b1 - outline-variant original */
+  --outline-variant: oklch(0.82 0.02 85);      /* #d1c5b1 */
+  --input: oklch(0.82 0.02 85);
+  --ring: oklch(0.45 0.12 85);                 /* #785a00 */
+
+  /* Muted e Inactivos */
+  --muted: oklch(0.96 0.01 240);
+  --muted-foreground: oklch(0.38 0.02 85);
+
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+
+  --radius: 0.5rem;
+
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -102,19 +145,6 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {
