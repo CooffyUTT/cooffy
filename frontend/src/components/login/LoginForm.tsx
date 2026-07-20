@@ -38,13 +38,13 @@ export function LoginForm() {
       {/* CAMPO: Correo Institucional (credentials)                     */}
       {/* ============================================================ */}
       <div className="space-y-1">
-        <label htmlFor="credentials" className="block text-xs font-semibold text-on-surface-variant ml-1">
+        <label htmlFor="user" className="block text-xs font-semibold text-on-surface-variant ml-1">
           Correo Institucional
         </label>
         <div className="relative group">
           {/* Icono izquierdo: cambia de color según el estado del campo (válido, error o neutro) */}
           <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors ${
-            errors.credentials ? "text-destructive" : isFieldValid('credentials') ? "text-primary" : "text-on-surface-variant/60"
+            errors.user ? "text-destructive" : isFieldValid('user') ? "text-primary" : "text-on-surface-variant/60"
           }`}>
             <User size={18} />
           </div>
@@ -52,37 +52,37 @@ export function LoginForm() {
           {/* Input: estilos condicionales según error o foco, con transiciones suaves */}
           <input
             className={`block w-full pl-10 pr-10 py-3 border rounded-lg bg-surface-container-lowest text-sm outline-none transition-all text-on-surface ${
-              errors.credentials
+              errors.user
                 ? "border-destructive focus:ring-2 focus:ring-destructive/25"
                 : "border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary"
             }`}
-            id="credentials"
-            name="credentials"
+            id="user"
+            name="user"
             placeholder="ejemplo@universidad.edu"
             type="text"
-            value={formData.credentials}
+            value={formData.user}
             onChange={handleInputChange}
             disabled={isLoading}
             // Accesibilidad: indica si el campo tiene un error
-            aria-invalid={!!errors.credentials}
+            aria-invalid={!!errors.user}
             // Accesibilidad: vincula el input con su mensaje de error para lectores de pantalla
-            aria-describedby={errors.credentials ? "credentials-error" : undefined}
+            aria-describedby={errors.user ? "user-error" : undefined}
           />
 
           {/* Icono derecho: muestra alerta de error o check de éxito, con animación de entrada */}
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            {errors.credentials && <AlertCircle size={16} className="text-destructive animate-in fade-in zoom-in-75" />}
-            {isFieldValid('credentials') && <CheckCircle2 size={16} className="text-primary animate-in fade-in zoom-in-75" />}
+            {errors.user && <AlertCircle size={16} className="text-destructive animate-in fade-in zoom-in-75" />}
+            {isFieldValid('user') && <CheckCircle2 size={16} className="text-primary animate-in fade-in zoom-in-75" />}
           </div>
         </div>
 
         {/* Mensaje de error dinámico (solo visible cuando existe) */}
-        {errors.credentials && (
+        {errors.user && (
           <p
-            id="credentials-error"
+            id="user-error"
             className="text-[11px] font-medium text-destructive ml-1 animate-in slide-in-from-top-1 duration-200"
           >
-            {errors.credentials}
+            {errors.user}
           </p>
         )}
       </div>
@@ -124,6 +124,8 @@ export function LoginForm() {
             aria-invalid={!!errors.password}
             aria-describedby={errors.password ? "password-error" : undefined}
           />
+
+          
 
           {/* Botón de visibilidad e ícono de alerta (derecha) */}
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-xs">
@@ -177,7 +179,7 @@ export function LoginForm() {
           ¿No tienes una cuenta?{" "}
         </span>
         <a
-          href="#register"
+          href="/register"
           className={`text-xs font-semibold text-primary hover:underline transition-all ${
             isLoading ? "pointer-events-none opacity-50" : ""
           }`}

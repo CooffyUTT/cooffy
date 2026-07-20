@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 // Interfaz para el manejo de mensajes de error específicos por campo
 interface FormErrors {
-  credentials?: string;
+  user?: string;
   password?: string;
 }
 
@@ -25,7 +25,7 @@ export function useLoginForm() {
   // Estado que almacena los datos ingresados por el usuario.
   // Required<LoginCredentials> obliga a que todas las propiedades opcionales del tipo original sean obligatorias aquí[cite: 2].
   const [formData, setFormData] = useState<Required<LoginCredentials>>({
-    credentials: '',
+    user: '',
     password: '',
   });
   
@@ -40,7 +40,7 @@ export function useLoginForm() {
 
   /**
    * Validador puro y centralizado por campo.
-   * @param name Nombre del campo a validar ('credentials' | 'password')
+   * @param name Nombre del campo a validar ('user' | 'password')
    * @param value Valor actual del campo
    * @returns Un string con el mensaje de error o un string vacío si es válido[cite: 2]
    */
@@ -51,7 +51,7 @@ export function useLoginForm() {
     }
 
     // Reglas de negocio para el usuario/correo institucional
-    if (name === 'credentials') {
+    if (name === 'user') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Expresión regular estándar para emails
       if (!emailRegex.test(value)) {
         return "Introduce un correo electrónico válido.";
@@ -100,12 +100,12 @@ export function useLoginForm() {
     if (isLoading) return; // Guard clause: Evita llamadas concurrentes si ya hay una petición en curso[cite: 2]
 
     // Forzar validación final de todos los campos antes de disparar la petición[cite: 2]
-    const credentialsError = validateField('credentials', formData.credentials);
+    const credentialsError = validateField('user', formData.user);
     const passwordError = validateField('password', formData.password);
 
     // Si existe algún error en el cliente, frena el flujo y actualiza el estado de errores[cite: 2]
     if (credentialsError || passwordError) {
-      setErrors({ credentials: credentialsError, password: passwordError });
+      setErrors({ user: credentialsError, password: passwordError });
       return;
     }
 
@@ -156,7 +156,7 @@ export function useLoginForm() {
    * Helper dinámico útil para la UI. Permite renderizar elementos visuales en tiempo real
    * (como un checkmark verde de validación al lado de los inputs)[cite: 2].
    */
-  const isFieldValid = (name: 'credentials' | 'password') => {
+  const isFieldValid = (name: 'user' | 'password') => {
     return formData[name].length > 0 && !errors[name];
   };
 
