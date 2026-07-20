@@ -37,6 +37,20 @@ Cooffy es un servicio web que conecta a **estudiantes y personal** con el **áre
 - pnpm ≥ 9
 - Python ≥ 3.12
 - Docker y Docker Compose
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
+    <details>
+    <summary>Como instalar uv</summary>
+
+    - Mac/Linux:
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
+    - Windows:
+    ```powershell
+    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+    ```
+    </details>
 
 ## Instalación
 
@@ -51,6 +65,33 @@ Se necesita crear el archivo `.env` para las variables de entorno
 cp .env.example .env
 ```
 
+### Setup con Scripts
+
+> Usando el [package.json](/package.json), se puede usar `pnpm` para ejecutar comandos desde la carpeta root
+
+Script *all in one* para hacer todo el setup y empezar a correr el programa completo
+
+```bash
+pnpm init:all
+```
+#### Scripts individuales
+Script solo para instalar
+```bash
+pnpm install:all    # Instalar front y back
+
+pnpm back:install   # Instalar solo backend
+pnpm front:install  # Instalar solo frontend
+```
+
+Script para iniciar proyectos
+```bash
+pnpm front      # Iniciar Nextjs
+pnpm migrate    # Hacer migraciones a la base de datos
+pnpm back       # Iniciar Django y docker-compose
+```
+
+### Setup manual
+
 Iniciar PostgreSQL con docker
 
 ```bash
@@ -64,26 +105,6 @@ pnpm install
 pnpm dev
 ```
 Iniciar el backend (Django)
-
-**Requisitos previos:**
-- PostgreSQL debe estar corriendo (ejecutar `docker-compose up -d` desde la raíz del proyecto)
-- El archivo `.env` debe estar configurado en la raíz del proyecto
-- Instalar `uv` para manejar entornos virtuales en python
-    <details>
-    <summary>Como instalar uv</summary>
-
-    - Mac/Linux:
-    ```bash
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    ```
-
-    - Windows:
-    ```powershell
-    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-    ```
-
-    > [Guia de instalación completa](https://docs.astral.sh/uv/getting-started/installation/)
-    </details>
 
 **Pasos:**
 
