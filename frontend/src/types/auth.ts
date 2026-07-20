@@ -16,7 +16,7 @@ export interface LoginCredentials {
    * - Al consumirse dentro de un estado del formulario (ej. mediante `Required<LoginCredentials>`),
    *   este campo pasa a ser obligatorio antes de procesar el envío.
    */
-  credentials?: string;
+  user?: string;
 
   /**
    * Clave secreta o frase de acceso asociada a la cuenta del usuario.
