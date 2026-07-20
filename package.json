@@ -1,0 +1,15 @@
+{
+    "scripts": {
+        "front": "pnpm --dir frontend dev",
+        "front:install": "pnpm --dir frontend install",
+        "back": "docker compose up -d && cd backend && uv run python -u manage.py runserver",
+        "back:install": "cd backend && uv venv --allow-existing && uv run pip install -r requirements.txt",
+        "back:migrate": "cd backend && uv run python -u manage.py migrate",
+        "dev": "concurrently -n back,front \"pnpm back\" \"pnpm front\"",
+        "install:all": "pnpm install && pnpm front:install && pnpm back:install",
+        "init:all": "pnpm install:all && pnpm back:migrate && pnpm dev"
+    },
+    "devDependencies": {
+        "concurrently": "^10.0.3"
+    }
+}

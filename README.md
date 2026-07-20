@@ -37,6 +37,20 @@ Cooffy es un servicio web que conecta a **estudiantes y personal** con el **áre
 - pnpm ≥ 9
 - Python ≥ 3.12
 - Docker y Docker Compose
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
+    <details>
+    <summary>Como instalar uv</summary>
+
+    - Mac/Linux:
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
+    - Windows:
+    ```powershell
+    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+    ```
+    </details>
 
 ## Instalación
 
@@ -50,6 +64,33 @@ Se necesita crear el archivo `.env` para las variables de entorno
 ```bash
 cp .env.example .env
 ```
+
+### Setup con Scripts
+
+> Usando el [package.json](/package.json), se puede usar `pnpm` para ejecutar comandos desde la carpeta root
+
+Script *all in one* para hacer todo el setup y empezar a correr el programa completo
+
+```bash
+pnpm init:all
+```
+#### Scripts individuales
+Script solo para instalar
+```bash
+pnpm install:all    # Instalar front y back
+
+pnpm back:install   # Instalar solo backend
+pnpm front:install  # Instalar solo frontend
+```
+
+Script para iniciar proyectos
+```bash
+pnpm front      # Iniciar Nextjs
+pnpm migrate    # Hacer migraciones a la base de datos
+pnpm back       # Iniciar Django y docker-compose
+```
+
+### Setup manual
 
 Iniciar PostgreSQL con docker
 
@@ -65,10 +106,6 @@ pnpm dev
 ```
 Iniciar el backend (Django)
 
-**Requisitos previos:**
-- PostgreSQL debe estar corriendo (ejecutar `docker-compose up -d` desde la raíz del proyecto)
-- El archivo `.env` debe estar configurado en la raíz del proyecto
-
 **Pasos:**
 
 1. **Navegar a la carpeta del backend**
@@ -79,44 +116,26 @@ cd backend
 
 2. **Crear el entorno virtual**
 
-Linux/Mac
 ```bash
-python -m venv venv
+uv venv
 ```
 
-Windows (CMD)
-```cmd
-python -m venv venv
-```
-
-3. **Activar el entorno virtual**
-
-Linux/Mac
-```bash
-source venv/bin/activate
-```
-
-Windows (CMD)
-```cmd
-venv\Scripts\activate.bat
-```
-
-4. **Instalar dependencias**
+3. **Instalar dependencias**
 
 ```bash
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```
 
-5. **Ejecutar migraciones de base de datos**
+4. **Ejecutar migraciones de base de datos**
 
 ```bash
-python manage.py migrate
+uv run python manage.py migrate
 ```
 
-6. **Iniciar el servidor**
+5. **Iniciar el servidor**
 
 ```bash
-python manage.py runserver
+uv run python manage.py runserver
 ```
 
 El servidor estará disponible en `http://localhost:8000/`

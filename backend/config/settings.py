@@ -88,9 +88,9 @@ from decouple import config
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRES_DB', default='cooffy_db'),
-        'USER': config('POSTGRES_USER', default='postgres'),
-        'PASSWORD': config('POSTGRES_PASSWORD', default='postgres'),
+        'NAME': config('POSTGRES_DB', default='cooffy'),
+        'USER': config('POSTGRES_USER', default='cooffy-postgres'),
+        'PASSWORD': config('POSTGRES_PASSWORD', default='cooffy-password'),
         'HOST': config('POSTGRES_HOST', default='localhost'),
         'PORT': config('POSTGRES_PORT', default='5432'),
     }
