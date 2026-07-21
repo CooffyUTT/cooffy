@@ -90,6 +90,11 @@ pnpm back:migrate    # Hacer migraciones a la base de datos
 pnpm back       # Iniciar Django y docker-compose
 ```
 
+Otro comando util para ejecutar `manage.py`
+```bash
+pnpm back:manage {parametro}
+```
+
 ### Setup manual
 
 Iniciar PostgreSQL con docker
@@ -132,7 +137,13 @@ uv pip install -r requirements.txt
 uv run python manage.py migrate
 ```
 
-5. **Iniciar el servidor**
+5. **Crear datos base**
+
+```bash
+uv run python manage.py seed_dev
+```
+
+6. **Iniciar el servidor**
 
 ```bash
 uv run python manage.py runserver
