@@ -8,8 +8,7 @@ class ProductMenuListSerializer(serializers.ModelSerializer):
             'id', 
             'name', 
             'price',
-            'image', 
-            'description', 
+            'image',
         ]
 
 class ProductMenuDetailSerializer(serializers.ModelSerializer):
