@@ -15,9 +15,9 @@ export default function Header() {
         <div className="flex items-center gap-8">
           <span className="text-3xl font-bold text-primary tracking-tight">Cooffy</span>
           <nav className="flex gap-6">
-            <a className="text-primary border-b-2 border-primary py-2 font-semibold text-sm" href="#">Menu</a>
-            <a className="text-on-surface-variant hover:text-primary transition-colors py-2 font-semibold text-sm" href="#">Orders</a>
-            <a className="text-on-surface-variant hover:text-primary transition-colors py-2 font-semibold text-sm" href="#">Offers</a>
+            <a className="text-primary border-b-2 border-primary py-2 font-semibold text-sm" href="#">Menú</a>
+            <a className="text-on-surface-variant hover:text-primary transition-colors py-2 font-semibold text-sm" href="#">Pedidos</a>
+            <a className="text-on-surface-variant hover:text-primary transition-colors py-2 font-semibold text-sm" href="#">Promociones</a>
           </nav>
         </div>
         
@@ -26,7 +26,7 @@ export default function Header() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant" />
             <Input 
               className="w-full bg-surface-container-low border-none rounded-full pl-10 pr-4 py-2 text-sm focus-visible:ring-2 focus-visible:ring-primary shadow-none" 
-              placeholder="Search your coffee..." 
+              placeholder="Busca tu café..."
             />
           </div>
           <div className="flex gap-4 items-center">
@@ -47,7 +47,7 @@ export default function Header() {
             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed-dim cursor-pointer active:scale-95 duration-200">
               <img 
                 className="w-full h-full object-cover" 
-                alt="Profile" 
+                alt="Perfil"
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzXkGrUxYSBMIwXRBpwXC2apsh8Pkq4-SMPO1-zX992_7WXHU5Z5ZBIz6xkenI7x0wmpfNoWHN1Lvzad2IQZeNL0tA3Sus4-x6EHh881r7XaqwTVIU8YTnGZil9wY1-b0K7B_gPYI8QSbLjnFTtQ-IXZVxVobiu8fASzbszzkiLBc6GlErUyVrB-gZAjgqjoGw5zyUuIK60X95uGBtpJeJxhTyfNoMMuNlbyj4T8Xf7b3kigH783RBE4-IMN5Hs2RMD7_LBppYEoI"
               />
             </div>

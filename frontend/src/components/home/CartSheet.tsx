@@ -30,15 +30,15 @@ export default function CartSheet() {
         <div>
           <SheetHeader className="mb-6 border-b border-outline-variant/20 pb-4">
             <SheetTitle className="font-headline-md text-2xl font-bold text-on-surface flex items-center gap-2">
-              <ShoppingBag className="text-primary h-6 w-6" /> Your Cart
+              <ShoppingBag className="text-primary h-6 w-6" /> Tu carrito
             </SheetTitle>
           </SheetHeader>
 
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center text-on-surface-variant">
               <ShoppingCart className="h-16 w-16 mb-4 opacity-35" />
-              <p className="font-medium text-lg">Your cart is empty</p>
-              <p className="text-sm">Choose delicious drinks to get started!</p>
+              <p className="font-medium text-lg">Tu carrito está vacío</p>
+              <p className="text-sm">¡Elige algo delicioso para comenzar!</p>
             </div>
           ) : (
             <div className="space-y-4 overflow-y-auto max-h-[55vh] pr-1 hide-scrollbar">
@@ -53,7 +53,7 @@ export default function CartSheet() {
                       <span className="text-sm font-semibold text-primary">${(item.price * item.quantity).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center mt-2">
-                      <span className="text-xs text-on-surface-variant">Regular Size</span>
+                      <span className="text-xs text-on-surface-variant">Tamaño regular</span>
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 border border-outline rounded-full px-2 py-1">
                           <button onClick={() => updateQuantity(item.id, -1)}>
@@ -84,7 +84,7 @@ export default function CartSheet() {
                 <span>${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm text-on-surface-variant">
-                <span>Tax (8%)</span>
+                <span>Impuesto (8%)</span>
                 <span>${tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-lg font-bold text-on-surface pt-2 border-t border-dashed border-outline-variant/20">
@@ -94,7 +94,7 @@ export default function CartSheet() {
             </div>
             <SheetFooter>
               <Button className="w-full bg-primary text-white py-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:bg-on-primary-fixed-variant">
-                Proceed to Checkout <ArrowRight className="h-4 w-4" />
+                Continuar al pago <ArrowRight className="h-4 w-4" />
               </Button>
             </SheetFooter>
           </div>
