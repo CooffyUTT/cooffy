@@ -44,16 +44,12 @@ export default function CartSheet() {
             <div className="space-y-4 overflow-y-auto max-h-[55vh] pr-1 hide-scrollbar">
               {cart.map((item) => (
                 <div key={item.id} className="flex gap-3 items-center border-b border-outline-variant/10 pb-4">
-                  <div className="w-16 h-16 rounded-lg bg-white overflow-hidden shrink-0 border border-outline-variant/20">
-                    <img className="w-full h-full object-cover" alt={item.name} src={item.image} />
-                  </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
                       <h5 className="text-sm font-bold text-on-surface">{item.name}</h5>
                       <span className="text-sm font-semibold text-primary">${(item.price * item.quantity).toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="text-xs text-on-surface-variant">Tamaño regular</span>
+                    <div className="flex justify-end items-center mt-2">
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 border border-outline rounded-full px-2 py-1">
                           <button onClick={() => updateQuantity(item.id, -1)}>
