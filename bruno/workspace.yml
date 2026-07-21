@@ -4,9 +4,9 @@ info:
   type: workspace
 
 collections:
-  - name: "Login"
-    path: "collections/Login"
+  - name: "Auth"
+    path: "collections/Auth"
 
 specs:
 
-docs: ''
+docs: ""
