@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "bru:auth": "cd bruno/collections/Auth && bru run",
+        "bru:auth": "cross-env-shell \"cd bruno/collections/Auth && bru run\"",
         "front": "pnpm --dir frontend dev",
         "front:install": "pnpm --dir frontend install",
         "back:manage": "uv --directory backend run python -u manage.py",
