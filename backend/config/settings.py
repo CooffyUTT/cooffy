@@ -41,13 +41,9 @@ INSTALLED_APPS = [
     # 3rd party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
     
     # Our apps
-    'apps.branches',
-    'apps.cart',
-    'apps.menu',
-    'apps.orders',
-    'apps.payments',
     'apps.users',
     'apps.products',
 ]
@@ -55,6 +51,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -89,7 +86,7 @@ from decouple import config
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.db.backends.postgresql',  
         'NAME': config('POSTGRES_DB', default='cooffy'),
         'USER': config('POSTGRES_USER', default='cooffy-postgres'),
         'PASSWORD': config('POSTGRES_PASSWORD', default='cooffy-password'),
@@ -134,3 +131,35 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Custom user model
+AUTH_USER_MODEL = 'users.User'
+
+# DRF configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
+
+# Simple JWT configuration
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+# CORS configuration
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+CORS_ALLOW_CREDENTIALS = True

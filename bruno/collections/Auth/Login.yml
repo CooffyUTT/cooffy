@@ -1,0 +1,24 @@
+info:
+  name: Login
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:8000/api/auth/login/
+  body:
+    type: multipart-form
+    data:
+      - name: user
+        type: text
+        value: admin
+      - name: password
+        type: text
+        value: admin123
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

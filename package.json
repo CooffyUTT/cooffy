@@ -1,5 +1,6 @@
 {
     "scripts": {
+        "bru:auth": "cd bruno/collections/Auth && bru run",
         "front": "pnpm --dir frontend dev",
         "front:install": "pnpm --dir frontend install",
         "back": "cross-env-shell \"docker compose up -d && cd backend && uv run python -u manage.py runserver\"",
@@ -10,6 +11,7 @@
         "init:all": "cross-env-shell \"pnpm install:all && docker compose up -d &&pnpm back:migrate && pnpm dev\""
     },
     "devDependencies": {
+        "@usebruno/cli": "^3.5.2",
         "concurrently": "^10.0.3",
         "cross-env": "^7.0.3"
     }
