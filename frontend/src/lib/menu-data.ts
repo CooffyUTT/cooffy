@@ -1,50 +1,87 @@
-import { Coffee, Croissant, Cookie, Utensils } from "lucide-react";
-
 /**
- * Datos de ejemplo para la pantalla del menú.
+ * Datos de ejemplo para la pantalla del menú del comedor.
  * Se separan aquí (fuera del componente visual) para que el layout
  * quede limpio y sea fácil reemplazar esto por datos reales del
  * backend (Django) más adelante, sin tocar el diseño.
+ *
+ * A propósito no se usan íconos ni fotos de relleno: mientras no
+ * haya fotos reales de los platillos, el menú se apoya solo en
+ * texto (como un menú impreso), en vez de poner imágenes genéricas.
  */
 
-// Categorías del menú. El "id" se usa para filtrar los productos.
+// "todos" es una categoría especial que sirve para mostrar el menú completo.
 export const CATEGORIES = [
-  { id: "coffee", name: "Café", icon: Coffee },
-  { id: "breakfast", name: "Desayuno", icon: Croissant },
-  { id: "snacks", name: "Bocadillos", icon: Cookie },
-  { id: "lunch", name: "Comida", icon: Utensils },
+  { id: "todos", name: "Todos" },
+  { id: "desayuno", name: "Desayuno" },
+  { id: "comida", name: "Comida" },
+  { id: "snacks", name: "Snacks" },
+  { id: "postres", name: "Postres" },
+  { id: "bebidas", name: "Bebidas" },
 ];
 
-// Productos de ejemplo (placeholder). Cada uno pertenece a una categoría.
 export const PRODUCTS = [
   {
     id: 1,
-    name: "Caramel Macchiato",
-    price: 4.5,
-    description: "Espresso intenso con leche cremosa y un toque de caramelo.",
-    category: "coffee",
-    tag: "Opción vegana",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAz8JmSFAQJ4gECn2fi0GPQBXugfeF5xL8LDAeKCm1jbNOxCEo218CcraepK28dQmJSlez8g9EDHeP9XT4LpjmxbKep1jyMmIV5hG9mCMGp7a0MLySxy6szDAn32V-qZAdbTr7ZjW3h2IZNhAMHdINB7UlMYugJ27faQtjxrnS-fBD8-F9ax-apaSiHCYjD5XUwGvMlWoefZ3J3VG4Hv6hpnEz73mxfd9xF6_ZJ1Pp3iL8NFCtcsVPC6p1pq-XlsKsxq-WeXOOXn0s",
+    name: "Chilaquiles verdes",
+    price: 45,
+    description: "Totopos bañados en salsa verde, con pollo deshebrado y crema.",
+    category: "desayuno",
+    tag: "Favorito",
   },
   {
     id: 2,
-    name: "Classic Cortado",
-    price: 3.75,
-    description: "Partes iguales de espresso y leche vaporizada, en perfecto equilibrio.",
-    category: "coffee",
-    tag: "Especialidad de la casa",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBy4QtO7MpYEJmGHVtlIBBav4B11eKe3gefa9VthkfhtqpP86oFkRlVAAhJN6uwzM0l5C6MJ2VaIQjrSkm1Aqy4lVpNxmPrZPsxyny604U8BfkpY75wWsezVSzIE0NgP80lPhv5uNBeFY-ruLBdgUcTkMJ820zHwmm49jLYejb1Ok1HizOSQXCBHY4hyXX1q7I1urxL6Gc495l1EwuNV0tlkiwOH0j-wVt2Y0Gr_LfYzruSWKo4sjExx0NFQNpZsKlJi6Qu9RDQ8cc",
+    name: "Hot cakes",
+    price: 35,
+    description: "Tres hot cakes esponjosos con miel y mantequilla.",
+    category: "desayuno",
+    tag: "Clásico",
   },
   {
     id: 3,
-    name: "Avocado Smash",
-    price: 8.2,
-    description: "Pan de masa madre con aguacate fresco, hojuelas de chile y huevo pochado.",
-    category: "breakfast",
-    tag: "Más vendido",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCYnS9yu9-7BMZ8QRVpJWGvDA990GfiIP3Oqd1yoiOuWul-yasgmbzucbmQBUut2m4dmjimDZ66QVtIWOgm-tRQORjSCF6vaM9jFbUUKeDYMj4HQgCKO35ezGXW-rVtwlmBQDt9Yw912AQuF29HMo4OxtYReSfOc-kh89Bh0rNbSKlW-HYRAsXnaWohrDPsiL7kEkx1ftmYzqJkRhvkKNCvWNwGKl285M6pIu0DRYqKfiICIvV4bFEhMVvj8aeRZCZYu_vPLGx52qk",
+    name: "Torta de milanesa",
+    price: 55,
+    description: "Milanesa de pollo empanizada, con jitomate, lechuga y aguacate.",
+    category: "comida",
+    tag: "Más pedido",
+  },
+  {
+    id: 4,
+    name: "Ensalada de pollo",
+    price: 60,
+    description: "Pechuga a la plancha, mezcla de lechugas, jitomate cherry y vinagreta.",
+    category: "comida",
+    tag: "Ligero",
+  },
+  {
+    id: 5,
+    name: "Papas gajo",
+    price: 30,
+    description: "Porción de papas gajo horneadas con especias, salsa incluida.",
+    category: "snacks",
+    tag: "Para compartir",
+  },
+  {
+    id: 6,
+    name: "Gelatina de mosaico",
+    price: 20,
+    description: "Gelatina casera de varios sabores, en vasito individual.",
+    category: "postres",
+    tag: "Casero",
+  },
+  {
+    id: 7,
+    name: "Café americano",
+    price: 25,
+    description: "Café de grano recién preparado, disponible caliente o frío.",
+    category: "bebidas",
+    tag: "Recomendado",
+  },
+  {
+    id: 8,
+    name: "Agua fresca de horchata",
+    price: 20,
+    description: "Preparada en casa cada mañana, sin conservadores.",
+    category: "bebidas",
+    tag: "Natural",
   },
 ];
