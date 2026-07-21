@@ -42,11 +42,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     
     # Our apps
-    'apps.branches',
-    'apps.cart',
-    'apps.menu',
-    'apps.orders',
-    'apps.payments',
     'apps.users',
 ]
 
