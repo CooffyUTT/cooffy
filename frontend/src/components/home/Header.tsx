@@ -1,10 +1,9 @@
 "use client";
 
 import React from "react";
-import { Search, Bell, ShoppingCart } from "lucide-react";
+import { Search, Bell, ShoppingCart, User } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Input } from "@/components/ui/input";
-import Image from "next/image";
 
 export default function Header() {
   const { totalItems, setIsCartOpen } = useCart();
@@ -25,8 +24,8 @@ export default function Header() {
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant" />
             <Input 
-              className="w-full bg-surface-container-low border-none rounded-full pl-10 pr-4 py-2 text-sm focus-visible:ring-2 focus-visible:ring-primary shadow-none" 
-              placeholder="Busca tu café..."
+              className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-10 pr-4 py-2 text-sm focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary shadow-none"
+              placeholder="Busca en el menú..."
             />
           </div>
           <div className="flex gap-4 items-center">
@@ -44,13 +43,12 @@ export default function Header() {
               )}
             </button>
 
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed-dim cursor-pointer active:scale-95 duration-200">
-              <img 
-                className="w-full h-full object-cover" 
-                alt="Perfil"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzXkGrUxYSBMIwXRBpwXC2apsh8Pkq4-SMPO1-zX992_7WXHU5Z5ZBIz6xkenI7x0wmpfNoWHN1Lvzad2IQZeNL0tA3Sus4-x6EHh881r7XaqwTVIU8YTnGZil9wY1-b0K7B_gPYI8QSbLjnFTtQ-IXZVxVobiu8fASzbszzkiLBc6GlErUyVrB-gZAjgqjoGw5zyUuIK60X95uGBtpJeJxhTyfNoMMuNlbyj4T8Xf7b3kigH783RBE4-IMN5Hs2RMD7_LBppYEoI"
-              />
-            </div>
+            <button
+              className="w-10 h-10 rounded-full bg-primary-container/20 border border-outline-variant/30 flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
+              aria-label="Mi perfil"
+            >
+              <User className="h-5 w-5 text-primary" />
+            </button>
           </div>
         </div>
       </div>
