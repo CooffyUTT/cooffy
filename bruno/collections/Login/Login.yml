@@ -1,5 +1,5 @@
 info:
-  name: Auth
+  name: Login
   type: http
   seq: 1
 
