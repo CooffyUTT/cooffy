@@ -8,7 +8,7 @@
         "back:install": "cross-env-shell \"uv --directory backend venv --allow-existing && uv --directory backend pip install -r requirements.txt\"",
         "dev": "concurrently -n back,front \"pnpm back\" \"pnpm front\"",
         "install:all": "cross-env-shell \"pnpm install && pnpm front:install && pnpm back:install\"",
-        "init:all": "cross-env-shell \"pnpm install:all && docker compose up -d && pnpm back:manage migrate && pnpm dev\""
+        "init:all": "cross-env-shell \"pnpm install:all && docker compose up -d && pnpm back:manage migrate && pnpm back:manage seed_dev && pnpm dev\""
     },
     "devDependencies": {
         "@usebruno/cli": "^3.5.2",
