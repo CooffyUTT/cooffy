@@ -7,7 +7,7 @@
         "back:migrate": "cross-env-shell \"cd backend && uv run python -u manage.py migrate\"",
         "dev": "concurrently -n back,front \"pnpm back\" \"pnpm front\"",
         "install:all": "cross-env-shell \"pnpm install && pnpm front:install && pnpm back:install\"",
-        "init:all": "cross-env-shell \"pnpm install:all && pnpm back:migrate && pnpm dev\""
+        "init:all": "cross-env-shell \"pnpm install:all && docker compose up -d &&pnpm back:migrate && pnpm dev\""
     },
     "devDependencies": {
         "concurrently": "^10.0.3",
