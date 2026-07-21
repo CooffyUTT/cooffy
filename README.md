@@ -86,7 +86,7 @@ pnpm front:install  # Instalar solo frontend
 Script para iniciar proyectos
 ```bash
 pnpm front      # Iniciar Nextjs
-pnpm migrate    # Hacer migraciones a la base de datos
+pnpm back:migrate    # Hacer migraciones a la base de datos
 pnpm back       # Iniciar Django y docker-compose
 ```
 
