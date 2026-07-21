@@ -42,11 +42,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     
     # Our apps
-    'apps.branches',
-    'apps.cart',
-    'apps.menu',
-    'apps.orders',
-    'apps.payments',
     'apps.users',
 ]
 
@@ -87,7 +82,7 @@ from decouple import config
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.db.backends.postgresql',  
         'NAME': config('POSTGRES_DB', default='cooffy'),
         'USER': config('POSTGRES_USER', default='cooffy-postgres'),
         'PASSWORD': config('POSTGRES_PASSWORD', default='cooffy-password'),
