@@ -1,17 +1,15 @@
-"use client"; // Usamos hooks (useState) y el contexto del carrito, por eso es un componente de cliente
+"use client";
 
 import React, { useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { CartProvider, useCart } from "@/context/CartContext";
 import { CATEGORIES, PRODUCTS } from "@/lib/menu-data";
 
-// Componentes modulares del menú
 import Header from "@/components/home/Header";
 import ProductCard from "@/components/home/ProductCard";
 import CartSheet from "@/components/home/CartSheet";
 
 function MenuContent() {
-  // "todos" muestra el menú completo; el resto filtra por categoría real.
   const [selectedCategory, setSelectedCategory] = useState("todos");
   const { setIsCartOpen, totalItems } = useCart();
 
@@ -29,15 +27,15 @@ function MenuContent() {
     <div className="bg-background text-on-background min-h-screen font-sans antialiased">
       <Header />
 
-      <main className="pt-20 md:pt-28 pb-24 md:pb-12 px-4 md:px-10 max-w-[860px] mx-auto">
+      <main className="pt-20 md:pt-28 pb-24 md:pb-12 px-4 md:px-10 max-w-[1100px] mx-auto">
 
         <section className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-on-surface">Menú de hoy</h1>
           <p className="text-sm text-on-surface-variant capitalize mt-1">{today}</p>
         </section>
 
-        {/* Categorías como pestañas de texto */}
-        <section className="mb-2 border-b border-outline-variant/40">
+        {/* Pestañas de categoría */}
+        <section className="mb-6 border-b border-outline-variant/40">
           <div className="flex overflow-x-auto gap-6 hide-scrollbar">
             {CATEGORIES.map((cat) => {
               const isActive = selectedCategory === cat.id;
@@ -58,22 +56,21 @@ function MenuContent() {
           </div>
         </section>
 
-      
-        <div className="divide-y divide-outline-variant/40">
-          {visibleProducts.length === 0 ? (
-            <p className="text-on-surface-variant text-sm text-center py-12">
-              No hay platillos en esta categoría todavía.
-            </p>
-          ) : (
-            visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)
-          )}
-        </div>
+        {visibleProducts.length === 0 ? (
+          <p className="text-on-surface-variant text-sm text-center py-12">
+            No hay platillos en esta categoría todavía.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {visibleProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
       </main>
 
-      {/* Carrito lateral (se abre desde el header o el botón flotante) */}
       <CartSheet />
 
-      {/* Botón flotante del carrito */}
       <button
         onClick={() => setIsCartOpen(true)}
         className="lg:hidden fixed bottom-6 right-6 w-16 h-16 bg-primary text-white rounded-full shadow-xl flex items-center justify-center z-40 active:scale-90 transition-transform"
@@ -89,7 +86,6 @@ function MenuContent() {
     </div>
   );
 }
-
 
 export function MenuView() {
   return (

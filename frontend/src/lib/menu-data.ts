@@ -1,15 +1,5 @@
-/**
- * Datos de ejemplo para la pantalla del menú del comedor.
- * Se separan aquí (fuera del componente visual) para que el layout
- * quede limpio y sea fácil reemplazar esto por datos reales del
- * backend (Django) más adelante, sin tocar el diseño.
- *
- * A propósito no se usan íconos ni fotos de relleno: mientras no
- * haya fotos reales de los platillos, el menú se apoya solo en
- * texto (como un menú impreso), en vez de poner imágenes genéricas.
- */
+// Datos de ejemplo del menú. Más adelante van a venir del backend.
 
-// "todos" es una categoría especial que sirve para mostrar el menú completo.
 export const CATEGORIES = [
   { id: "todos", name: "Todos" },
   { id: "desayuno", name: "Desayuno" },
@@ -27,6 +17,7 @@ export const PRODUCTS = [
     description: "Totopos bañados en salsa verde, con pollo deshebrado y crema.",
     category: "desayuno",
     tag: "Favorito",
+    image: "",
   },
   {
     id: 2,
@@ -35,6 +26,7 @@ export const PRODUCTS = [
     description: "Tres hot cakes esponjosos con miel y mantequilla.",
     category: "desayuno",
     tag: "Clásico",
+    image: "",
   },
   {
     id: 3,
@@ -43,6 +35,7 @@ export const PRODUCTS = [
     description: "Milanesa de pollo empanizada, con jitomate, lechuga y aguacate.",
     category: "comida",
     tag: "Más pedido",
+    image: "",
   },
   {
     id: 4,
@@ -51,6 +44,7 @@ export const PRODUCTS = [
     description: "Pechuga a la plancha, mezcla de lechugas, jitomate cherry y vinagreta.",
     category: "comida",
     tag: "Ligero",
+    image: "",
   },
   {
     id: 5,
@@ -59,6 +53,7 @@ export const PRODUCTS = [
     description: "Porción de papas gajo horneadas con especias, salsa incluida.",
     category: "snacks",
     tag: "Para compartir",
+    image: "",
   },
   {
     id: 6,
@@ -67,6 +62,7 @@ export const PRODUCTS = [
     description: "Gelatina casera de varios sabores, en vasito individual.",
     category: "postres",
     tag: "Casero",
+    image: "",
   },
   {
     id: 7,
@@ -75,6 +71,7 @@ export const PRODUCTS = [
     description: "Café de grano recién preparado, disponible caliente o frío.",
     category: "bebidas",
     tag: "Recomendado",
+    image: "",
   },
   {
     id: 8,
@@ -83,5 +80,6 @@ export const PRODUCTS = [
     description: "Preparada en casa cada mañana, sin conservadores.",
     category: "bebidas",
     tag: "Natural",
+    image: "",
   },
 ];

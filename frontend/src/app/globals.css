@@ -23,9 +23,6 @@
   /* Variables nativas que usa shadcn/ui */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Antes esto se referenciaba a sí mismo (--font-sans: var(--font-sans)) y
-     nunca cargaba ninguna fuente real. Ahora sí apunta a la fuente que se
-     carga en layout.tsx (Plus Jakarta Sans). */
   --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
   --font-heading: var(--font-sans);

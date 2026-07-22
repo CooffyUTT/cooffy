@@ -3,9 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-// Fuente principal de la marca Cooffy. Antes el proyecto la mencionaba
-// en clases sueltas (ej. LoginView) pero nunca se cargaba de verdad,
-// así que el navegador terminaba usando su fuente por defecto.
+// Fuente principal de Cooffy
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
   subsets: ["latin"],
