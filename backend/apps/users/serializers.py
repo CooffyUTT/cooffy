@@ -24,7 +24,7 @@ class LoginSerializer(serializers.Serializer):
         data['user_obj'] = user
         return data
 
-class CreateUserSerializer(serializers.Serializer):
+class CreateClientSerializer(serializers.Serializer):
     user = serializers.EmailField(max_length=254)
     name = serializers.CharField(max_length=100)
     password = serializers.CharField(
@@ -41,13 +41,9 @@ class CreateUserSerializer(serializers.Serializer):
         if not re.match(pattern, user):
             raise serializers.ValidationError("Debe utilizar un correo institucional.")
 
-        return data
+        if User.objects.filter(user=user).exists():
+            raise serializers.ValidationError("El correo ya se encuentra registrado.")
 
-        #verificar que el usuario no exista
-        if User.objects.filter(user=email).exists():
-            raise serializers.ValidationError(
-                "El correo ya se encuentra registrado."
-            )
         return data
     
     def create(self, validated_data):
