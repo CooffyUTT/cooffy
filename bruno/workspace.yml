@@ -1,0 +1,12 @@
+opencollection: 1.0.0
+info:
+  name: "Cooffy"
+  type: workspace
+
+collections:
+  - name: "Auth"
+    path: "collections/Auth"
+
+specs:
+
+docs: ""
