@@ -11,11 +11,14 @@ import CartSheet from "@/components/home/CartSheet";
 
 function MenuContent() {
   const [selectedCategory, setSelectedCategory] = useState("todos");
+  const [searchTerm, setSearchTerm] = useState("");
   const { setIsCartOpen, totalItems } = useCart();
 
-  const visibleProducts = PRODUCTS.filter(
-    (p) => selectedCategory === "todos" || p.category === selectedCategory
-  );
+  const visibleProducts = PRODUCTS.filter((p) => {
+    const matchesCategory = selectedCategory === "todos" || p.category === selectedCategory;
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const today = new Intl.DateTimeFormat("es-MX", {
     weekday: "long",
@@ -25,7 +28,7 @@ function MenuContent() {
 
   return (
     <div className="bg-background text-on-background min-h-screen font-sans antialiased">
-      <Header />
+      <Header searchValue={searchTerm} onSearchChange={setSearchTerm} />
 
       <main className="pt-20 md:pt-28 pb-24 md:pb-12 px-4 md:px-10 max-w-[1100px] mx-auto">
 
