@@ -25,7 +25,7 @@ class LoginSerializer(serializers.Serializer):
         return data
 
 class CreateUserSerializer(serializers.Serializer):
-    email = serializers.EmailField(max_length=254)
+    user = serializers.EmailField(max_length=254)
     name = serializers.CharField(max_length=100)
     password = serializers.CharField(
         max_length=255,
@@ -35,10 +35,10 @@ class CreateUserSerializer(serializers.Serializer):
     school_id = serializers.IntegerField()
 
     def validate(self, data):
-        email = data.get('email')
+        user = data.get('user')
 
         pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu\.mx$"
-        if not re.match(pattern, email):
+        if not re.match(pattern, user):
             raise serializers.ValidationError("Debe utilizar un correo institucional.")
 
         return data
@@ -54,7 +54,7 @@ class CreateUserSerializer(serializers.Serializer):
         """Crear el usuario a partir del UserManager"""
 
         return User.objects.create_user(
-            user=validated_data["email"],
+            user=validated_data["user"],
             password=validated_data["password"],
             name=validated_data["name"],
             school_id=validated_data["school_id"],
