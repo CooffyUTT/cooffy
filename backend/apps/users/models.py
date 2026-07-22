@@ -9,10 +9,17 @@ from django.contrib.auth.hashers import make_password
 
 class UserManager(BaseUserManager):
     """Manager personalizado para User que usa 'user' como identificador único."""
+     def _validate_school_email(self, email):
+
+        if not email.endswith(".edu.mx"):
+            raise ValueError(
+                "Debe utilizar un correo institucional."
+            )
 
     def _create_user(self, user, password, **extra_fields):
         if not user:
             raise ValueError("El campo 'user' es obligatorio")
+        self._validate_school_email(user)
         user_obj = self.model(user=user, **extra_fields)
         user_obj.password = make_password(password)
         user_obj.save(using=self._db)

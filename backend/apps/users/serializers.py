@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import User
+import re
 
 
 class LoginSerializer(serializers.Serializer):
@@ -23,6 +24,41 @@ class LoginSerializer(serializers.Serializer):
         data['user_obj'] = user
         return data
 
+class CreateUserSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=254)
+    name = serializers.CharField(max_length=100)
+    password = serializers.CharField(
+        max_length=255,
+        min_length=8,
+        write_only=True
+    )
+    school_id = serializers.IntegerField()
+
+    def validate(self, data):
+        email = data.get('email')
+
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu\.mx$"
+        if not re.match(pattern, email):
+            raise serializers.ValidationError("Debe utilizar un correo institucional.")
+
+        return data
+
+        #verificar que el usuario no exista
+        if User.objects.filter(user=email).exists():
+            raise serializers.ValidationError(
+                "El correo ya se encuentra registrado."
+            )
+        return data
+    
+    def create(self, validated_data):
+        """Crear el usuario a partir del UserManager"""
+
+        return User.objects.create_user(
+            user=validated_data["email"],
+            password=validated_data["password"],
+            name=validated_data["name"],
+            school_id=validated_data["school_id"],
+        )
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
