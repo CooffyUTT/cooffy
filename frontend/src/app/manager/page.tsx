@@ -1,3 +1,5 @@
+//Página par la vista del gerente
+
 import React from 'react';
 import type { Metadata } from 'next';
 import { ManagerView } from '@/components/manager/ManagerView';

@@ -1,5 +1,5 @@
 "use client";
-
+//Página para la vista de los cientes
 import React, { useState } from "react";
 import { Coffee, Croissant, Cookie, Utensils, ArrowRight, ShoppingCart } from "lucide-react";
 import { CartProvider, useCart } from "@/context/CartContext";

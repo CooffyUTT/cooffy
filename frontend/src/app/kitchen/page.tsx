@@ -1,3 +1,5 @@
+//Página para la vista de la cocina
+
 import React from 'react';
 import type { Metadata } from 'next';
 import { KitchenView } from '@/components/kitchen/KitchenView';
