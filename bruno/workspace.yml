@@ -6,7 +6,9 @@ info:
 collections:
   - name: "Auth"
     path: "collections/Auth"
+  - name: "Products"
+    path: "collections/Products"
 
 specs:
 
-docs: ""
+docs: ''
