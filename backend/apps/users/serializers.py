@@ -56,6 +56,19 @@ class CreateClientSerializer(serializers.Serializer):
         )
 
 class UserSerializer(serializers.ModelSerializer):
+    groups = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'user', 'name', 'lastname', 'school_id', 'active']
+        fields = [
+            'id',
+            'user',
+            'name',
+            'lastname',
+            'school_id',
+            'active',
+            'groups',
+        ]
+
+    def get_groups(self, obj):
+        return list(obj.groups.values_list('name', flat=True))

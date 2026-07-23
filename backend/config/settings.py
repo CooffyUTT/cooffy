@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     # 3rd party apps
     'rest_framework',
     'rest_framework_simplejwt',
@@ -53,6 +54,7 @@ INSTALLED_APPS = [
     
     # Our apps
     'apps.users',
+    'apps.products',
 ]
 
 MIDDLEWARE = [
