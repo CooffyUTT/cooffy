@@ -1,5 +1,5 @@
 """
-Management command to seed a default admin user for development.
+Management command to seed a default admin user and default groups for development.
 
 Usage:
     python manage.py seed_dev       # creates admin if not exists
@@ -9,10 +9,11 @@ Usage:
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from apps.users.models import User
+from django.contrib.auth.models import Group
 
 
 class Command(BaseCommand):
-    help = 'Crea un usuario admin por defecto para desarrollo (user=admin / password=admin123).'
+    help = 'Crea un usuario admin y grupos por defecto para desarrollo (user=admin / password=admin123).'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -26,12 +27,28 @@ class Command(BaseCommand):
         if settings.DJANGO_ENV != 'development':
             self.stderr.write(
                 self.style.ERROR(
-                    'Este comando solo puede ejecutarse en entorno development '
+                    'Este comando solo puede ejecutarse en entorno desarrollo '
                     f'(DJANGO_ENV={settings.DJANGO_ENV}).'
                 )
             )
             return
 
+        # --- Creación de Grupos ---
+        self.stdout.write("Creando grupos...")
+
+        gerente_group, created = Group.objects.get_or_create(name="gerente")
+        if created:
+            self.stdout.write(self.style.SUCCESS("Grupo 'gerente' creado."))
+        else:
+            self.stdout.write(self.style.WARNING("Grupo 'gerente' ya existe."))
+
+        cliente_group, created = Group.objects.get_or_create(name="cliente")
+        if created:
+            self.stdout.write(self.style.SUCCESS("Grupo 'cliente' creado."))
+        else:
+            self.stdout.write(self.style.WARNING("Grupo 'cliente' ya existe."))
+
+        # --- Creación de Usuario Admin ---
         username = 'admin'
         password = 'admin123'
 
@@ -50,12 +67,14 @@ class Command(BaseCommand):
             existing.delete()
             self.stdout.write(f'Usuario "{username}" eliminado.')
 
-        User.objects.create_superuser(
+        admin = User.objects.create_superuser(
             user=username,
             password=password,
             name='Admin',
             lastname='Cooffy',
         )
+
+        admin.groups.set([gerente_group])
 
         self.stdout.write(
             self.style.SUCCESS(

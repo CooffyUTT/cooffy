@@ -1,0 +1,21 @@
+info:
+  name: Consultar Usuarios por Rol
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://127.0.0.1:8000/api/auth/?role=gerente
+  params:
+    - name: role
+      value: gerente
+      type: query
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg0ODcwNzI3LCJpYXQiOjE3ODQ4Njg5MjcsImp0aSI6IjhiNzJmYTM1YjE2OTRiNmJiNzgyZjVkNmUwN2IwZGNkIiwidXNlcl9pZCI6IjIifQ.BzqeVqXvtUpZHZRls01Dkpe6eDqRyh-DC5UXk2CLtMU
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
