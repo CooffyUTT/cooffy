@@ -1,15 +1,18 @@
 {
     "scripts": {
+        "bru:auth": "cross-env-shell \"cd bruno/collections/Auth && bru run\"",
         "front": "pnpm --dir frontend dev",
         "front:install": "pnpm --dir frontend install",
-        "back": "docker compose up -d && cd backend && uv run python -u manage.py runserver",
-        "back:install": "cd backend && uv venv --allow-existing && uv run pip install -r requirements.txt",
-        "back:migrate": "cd backend && uv run python -u manage.py migrate",
+        "back:manage": "uv --directory backend run python -u manage.py",
+        "back": "pnpm back:manage runserver",
+        "back:install": "cross-env-shell \"uv --directory backend venv --allow-existing && uv --directory backend pip install -r requirements.txt\"",
         "dev": "concurrently -n back,front \"pnpm back\" \"pnpm front\"",
-        "install:all": "pnpm install && pnpm front:install && pnpm back:install",
-        "init:all": "pnpm install:all && pnpm back:migrate && pnpm dev"
+        "install:all": "cross-env-shell \"pnpm install && pnpm front:install && pnpm back:install\"",
+        "init:all": "cross-env-shell \"pnpm install:all && docker compose up -d && pnpm back:manage migrate && pnpm back:manage seed_dev && pnpm dev\""
     },
     "devDependencies": {
-        "concurrently": "^10.0.3"
+        "@usebruno/cli": "^3.5.2",
+        "concurrently": "^10.0.3",
+        "cross-env": "^7.0.3"
     }
 }
