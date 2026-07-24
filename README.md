@@ -90,6 +90,11 @@ pnpm back:migrate    # Hacer migraciones a la base de datos
 pnpm back       # Iniciar Django y docker-compose
 ```
 
+Otro comando util para ejecutar `manage.py`
+```bash
+pnpm back:manage {parametro}
+```
+
 ### Setup manual
 
 Iniciar PostgreSQL con docker
@@ -132,7 +137,13 @@ uv pip install -r requirements.txt
 uv run python manage.py migrate
 ```
 
-5. **Iniciar el servidor**
+5. **Crear datos base**
+
+```bash
+uv run python manage.py seed_dev
+```
+
+6. **Iniciar el servidor**
 
 ```bash
 uv run python manage.py runserver
@@ -223,4 +234,47 @@ docs: update README
 chore: configure docker compose
 
 refactor: simplify authentication service
+```
+
+# 🧪 Bruno — API Client
+
+[Bruno](https://www.usebruno.com/) es un cliente de APIs **open source** y **offline**, alternativa a Postman, que se integra con Git. Las colecciones se guardan como archivos de texto plano dentro del repositorio, lo que permite versionarlas y compartirlas con todo el equipo.
+
+### Colecciones del proyecto
+
+Las colecciones de Bruno se encuentran en la carpeta [`bruno/`](bruno/):
+
+```
+bruno/
+├── workspace.yml
+└── collections/
+    ├── Auth/
+    │   ├── Login.yml
+    │   └── opencollection.yml
+    ├── Products/
+    |   ├── Menu Products.yml
+    |   └── opencollection.yml
+    └── ...
+```
+
+### Cómo usar la GUI de Bruno
+
+1. [Descargar Bruno](https://www.usebruno.com/downloads) e instalarlo.
+2. Abrir Bruno y hacer clic en **Open Workspace** (o **Open Collection**).
+3. Seleccionar la carpeta `bruno/` de este repositorio.
+
+### Bruno CLI (`bru`)
+
+El proyecto incluye [`@usebruno/cli`](https://www.npmjs.com/package/@usebruno/cli) como dev-dependency en [`package.json`](package.json), para futuras automatizaciones y CI/CD.
+
+```bash
+# Ejecutar todas las requests de la colección Auth
+pnpm bru:auth
+```
+
+También puedes usar `bru` directamente:
+
+```bash
+cd bruno/collections/<colección>
+pnpm bru run
 ```

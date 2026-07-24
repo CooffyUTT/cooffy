@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from django.contrib.auth.hashers import check_password
 from .models import User
 
 
@@ -17,8 +16,8 @@ class LoginSerializer(serializers.Serializer):
         except User.DoesNotExist:
             raise serializers.ValidationError("Credenciales inválidas")
 
-        # Comparar contraseña
-        if not check_password(password_input, user.password_hash):
+        # Validar contraseña usando Django auth
+        if not user.check_password(password_input):
             raise serializers.ValidationError("Credenciales inválidas")
 
         data['user_obj'] = user
@@ -26,6 +25,19 @@ class LoginSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    groups = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'user', 'name', 'lastname', 'school_id', 'active']
+        fields = [
+            'id',
+            'user',
+            'name',
+            'lastname',
+            'school_id',
+            'active',
+            'groups',
+        ]
+
+    def get_groups(self, obj):
+        return list(obj.groups.values_list('name', flat=True))
