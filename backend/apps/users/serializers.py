@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import User
+from django.contrib.auth.models import Group
 import re
 
 class LoginSerializer(serializers.Serializer):
@@ -49,12 +50,19 @@ class CreateClientSerializer(serializers.Serializer):
     def create(self, validated_data):
         """Crear el usuario a partir del UserManager"""
 
-        return User.objects.create_user(
+        new_user = User.objects.create_user(
             user=validated_data["user"],
             password=validated_data["password"],
             name=validated_data["name"],
+            lastname=validated_data.get("lastname"),
             school_id=validated_data["school_id"],
         )
+
+        # Asignar el grupo "cliente" por defecto
+        cliente_group, _ = Group.objects.get_or_create(name="cliente")
+        new_user.groups.add(cliente_group)
+
+        return new_user
 
 class UserSerializer(serializers.ModelSerializer):
     groups = serializers.SerializerMethodField()
