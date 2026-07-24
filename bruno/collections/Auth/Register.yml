@@ -10,10 +10,11 @@ http:
     type: json
     data: |-
       {
-      "user":"juan111@utt.edu.mx",
+      "user":"juanPerez111@utt.edu.mx",
       "name":"Juan",
+      "lastname": "Perez",
       "password":"12345678",
-      "school_id":20231234
+      "school_id":20231232
       }
   auth: inherit
 
