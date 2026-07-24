@@ -26,7 +26,7 @@ class LoginSerializer(serializers.Serializer):
 class CreateClientSerializer(serializers.Serializer):
     user = serializers.EmailField(max_length=254)
     name = serializers.CharField(max_length=100)
-    lastname = serializers.CharField(max_length=100)
+    lastname = serializers.CharField(max_length=100, required=False, allow_null=True)
     password = serializers.CharField(
         max_length=255,
         min_length=8,
