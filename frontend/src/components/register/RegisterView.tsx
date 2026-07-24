@@ -356,7 +356,7 @@ export function RegisterView() {
             {/* Enlace sutil al Login */}
             <motion.div variants={itemVariants} className="text-center mt-md">
               <span className="text-xs text-on-surface-variant font-medium">¿Ya tienes cuenta? </span>
-              <Link href="/login" className="text-xs font-semibold text-primary hover:underline transition-all">
+              <Link href="/" className="text-xs font-semibold text-primary hover:underline transition-all">
                 Inicia sesión
               </Link>
             </motion.div>
