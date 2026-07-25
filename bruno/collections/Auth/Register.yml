@@ -7,15 +7,18 @@ http:
   method: POST
   url: http://localhost:8000/api/auth/register/
   body:
-    type: json
-    data: |-
-      {
-      "user":"juanPerez111@utt.edu.mx",
-      "name":"Juan",
-      "lastname": "Perez",
-      "password":"12345678",
-      "school_id":20231232
-      }
+    type: form-urlencoded
+    data:
+      - name: user
+        value: 2023{{$randomInt}}@utt.edu.mx
+      - name: name
+        value: "{{$randomFirstName}}"
+      - name: lastname
+        value: "{{$randomLastName}}"
+      - name: password
+        value: secret-password-123
+      - name: school_id
+        value: "1"
   auth: inherit
 
 settings:
