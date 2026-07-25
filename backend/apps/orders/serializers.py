@@ -1,12 +1,17 @@
 from decimal import Decimal
 from django.db import transaction
+from django.utils import timezone
+from django.db.models import Sum, Max
 from rest_framework import serializers
 from .models import Order, OrderProduct
+
 
 class OrderProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderProduct
         fields = ['id', 'item_id', 'quantity', 'price', 'excluded_modifiers']
+        read_only_fields = ('id',)
+
 
 class OrderListSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,6 +27,7 @@ class OrderListSerializer(serializers.ModelSerializer):
             'payment_status',
             'created_at',
         ]
+
 
 class OrderDetailSerializer(serializers.ModelSerializer):
     order_products = OrderProductSerializer(many=True, read_only=True)
@@ -46,14 +52,13 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             'order_products',
         ]
 
+
 class OrderCreateSerializer(serializers.ModelSerializer):
     order_products = OrderProductSerializer(many=True)
 
     class Meta:
         model = Order
         fields = [
-            'order_number',
-            'date',
             'branch_id',
             'client_id',
             'scheduled_pickup_at',
@@ -73,7 +78,22 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         products_data = validated_data.pop('order_products')
-        order = Order.objects.create(**validated_data)
+
+        max_num = Order.objects.aggregate(max_num=Max('order_number'))['max_num'] or 0
+        order_number = max_num + 1
+
+        date = timezone.now().date()
+
+        order = Order.objects.create(
+            order_number=order_number,
+            date=date,
+            **validated_data
+        )
+
         for p in products_data:
             OrderProduct.objects.create(order=order, **p)
+
+        order.total = order.order_products.aggregate(total=Sum('price'))['total'] or Decimal('0.00')
+        order.save(update_fields=['total'])
+
         return order
