@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for OpenCode sessions working in the Cooffy repo (school project: Django + Next.js learning project). Verify against the codebase before trusting; this file is a shortcut, not a spec.
+Guidance for AI Agents sessions (ClaudeCode, OpenCode, GithubCopilot) working in the Cooffy repo (school project: Django + Next.js learning project). Verify against the codebase before trusting; this file is a shortcut, not a spec.
 
 ## Repo shape
 
