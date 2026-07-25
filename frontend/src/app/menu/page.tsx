@@ -1,13 +1,14 @@
 "use client";
-//Página para la vista de los cientes
-import React, { useState } from "react";
+//Página para la vista de los clientes con protección de ruta
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Coffee, Croissant, Cookie, Utensils, ArrowRight, ShoppingCart } from "lucide-react";
 import { CartProvider, useCart } from "@/context/CartContext";
 
 // Componentes modulares
-import Header from "@/components/home/Header";
-import ProductCard from "@/components/home/ProductCard";
-import CartSheet from "@/components/home/CartSheet";
+import Header from "@/components/menu/Header";
+import ProductCard from "@/components/menu/ProductCard";
+import CartSheet from "@/components/menu/CartSheet";
 
 // Datos estáticos de ejemplo
 const CATEGORIES = [
@@ -136,8 +137,50 @@ function DashboardContent() {
   );
 }
 
-// Orquestador que inyecta el Contexto a los componentes de la vista
+// Orquestador que valida la seguridad e inyecta el Contexto
 export default function DashboardPage() {
+  const router = useRouter();
+
+  // 1. Inicialización perezosa de la autorización desde localStorage
+  const [isAuthorized, setIsAuthorized] = useState(() => {
+    if (typeof window === "undefined") return false; // Compatibilidad con SSR
+
+    const userDataStr = localStorage.getItem("userData");
+    if (!userDataStr) return false;
+
+    try {
+      const userData = JSON.parse(userDataStr);
+      const groups: string[] = userData.groups || [];
+
+      // Permitir acceso a clientes y gerentes
+      return groups.includes("cliente") || groups.includes("gerente");
+    } catch {
+      return false;
+    }
+  });
+
+  // 2. Efecto para redirigir en caso de no contar con autorización
+  useEffect(() => {
+    if (!isAuthorized) {
+      router.push("/");
+    }
+  }, [isAuthorized, router]);
+
+  // 3. Pantalla de carga mientras se valida o redirige
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-medium text-on-surface-variant">
+            Verificando permisos de usuario...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // 4. Renderizado normal del orquestador una vez verificado[cite: 2]
   return (
     <CartProvider>
       <DashboardContent />
