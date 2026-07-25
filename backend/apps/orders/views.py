@@ -1,102 +1,106 @@
 from decimal import Decimal
-
+from django.db import transaction
 from django.db.models import Sum
-from django.shortcuts import get_object_or_404
-from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework import viewsets, filters, status
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
 
-from apps.orders.models import Order, OrderProduct
-from apps.orders.serializers import serialize_order
+from .models import Order, OrderProduct
+from .serializers import (
+    OrderListSerializer,
+    OrderDetailSerializer,
+    OrderCreateSerializer,
+    OrderProductSerializer,
+)
 from apps.products.models import Product
 
 
-class OrderListCreateView(APIView):
-    permission_classes = [AllowAny]
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all().order_by("-created_at")
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["order_number", "state", "payment_status"]
+    ordering_fields = ["created_at", "date", "order_number"]
+    ordering = ["-created_at"]
 
-    def get(self, request):
-        orders = Order.objects.all()
-        client_id = request.query_params.get("client_id")
+    def get_serializer_class(self):
+        if self.action == "list":
+            return OrderListSerializer
+        if self.action in ("retrieve", "update", "partial_update"):
+            return OrderDetailSerializer
+        if self.action == "create":
+            return OrderCreateSerializer
+        return OrderDetailSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = getattr(self.request, "user", None)
+        client_id = self.request.query_params.get("client_id")
+
         if client_id is not None:
-            orders = orders.filter(client_id=client_id)
-        return Response([serialize_order(order) for order in orders.order_by("-created_at")])
+            qs = qs.filter(client_id=client_id)
 
-    def post(self, request):
-        try:
-            order = Order.objects.create(
-                order_number=request.data.get("order_number"),
-                date=request.data.get("date"),
-                branch_id=request.data.get("branch_id", 1),
-                client_id=request.data.get("client_id"),
-                payment_method=request.data.get("payment_method"),
-                comment=request.data.get("comment", ""),
-            )
-            return Response(serialize_order(order), status=status.HTTP_201_CREATED)
-        except Exception as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        if user and not getattr(user, "is_staff", False):
+            # limitar a los pedidos del propio cliente si no es staff
+            qs = qs.filter(client_id=getattr(user, "id", None))
 
+        return qs
 
-class OrderProductCreateView(APIView):
-    permission_classes = [AllowAny]
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+        return Response(OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED)
 
-    def post(self, request):
-        try:
-            order = get_object_or_404(Order, pk=request.data.get("order_id"))
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        order = self.get_object()
 
-            quantity = int(request.data.get("quantity", 1))
-            item_id = request.data.get("item_id")
-
-            if request.data.get("price") is not None:
-                unit_price = Decimal(str(request.data.get("price")))
-            else:
-                product = Product.objects.get(pk=item_id)
-                unit_price = product.price
-
-            line_total = unit_price * quantity
-
-            OrderProduct.objects.create(
-                order=order,
-                item_id=item_id,
-                quantity=quantity,
-                price=line_total,
-                excluded_modifiers=request.data.get("excluded_modifiers", []),
-            )
-
+        if "state" in request.data:
+            order.state = request.data.get("state", order.state)
+        if "payment_status" in request.data:
+            order.payment_status = request.data.get("payment_status", order.payment_status)
+        if "payment_method" in request.data:
+            order.payment_method = request.data.get("payment_method", order.payment_method)
+        if "comment" in request.data:
+            order.comment = request.data.get("comment", order.comment)
+        if "total" in request.data:
+            order.total = Decimal(str(request.data.get("total")))
+        else:
             order.total = order.order_products.aggregate(total=Sum("price"))["total"] or Decimal("0.00")
-            order.save(update_fields=["total"])
 
-            return Response(serialize_order(order), status=status.HTTP_201_CREATED)
-        except Exception as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        order.save()
+        return Response(OrderDetailSerializer(order).data)
 
+    @action(detail=True, methods=["post"], url_path="add-product")
+    @transaction.atomic
+    def add_product(self, request, pk=None):
+        order = self.get_object()
 
-class OrderDetailView(APIView):
-    permission_classes = [AllowAny]
+        quantity = int(request.data.get("quantity", 1))
+        item_id = request.data.get("item_id")
 
-    def get(self, request, pk):
-        order = get_object_or_404(Order, pk=pk)
-        return Response(serialize_order(order))
+        if request.data.get("price") is not None:
+            unit_price = Decimal(str(request.data.get("price")))
+        else:
+            product = get_object_or_404(Product, pk=item_id)
+            unit_price = product.price
 
-    def put(self, request, pk):
-        try:
-            order = get_object_or_404(Order, pk=pk)
+        line_total = unit_price * quantity
 
-            if "state" in request.data:
-                order.state = request.data.get("state", order.state)
-            if "payment_status" in request.data:
-                order.payment_status = request.data.get("payment_status", order.payment_status)
-            if "payment_method" in request.data:
-                order.payment_method = request.data.get("payment_method", order.payment_method)
-            if "comment" in request.data:
-                order.comment = request.data.get("comment", order.comment)
-            if "total" in request.data:
-                order.total = Decimal(str(request.data.get("total")))
-            else:
-                order.total = order.order_products.aggregate(total=Sum("price"))["total"] or Decimal("0.00")
+        OrderProduct.objects.create(
+            order=order,
+            item_id=item_id,
+            quantity=quantity,
+            price=line_total,
+            excluded_modifiers=request.data.get("excluded_modifiers", []),
+        )
 
-            order.save()
+        order.total = order.order_products.aggregate(total=Sum("price"))["total"] or Decimal("0.00")
+        order.save(update_fields=["total"])
 
-            return Response(serialize_order(order))
-        except Exception as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        order.refresh_from_db()
+        return Response(OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED)
