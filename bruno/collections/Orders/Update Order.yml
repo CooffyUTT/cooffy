@@ -1,0 +1,15 @@
+info:
+  name: Update Order
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: http://localhost:8000/api/orders/1/
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
