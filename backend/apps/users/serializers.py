@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import User
-
+from django.contrib.auth.models import Group
+import re
 
 class LoginSerializer(serializers.Serializer):
     user = serializers.CharField(max_length=254)
@@ -23,6 +24,45 @@ class LoginSerializer(serializers.Serializer):
         data['user_obj'] = user
         return data
 
+class CreateClientSerializer(serializers.Serializer):
+    user = serializers.EmailField(max_length=254)
+    name = serializers.CharField(max_length=100)
+    lastname = serializers.CharField(max_length=100, required=False, allow_null=True)
+    password = serializers.CharField(
+        max_length=255,
+        min_length=8,
+        write_only=True
+    )
+    school_id = serializers.IntegerField()
+
+    def validate(self, data):
+        user = data.get('user')
+
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu\.mx$" ## para validar que sea un correo institucional válido
+        if not re.match(pattern, user):
+            raise serializers.ValidationError("Debe utilizar un correo institucional.")
+
+        if User.objects.filter(user=user).exists():
+            raise serializers.ValidationError("El correo ya se encuentra registrado.")
+
+        return data
+    
+    def create(self, validated_data):
+        """Crear el usuario a partir del UserManager"""
+
+        new_user = User.objects.create_user(
+            user=validated_data["user"],
+            password=validated_data["password"],
+            name=validated_data["name"],
+            lastname=validated_data.get("lastname"),
+            school_id=validated_data["school_id"],
+        )
+
+        # Asignar el grupo "cliente" por defecto
+        cliente_group, _ = Group.objects.get_or_create(name="cliente")
+        new_user.groups.add(cliente_group)
+
+        return new_user
 
 class UserSerializer(serializers.ModelSerializer):
     groups = serializers.SerializerMethodField()

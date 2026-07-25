@@ -139,6 +139,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Media files (user-uploaded content)
+# https://docs.djangoproject.com/en/6.0/topics/files/
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Custom user model
 AUTH_USER_MODEL = 'users.User'
 
