@@ -6,6 +6,13 @@ info:
 http:
   method: PUT
   url: http://localhost:8000/api/orders/1/
+  body:
+    type: json
+    data: |-
+      {
+        "state": "progress",
+        "payment_status": "paid"
+      }
   auth: inherit
 
 settings:

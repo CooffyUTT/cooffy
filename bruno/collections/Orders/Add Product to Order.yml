@@ -6,6 +6,16 @@ info:
 http:
   method: POST
   url: http://localhost:8000/api/orders/product/
+  body:
+    type: json
+    data: |-
+      {
+        "order_id": 1,
+        "item_id": 2,
+        "quantity": 1,
+        "price": "8.00",
+        "excluded_modifiers": ["frío"]
+      }
   auth: inherit
 
 settings:
