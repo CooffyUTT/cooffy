@@ -1,29 +1,79 @@
 from decimal import Decimal
+from django.db import transaction
+from rest_framework import serializers
+from .models import Order, OrderProduct
 
-def serialize_order(order):
-    return {
-        "id": order.id,
-        "order_number": order.order_number,
-        "date": str(order.date),
-        "branch_id": order.branch_id,
-        "client_id": order.client_id,
-        "created_at": order.created_at.isoformat() if order.created_at else None,
-        "prepared_at": order.prepared_at.isoformat() if order.prepared_at else None,
-        "picked_up_at": order.picked_up_at.isoformat() if order.picked_up_at else None,
-        "scheduled_pickup_at": order.scheduled_pickup_at.isoformat() if order.scheduled_pickup_at else None,
-        "total": str(order.total),
-        "state": order.state,
-        "payment_method": order.payment_method,
-        "payment_status": order.payment_status,
-        "comment": order.comment,
-        "products": [
-            {
-                "id": item.id,
-                "item_id": item.item_id,
-                "quantity": item.quantity,
-                "price": str(item.price),
-                "excluded_modifiers": item.excluded_modifiers or [],
-            }
-            for item in order.order_products.all()
-        ],
-    }
+class OrderProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderProduct
+        fields = ['id', 'item_id', 'quantity', 'price', 'excluded_modifiers']
+
+class OrderListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'order_number',
+            'date',
+            'branch_id',
+            'client_id',
+            'total',
+            'state',
+            'payment_status',
+            'created_at',
+        ]
+
+class OrderDetailSerializer(serializers.ModelSerializer):
+    order_products = OrderProductSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'order_number',
+            'date',
+            'branch_id',
+            'client_id',
+            'created_at',
+            'prepared_at',
+            'picked_up_at',
+            'scheduled_pickup_at',
+            'total',
+            'state',
+            'payment_method',
+            'payment_status',
+            'comment',
+            'order_products',
+        ]
+
+class OrderCreateSerializer(serializers.ModelSerializer):
+    order_products = OrderProductSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'order_number',
+            'date',
+            'branch_id',
+            'client_id',
+            'scheduled_pickup_at',
+            'total',
+            'state',
+            'payment_method',
+            'payment_status',
+            'comment',
+            'order_products',
+        ]
+
+    def validate_order_products(self, value):
+        if not value:
+            raise serializers.ValidationError("El pedido debe tener al menos un producto.")
+        return value
+
+    @transaction.atomic
+    def create(self, validated_data):
+        products_data = validated_data.pop('order_products')
+        order = Order.objects.create(**validated_data)
+        for p in products_data:
+            OrderProduct.objects.create(order=order, **p)
+        return order
