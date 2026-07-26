@@ -7,14 +7,26 @@ http:
   method: POST
   url: http://localhost:8000/api/orders/
   body:
-    type: urlencoded
-    data: |-
-      branch_id=1
-      client_id=1
-      payment_method=1
-      comment=orden de prueba
-      order_products=[{"item_id":101,"quantity":1,"price":"10.00"},{"item_id":102,"quantity":1,"price":"12.00"}]
-  auth: inherit
+    type: multipart-form
+    data:
+    - name: branch_id
+      type: text
+      value: 1
+    - name: client_id
+      type: text
+      value: 1
+    - name: payment_method
+      type: text
+      value: 1
+    - name: comment
+      type: text
+      value: orden de prueba
+    - name: order_products
+      type: text
+      value: '[{"item_id":101,"quantity":1,"price":"10.00"},{"item_id":102,"quantity":1,"price":"12.00"}]'
+  auth:
+    type: bearer
+    token: "{{access_token}}"
 
 settings:
   encodeUrl: true

@@ -7,11 +7,17 @@ http:
   method: PUT
   url: http://localhost:8000/api/orders/1/
   body:
-    type: urlencoded
-    data: |-
-      state=progress
-      payment_status=paid
-  auth: inherit
+    type: multipart-form
+    data:
+    - name: state
+      type: text
+      value: progress
+    - name: payment_status
+      type: text
+      value: paid
+  auth:
+    type: bearer
+    token: "{{access_token}}"
 
 settings:
   encodeUrl: true
