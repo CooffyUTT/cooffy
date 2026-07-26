@@ -12,7 +12,6 @@ from .serializers import (
     OrderListSerializer,
     OrderDetailSerializer,
     OrderCreateSerializer,
-    OrderProductSerializer,
 )
 from apps.products.models import Product
 
@@ -43,7 +42,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             qs = qs.filter(client_id=client_id)
 
         if user and not getattr(user, "is_staff", False):
-            # limitar a los pedidos del propio cliente si no es staff
             qs = qs.filter(client_id=getattr(user, "id", None))
 
         return qs
@@ -56,7 +54,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop("partial", False)
         order = self.get_object()
 
         if "state" in request.data:
