@@ -7,16 +7,13 @@ http:
   method: POST
   url: http://localhost:8000/api/orders/
   body:
-    type: json
+    type: urlencoded
     data: |-
-      {
-        "order_number": 1001,
-        "date": "2026-07-24",
-        "branch_id": 1,
-        "client_id": 1,
-        "payment_method": 1,
-        "comment": "orden de prueba"
-      }
+      branch_id=1
+      client_id=1
+      payment_method=1
+      comment=orden de prueba
+      order_products=[{"item_id":101,"quantity":1,"price":"10.00"},{"item_id":102,"quantity":1,"price":"12.00"}]
   auth: inherit
 
 settings:

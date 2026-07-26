@@ -7,12 +7,10 @@ http:
   method: PUT
   url: http://localhost:8000/api/orders/1/
   body:
-    type: json
+    type: urlencoded
     data: |-
-      {
-        "state": "progress",
-        "payment_status": "paid"
-      }
+      state=progress
+      payment_status=paid
   auth: inherit
 
 settings:
