@@ -10,10 +10,8 @@ http:
     type: form-urlencoded
     data:
       - name: user
-        type: text
         value: admin
       - name: password
-        type: text
         value: admin123
   auth: inherit
 
