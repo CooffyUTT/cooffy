@@ -37,16 +37,3 @@ Restricciones:
 - RN-20 Todo pedido pagado generará automáticamente un comprobante de compra
 - RN-22 Los cambios realizados deberán registrar la fecha y hora de la última modificación
 
-## Tareas
-
-| Nombre | Descripción | Prioridad |
-| --- | --- | --- |
-| Diseño de la interfaz del pago | Diseñar la pantalla para seleccionar el método de pago | Alta |
-| Seleccionar el método de pago | Permitir elegir entre pago con tarjeta o pago en efectivo | Alta |
-| Registro de pago en efectivo | Registrar pedidos de pagos realizado en la caja | Alta |
-| Generación de un comprobante | Generar un comprobante con número de pedido para identificar el pedido | Alta |
-| Confirmación de pago en la caja | Permitir al cocinero confirmar el pago en efectivo antes de entregar el pedido | Alta |
-| Actualización del estado del pedido | Cambiar el estado del pedido a Pagado únicamente cuando el pago haya sido confirmado | Alta |
-| Consulta del comprobante | Permitir al cliente visualizar o descargar su comprobante de compra | Alta |
-| Validación del comprobante | Permitir que el empleado ingrese el número de pedido para verificar su autenticidad | Alta |
-| Registro en el comprobante | Registrar fecha, hora, método de pago y usuario que confirmó el pago | Media |

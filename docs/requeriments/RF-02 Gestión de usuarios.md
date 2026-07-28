@@ -32,14 +32,3 @@ admin. de escuela.
 Depende de:
 
 - [RF-01 Autenticación de usuarios](RF-01%20Autenticaci%C3%B3n%20de%20usuarios.md)
-
-## Tareas
-
-| Nombre | Descripción | Prioridad |
-|--------|-------------|-----------|
-| Creación de los modelos en el backend | - Crear el modelo `Usuario` y los campos necesarios para identificar su rol dentro del sistema.<br>- Configurar el Custom User Model | Alta |
-| Implementar los serializadores | Crear las clases que representen especificamente los campos de cada tabla que se creará en la BD. | Alta |
-| Endpoint para alta de clientes | - Crear el endpoint que permita registrarse en la aplicación.<br>- Validar que el correo pertenezca al dominio autorizado por la escuela seleccionada. | Alta |
-| Endpoint para consulta de usuarios | Permitir obtener la información de los usuarios registrados según su rol (Aplica solo para gerente y clientes). | Media-Baja |
-| Validación de contraseñas | Almacenar de manera segura las contraseñas en la BD con ayuda de Django | Alta |
-| Interfaz para regristro del usuario cliente | Pantalla inicial del usuario cliente al entrar a la app. Esta interfaz le va a permitir a los clientes registrarse en el sistema para empezar a realizar pedidos, por lo que una vez registrado el sistema lo va a redirigir a la pagina de inicio (menú). | Alta |
