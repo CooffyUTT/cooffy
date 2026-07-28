@@ -1,0 +1,30 @@
+info:
+  name: Create school
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:8000/api/schools/
+  body:
+    type: form-urlencoded
+    data:
+      - name: admin
+        value: "1"
+      - name: full_name
+        value: Universidad Tecnologica de Tijuana
+      - name: short_name
+        value: UTT
+      - name: address
+        value: El refugio
+      - name: active
+        value: "true"
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg1MjI0NDU0LCJpYXQiOjE3ODUyMjI2NTQsImp0aSI6Ijg0ZDdjZDgzNDI1MDQ0YzVhMGM1MGEwMWFiMGVjMjgzIiwidXNlcl9pZCI6IjcifQ.uGMlqyuPZ9qAsj_6nrMf7ooH2BWtnI7E5bUfkoFHrJU
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
