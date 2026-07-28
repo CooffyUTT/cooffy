@@ -1,6 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation'; // 👈 Importamos useRouter para la redirección
 import { AnimatePresence } from 'framer-motion';
 import { Order } from '@/types/kitchen';
 import { INITIAL_ORDERS } from '@/data/mockOrders';
@@ -12,11 +15,36 @@ import { KanbanColumn } from './KanbanColumn';
 import { OrderCard } from './OrderCard';
 
 export function KitchenView() {
+  const router = useRouter();
+
+  // 👈 Estado para controlar si el usuario está autorizado para ver la vista
+  const [isAuthorized, setIsAuthorized] = useState(() => {
+    if (typeof window === "undefined") return false; // Soporte para SSR en Next.js
+
+    const userDataStr = localStorage.getItem("userData");
+    if (!userDataStr) return false;
+
+    try {
+      const userData = JSON.parse(userDataStr);
+      const groups: string[] = userData.groups || [];
+      return groups.includes("empleado") || groups.includes("gerente");
+    } catch {
+      return false;
+    }
+  });
+
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
   const [kitchenActive, setKitchenActive] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isConnected] = useState(true);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
+  // 👈 useEffect para verificar sesión y rol en LocalStorage
+  useEffect(() => {
+    if (!isAuthorized) {
+      router.push("/");
+    }
+  }, [isAuthorized, router]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -38,6 +66,21 @@ export function KitchenView() {
     setConfirmingId(null);
   };
 
+  // 👈 PANTALLA DE CARGA: Oculta el contenido mientras verifica la autorización
+  if (!isAuthorized) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#F4F5F7] font-['Plus_Jakarta_Sans',sans-serif]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-semibold text-gray-600">
+            Verificando permisos de Cocina...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // 👈 Renderizado normal de la vista cuando el usuario está autorizado
   return (
     <div className="flex h-screen bg-[#F4F5F7] font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden">
       <KitchenSidebar />

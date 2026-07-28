@@ -1,9 +1,9 @@
 """
-Management command to seed a default admin user and default groups for development.
+Management command to seed default users and groups for development testing.
 
 Usage:
-    python manage.py seed_dev       # creates admin if not exists
-    python manage.py seed_dev --force  # re-creates even if already exists
+    python manage.py seed_dev        # creates default groups and test users if not exist
+    python manage.py seed_dev --force  # re-creates users even if already exist
 """
 
 from django.core.management.base import BaseCommand
@@ -13,71 +13,115 @@ from django.contrib.auth.models import Group
 
 
 class Command(BaseCommand):
-    help = 'Crea un usuario admin y grupos por defecto para desarrollo (user=admin / password=admin123).'
+    help = 'Crea usuarios de prueba y grupos por defecto para desarrollo (gerente, empleado y cliente).'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--force',
             action='store_true',
-            help='Re-crea el admin aunque ya exista.',
+            help='Re-crea los usuarios aunque ya existan.',
         )
 
     def handle(self, *args, **options):
         # Guard: only run in development
-        if settings.DJANGO_ENV != 'development':
+        if getattr(settings, 'DJANGO_ENV', 'development') != 'development':
             self.stderr.write(
                 self.style.ERROR(
                     'Este comando solo puede ejecutarse en entorno desarrollo '
-                    f'(DJANGO_ENV={settings.DJANGO_ENV}).'
+                    f'(DJANGO_ENV={getattr(settings, "DJANGO_ENV", "production")}).'
                 )
             )
             return
 
-        # --- Creación de Grupos ---
-        self.stdout.write("Creando grupos...")
+        force = options['force']
 
-        gerente_group, created = Group.objects.get_or_create(name="gerente")
-        if created:
-            self.stdout.write(self.style.SUCCESS("Grupo 'gerente' creado."))
-        else:
-            self.stdout.write(self.style.WARNING("Grupo 'gerente' ya existe."))
+        # ============================================================
+        # 1. CREACIÓN DE GRUPOS
+        # ============================================================
+        self.stdout.write(self.style.MIGRATE_HEADING("--- Creando Grupos ---"))
 
-        cliente_group, created = Group.objects.get_or_create(name="cliente")
-        if created:
-            self.stdout.write(self.style.SUCCESS("Grupo 'cliente' creado."))
-        else:
-            self.stdout.write(self.style.WARNING("Grupo 'cliente' ya existe."))
+        groups_config = ['gerente', 'cliente', 'empleado']
+        groups = {}
 
-        # --- Creación de Usuario Admin ---
-        username = 'admin'
-        password = 'admin123'
+        for group_name in groups_config:
+            group_obj, created = Group.objects.get_or_create(name=group_name)
+            groups[group_name] = group_obj
+            if created:
+                self.stdout.write(self.style.SUCCESS(f"✔ Grupo '{group_name}' creado."))
+            else:
+                self.stdout.write(self.style.WARNING(f"ℹ Grupo '{group_name}' ya existe."))
 
-        existing = User.objects.filter(user=username).first()
+        # ============================================================
+        # 2. DEFINICIÓN DE USUARIOS DE PRUEBA
+        # ============================================================
+        self.stdout.write(self.style.MIGRATE_HEADING("\n--- Creando Usuarios de Prueba ---"))
 
-        if existing and not options['force']:
+        test_users = [
+            {
+                'username': 'admin',
+                'password': 'admin123',
+                'name': 'Admin',
+                'lastname': 'Cooffy',
+                'is_superuser': True,
+                'groups': [groups['gerente']],
+            },
+            {
+                'username': 'cocina1',
+                'password': 'admin123',
+                'name': 'Carlos',
+                'lastname': 'Cocinero',
+                'is_superuser': False,
+                'groups': [groups['empleado']],
+            },
+            {
+                'username': 'cliente1',
+                'password': 'admin123',
+                'name': 'Ana',
+                'lastname': 'Cliente',
+                'is_superuser': False,
+                'groups': [groups['cliente']],
+            },
+        ]
+
+        # ============================================================
+        # 3. PROCESAMIENTO DE USUARIOS
+        # ============================================================
+        for user_data in test_users:
+            username = user_data['username']
+            password = user_data['password']
+            existing = User.objects.filter(user=username).first()
+
+            if existing:
+                if force:
+                    existing.delete()
+                    self.stdout.write(self.style.WARNING(f'Usuario "{username}" eliminado por --force.'))
+                else:
+                    self.stdout.write(self.style.WARNING(f'ℹ Usuario "{username}" ya existe (omitido).'))
+                    continue
+
+            # Crear usuario según su rol
+            if user_data['is_superuser']:
+                user_obj = User.objects.create_superuser(
+                    user=username,
+                    password=password,
+                    name=user_data['name'],
+                    lastname=user_data['lastname'],
+                )
+            else:
+                user_obj = User.objects.create_user(
+                    user=username,
+                    password=password,
+                    name=user_data['name'],
+                    lastname=user_data['lastname'],
+                )
+
+            # Asignar grupos
+            user_obj.groups.set(user_data['groups'])
+
             self.stdout.write(
-                self.style.WARNING(
-                    f'El usuario "{username}" ya existe. '
-                    'Usa --force para re-crearlo.'
+                self.style.SUCCESS(
+                    f'✔ Usuario Creado: {username} | Pass: {password} | Rol: {[g.name for g in user_data["groups"]]}'
                 )
             )
-            return
 
-        if existing and options['force']:
-            existing.delete()
-            self.stdout.write(f'Usuario "{username}" eliminado.')
-
-        admin = User.objects.create_superuser(
-            user=username,
-            password=password,
-            name='Admin',
-            lastname='Cooffy',
-        )
-
-        admin.groups.set([gerente_group])
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                f'Usuario admin creado: {username} / {password}'
-            )
-        )
+        self.stdout.write(self.style.MIGRATE_LABEL("\n¡Seed de desarrollo completado con éxito! 🎉"))
