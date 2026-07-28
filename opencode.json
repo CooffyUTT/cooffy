@@ -2,49 +2,9 @@
   "$schema": "https://opencode.ai/config.json",
   "agent": {
     "ask": {
-      "description": "Default read-only Q&A agent for Cooffy. Use for 'how do I...', 'explain...', 'what's the pattern for...' questions. Reads AGENTS.md and docs/agents/*.md for repo context. Never edits code — suggest approaches, reference file paths with line numbers, explain concepts. For deep domain dives, invoke @backend or @frontend.",
+      "description": "Default read-only Q&A agent for Cooffy. Use for 'how do I...', 'explain...', 'what's the pattern for...' questions. Reads AGENTS.md and docs/ for repo context. Never edits code — suggest approaches, reference file paths with line numbers, explain concepts. For deep domain dives, invoke @general or @explore when needed.",
       "mode": "primary",
       "temperature": 0.2,
-      "permission": {
-        "edit": "deny",
-        "bash": "deny"
-      }
-    },
-    "backend": {
-      "description": "Django + DRF backend domain specialist. Read-only — explains backend patterns, code, and how to implement features. Invoke with @backend for deep Django/DRF questions.",
-      "mode": "subagent",
-      "temperature": 0.2,
-      "prompt": "{file:./docs/agents/backend-guide.md}",
-      "permission": {
-        "edit": "deny",
-        "bash": "deny"
-      }
-    },
-    "frontend": {
-      "description": "Next.js 16 + React 19 frontend domain specialist. Read-only — explains frontend patterns, code, and how to implement features. Invoke with @frontend for deep Next/React questions.",
-      "mode": "subagent",
-      "temperature": 0.2,
-      "prompt": "{file:./docs/agents/frontend-guide.md}",
-      "permission": {
-        "edit": "deny",
-        "bash": "deny"
-      }
-    },
-    "reviewer": {
-      "description": "Read-only PR/diff reviewer for the Cooffy repo. Enforces the repo-specific review checklist (Conventional Commits, no backend/.env, apps/orders not wired, is_active vs active, WEBP re-encode, raw <img>, etc.).",
-      "mode": "subagent",
-      "temperature": 0.1,
-      "prompt": "{file:./docs/agents/review-checklist.md}",
-      "permission": {
-        "edit": "deny",
-        "bash": "deny"
-      }
-    },
-    "architect": {
-      "description": "Read-only architect for the Cooffy repo. Produces plans and design guidance (wiring apps/orders, frontend↔backend integration, non-dev env, test strategy). Returns plans, no diffs.",
-      "mode": "subagent",
-      "temperature": 0.1,
-      "prompt": "{file:./docs/agents/architecture.md}",
       "permission": {
         "edit": "deny",
         "bash": "deny"

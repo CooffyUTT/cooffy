@@ -15,12 +15,13 @@ There are **two pnpm lockfiles** (root and `frontend/`). Use `pnpm install:all` 
 
 ## Running things — use the root pnpm scripts, do not `cd` manually
 
-All commands run from repo root. Backend is invoked through `uv --directory backend`, so CWD for Django is `backend/` even though you run from root.
+All commands run from repo root on `package.json`. Backend is invoked through `uv --directory backend`, so CWD for Django is `backend/` even though you run from root.
 
 - `pnpm init:all` — install everything, up Postgres, migrate, seed, start dev servers (one-shot first run).
 - `pnpm dev` — start backend + frontend together (via `concurrently`).
 - `pnpm front` / `pnpm back` — start one side. `pnpm back` = `manage.py runserver`.
 - `pnpm back:manage <args>` — proxy for `python manage.py <args>` (e.g. `pnpm back:manage makemigrations`).
+- `pnpm front:install` — run `pnpm install` on `frontend/` directory.
 - `pnpm back:install` — creates `backend/.venv` with `uv venv` and installs `requirements.txt`.
 
 Postgres is required and runs only via `docker compose up -d` (docker-compose.yml at root). The backend cannot start without it.
@@ -57,33 +58,9 @@ Key vars: `DJANGO_ENV` (controls `DEBUG` and CORS behavior), `POSTGRES_*`, `NEXT
 - Base integration branch is **`develop`**, not `main`. Branch off `develop` with `feature/`, `fix/`, `docs/`, `chore/`, `refactor/`, `hotfix/` prefixes; PRs target `develop`.
 - **Conventional Commits** (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `style:`). PR template (`/.github/pull_request_template.md`) requires `Closes #<issue>`.
 
-## Specialized agents & docs
-
-Repo-specific guidance lives once in `docs/agents/` (tool-agnostic cheatsheets with `file:line` refs). Per-tool agent wrappers live in `opencode.json` (OpenCode) and `.claude/agents/` (Claude Code). Copilot reads `.github/copilot-instructions.md` which points here for full context.
-
-Agents are **read-only by default** — they explain patterns, reference code, and suggest approaches so the team learns by writing code themselves (with Copilot helping in VS Code). For actual implementation, switch to the built-in `Build` agent or use Copilot.
-
-### Docs (source of truth)
-- `docs/agents/backend-guide.md` — Django/DRF patterns + quirks (`User.user`/`is_active` property, `Group` roles, `ArrayField`, `Product.save()` WEBP, dev-only seeds, exact-pinned reqs).
-- `docs/agents/frontend-guide.md` — Next 16 / App Router / React Compiler / shadcn + mock-first reality (TanStack/Zustand/rhf+zod installed but unused; `api.ts` unused) and the wiring roadmap.
-- `docs/agents/review-checklist.md` — repo-specific PR checklist (Conventional Commits, `Closes #`, no `backend/.env`, `apps/orders` not wired, `is_active` vs `active`, WEBP re-encode, raw `<img>`).
-- `docs/agents/architecture.md` — current topology + planned seams (wiring `apps.orders`, frontend↔backend integration, non-dev env, test strategy) with "don't over-build" guardrails.
-
-### Agents
-| Agent | Mode | Role | OpenCode | Claude |
-|---|---|---|---|---|
-| `ask` | primary (read-only) | Default Q&A — explains, suggests, references code. Use for "how do I...", "explain...", "what's the pattern..." | `opencode.json` `agent.ask` | `.claude/agents/ask.md` |
-| `backend` | subagent (read-only) | Deep Django/DRF domain knowledge | `opencode.json` `agent.backend` | `.claude/agents/backend.md` |
-| `frontend` | subagent (read-only) | Deep Next/React domain knowledge | `opencode.json` `agent.frontend` | `.claude/agents/frontend.md` |
-| `reviewer` | subagent (read-only) | PR/diff review | `opencode.json` `agent.reviewer` | `.claude/agents/reviewer.md` |
-| `architect` | subagent (read-only) | Plans/design, no diffs | `opencode.json` `agent.architect` | `.claude/agents/architect.md` |
-
-OpenCode `opencode.json` loads its agent prompts via `{file:./docs/agents/...}`, so the prose lives in exactly one place. Claude subagents inline a short identity + the top guardrails and read the `docs/agents/` file on first action (minor duplication accepted). Codex/Cursor users: open `docs/agents/` directly. Copilot: reads `.github/copilot-instructions.md` which points here.
-
 ## Things agents get wrong here
 
-- Treating `apps/orders` as a working app (it isn't wired in yet).
 - Creating `backend/.env` or assuming secrets live in the backend dir.
-- Running `cd backend && ...` instead of `pnpm back:*` / `uv --directory backend ...` (breaks env resolution and script expectations).
+- Running `cd backend && ...` instead of `pnpm back:*` (breaks env resolution and script expectations).
 - Expecting pytest/mocha/jest — there is no test framework set up on either side.
 - Committing `.env` or `backend/media/` (both gitignored).
