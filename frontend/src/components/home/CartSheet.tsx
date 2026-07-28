@@ -26,7 +26,7 @@ export default function CartSheet() {
 
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-      <SheetContent className="w-full sm:max-w-md bg-surface border-l border-outline-variant/30 flex flex-col justify-between p-6">
+      <SheetContent className="bg-surface border-outline-variant/30 flex flex-col justify-between p-6">
         <div>
           <SheetHeader className="mb-6 border-b border-outline-variant/20 pb-4">
             <SheetTitle className="font-headline-md text-2xl font-bold text-on-surface flex items-center gap-2">
