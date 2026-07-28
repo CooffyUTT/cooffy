@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/auth/', include('apps.users.urls')),
     path('api/menu/', include('apps.products.urls')),
     path('api/orders/', include('apps.orders.urls')),
+    path('api/schools/', include('apps.schools.urls')),
 ]
 
 # Serving static and media files during development
