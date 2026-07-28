@@ -46,13 +46,3 @@ Para que este requerimiento funcional funcione se deben de contar con las siguie
 
 - RN-08 Un producto deshabilitado no podrá agregarse a nuevos pedidos ni mostrarse como disponible en el menú.
 - RN-09 Un producto podrá marcarse como promoción únicamente mientras permanezca activo.
-
-| Nombre | Descripción | Prioridad |
-| --- | --- | --- |
-| Creación del end point para poder obtener los productos | Generar un end point con el cual se hace la comunicación del front end y back end para obtener la información de los alimentos | alta |
-| Layout de las pantallas | Generar el diseño de la pantallas | alta |
-| Realización de los diseños de los complementos de la pantalla | Realización de: productCard, banners, promociones, buscador | media |
-| Buscador | Implementación funcional del buscador de la sección del menú | baja |
-| Consultación de disponibilidad | Ver la disponibilidad de los productos y que en base a estos se muestren o no en el apartado del menú, o indicarle al usuario que el producto no esta disponible | media |
-| Rendimiento | Optimización de la sección | alta |
-| Consulta de ofertas | Consultar el que un producto tenga oferta y que se muestre en la sección del menú | media |

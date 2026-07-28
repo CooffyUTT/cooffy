@@ -30,11 +30,3 @@ Restricciones:
 
 - RN-22 Los cambios realizados sobre usuarios, sucursales, productos y pedidos deberán registrar la fecha y hora de la última modificación.
 - RN-23 Un usuario únicamente podrá administrar la información correspondiente a las sucursales para las que tenga autorización.
-
-## Tareas
-
-| Nombre | Descripción | Prioridad |
-| --- | --- | --- |
-| Endpoint para gestionar gerentes por sucursal | Endpoints en el backend para CRUD de sucursales de tienda de la escuela asignada al admin | Media |
-| Panel de admin escolar | Diseño de pantalla de admin sin funcionalidad | Media |
-| CRUD de sucursales por escuela | Admin podrá gestionar los usuarios desde la interfaz | Media |

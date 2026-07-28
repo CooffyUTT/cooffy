@@ -54,15 +54,3 @@ Depende de:
 Restricciones:
 
 - RN-23: Un usuario únicamente podrá administrar la información correspondiente a las sucursales para las que tenga autorización.
-
-## Tareas
-
-| Nombre | Descripción | Prioridad |
-| --- | --- | --- |
-| Endpoint general de dashboards | Generar un endpoint base para los dashboards, incluyendo los del resumen del dia | media |
-| Layout estático de dashboards | Pantalla base para los dashboards (sin funcionalidad necesaria), dividido por periodo. | media |
-| Resumen del dia | Implementar dashboards de resumen del dia | media |
-| Top de productos | Dashboard de los productos más vendidos según periodo | baja |
-| Pedidos por hora | Dashboard de promedio pedidos por hora según periodo | baja |
-| Venta generada | Dashboard de cantidad de venta generada por cada fecha según periodo | baja |
-| Tiempos de operación | Dashboard de tiempos de promedio de tiempos de operación por status (preparación, espera, etc) según periodo | baja |
