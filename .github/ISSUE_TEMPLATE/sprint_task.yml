@@ -1,33 +1,12 @@
 name: Task
 description: Tarea de desarrollo para un RF
-title: "[RF-XX] Nombre"
+title: "Nombre"
 labels: ["task"]
 body:
   - type: markdown
     attributes:
       value: |
         Completa la información necesaria para realizar la tarea.
-
-  - type: dropdown
-    id: rf
-    attributes:
-      label: Requerimiento Funcional
-      options:
-        - RF-01 Autenticación
-        - RF-02 Gestión de usuarios
-        - RF-03 Gestión de sucursales
-        - RF-04 Dashboard e indicadores
-        - RF-05 Gestión del menú
-        - RF-06 Disponibilidad de productos
-        - RF-07 Gestión de pedidos
-        - RF-08 Consulta del menú
-        - RF-09 Gestión del carrito
-        - RF-10 Registro de pedidos
-        - RF-11 Gestión de pagos
-        - RF-12 Estado del pedido
-        - RF-13 Gestionar sucursales de una escuela
-    validations:
-      required: true
 
   - type: textarea
     id: objective
@@ -45,4 +24,4 @@ body:
       label: Notas
       description: Información adicional, dependencias o comentarios.
       placeholder: |
-        Depende de RF-01: Configurar JWT
+        Depende de RF-01, No se fva a implementar todo en el MVP, etc
