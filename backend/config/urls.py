@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/menu/', include('apps.products.urls')),
     path('api/branches/', include('apps.branches.urls')),
     path('api/orders/', include('apps.orders.urls')),
+    path('api/schools/', include('apps.schools.urls')),
 ]
 
 # Serving static and media files during development
