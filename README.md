@@ -140,7 +140,7 @@ uv run python manage.py migrate
 5. **Crear datos base**
 
 ```bash
-uv run python manage.py seed_dev
+uv run python manage.py seed
 ```
 
 6. **Iniciar el servidor**
