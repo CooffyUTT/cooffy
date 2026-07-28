@@ -7,7 +7,7 @@ from apps.users.models import User
 from .models import Company, Branch
 
 
-class BranchByCompanyViewTests(APITestCase):
+class BranchViewSetTests(APITestCase):
     """Pruebas para GET /api/branches/?company_id=<id>"""
 
     def setUp(self):

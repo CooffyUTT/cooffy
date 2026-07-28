@@ -1,6 +1,10 @@
-from django.urls import path
-from .views import BranchByCompanyView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import BranchViewSet
+
+router = DefaultRouter()
+router.register(r'', BranchViewSet, basename='branch')
 
 urlpatterns = [
-    path('', BranchByCompanyView.as_view(), name='branch-list'),
+    path('', include(router.urls)),
 ]
