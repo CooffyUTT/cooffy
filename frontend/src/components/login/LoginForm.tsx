@@ -58,7 +58,7 @@ export function LoginForm() {
             }`}
             id="user"
             name="user"
-            placeholder="ejemplo@universidad.edu"
+            placeholder="ejemplo@universidad.edu.mx"
             type="text"
             value={formData.user}
             onChange={handleInputChange}

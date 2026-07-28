@@ -37,8 +37,8 @@ export function useLoginForm() {
 
     // 👈 2. Ajuste: Permitir tanto nombres de usuario como correos
     if (name === 'password') {
-      if (value.length < 6) {
-        return "La contraseña debe tener al menos 6 caracteres.";
+      if (value.length < 8) {
+        return "La contraseña debe tener al menos 8 caracteres.";
       }
     }
 
