@@ -7,24 +7,17 @@ from .serializers import SchoolSerializer
 from django.shortcuts import get_object_or_404
 
 # Create your views here.
-class SchoolListView(APIView):
+class SchoolView(APIView):
     """
-    Endpoint para listar todas las escuelas activas.
+    Endpoints para listar y crear escuelas.
     """
     permission_classes = [IsAuthenticated]
  
     def get(self, request):
         queryset = School.objects.filter(active=True)
         serializer = SchoolSerializer(queryset, many=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-class CreateSchoolView(APIView):
-    """
-    Endpoint para crear una nueva escuela.
-    """
-    permission_classes = [IsAuthenticated]
-
+ 
     def post(self, request):
         serializer = SchoolSerializer(data=request.data)
  
@@ -37,5 +30,28 @@ class CreateSchoolView(APIView):
             SchoolSerializer(school).data,
             status=status.HTTP_201_CREATED
         )
-
  
+
+class SchoolDetailView(APIView):
+    """
+    Endpoints para obtener o actualizar por ID
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        school = get_object_or_404(School, pk=pk)
+        serializer = SchoolSerializer(school)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        school = get_object_or_404(School, pk=pk)
+        serializer = SchoolSerializer(school, data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        school = serializer.save()
+        return Response(
+            SchoolSerializer(school).data,
+            status=status.HTTP_200_OK
+        )
