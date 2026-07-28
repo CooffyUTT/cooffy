@@ -41,14 +41,14 @@ export function useRegisterForm() {
     }
 
     if (name === 'user') {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex =  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.edu.mx$/;
     if (!emailRegex.test(value)) {
       return "Introduce un correo electrónico institucional válido.";
     }
   }
 
-    if (name === 'password' && value.length < 6) {
-      return "La contraseña debe tener al menos 6 caracteres.";
+    if (name === 'password' && value.length < 8) {
+      return "La contraseña debe tener al menos 8 caracteres.";
     }
 
     if (name === 'confirmPassword') {
@@ -89,7 +89,7 @@ export function useRegisterForm() {
 
   const getPasswordRequirements = (password: string) => {
     return {
-      hasMinLength: password.length >= 6,
+      hasMinLength: password.length >= 8,
       hasUpperAndLower: /[a-z]/.test(password) && /[A-Z]/.test(password),
       hasNumber: /[0-9]/.test(password),
       hasSpecialChar: /[^A-Za-z0-9]/.test(password),
@@ -139,15 +139,6 @@ export function useRegisterForm() {
     setIsLoading(true);
 
     try {
-      // Simulación de petición de registro al servidor de Cooffy (1.5 segundos)
-      // await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // toast.success("¡Registro Exitoso!", { 
-      //   description: "Cuenta creada. Redirigiéndote al menú..." 
-      // });
-
-      // // Redirección inmediata a la página de inicio/menú de pedidos
-      // router.push('/menu'); 
       const params = new URLSearchParams();
       params.append('user', formData.user);
       params.append('name', formData.name);

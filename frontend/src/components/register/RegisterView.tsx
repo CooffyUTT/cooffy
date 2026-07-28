@@ -155,7 +155,7 @@ export function RegisterView() {
                     id="user" 
                     name="user" 
                     type="email" 
-                    placeholder="tu_correo@universidad.edu" 
+                    placeholder="tu_correo@universidad.edu.mx" 
                     value={formData.user} 
                     onChange={handleInputChange} 
                     disabled={isLoading}
@@ -228,7 +228,7 @@ export function RegisterView() {
                     <div className="grid grid-cols-2 gap-x-2 gap-y-1 pt-1 text-[11px] font-medium">
                         <RequirementItem 
                         isMet={passwordRequirements.hasMinLength} 
-                        label="Mínimo 6 caracteres" 
+                        label="Mínimo 8 caracteres" 
                         />
                         <RequirementItem 
                         isMet={passwordRequirements.hasUpperAndLower} 
