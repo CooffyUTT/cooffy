@@ -1,0 +1,28 @@
+info:
+  name: Register
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:8000/api/auth/register/
+  body:
+    type: form-urlencoded
+    data:
+      - name: user
+        value: 2023{{$randomInt}}@utt.edu.mx
+      - name: name
+        value: "{{$randomFirstName}}"
+      - name: lastname
+        value: "{{$randomLastName}}"
+      - name: password
+        value: secret-password-123
+      - name: school_id
+        value: "1"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

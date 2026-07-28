@@ -6,11 +6,15 @@ Usage:
     python manage.py seed_products --clear  # deletes all products and re-creates them
 """
 
+import os
+from urllib.parse import urlsplit
+
+import requests
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from apps.products.models import Product
 
-#TODO: implement upload photos and use that ones
 SEED_PRODUCTS = [
     {
         "name": "Burrito de carne asada",
@@ -95,6 +99,15 @@ SEED_PRODUCTS = [
 ]
 
 
+def download_image(image_url, timeout=15):
+    response = requests.get(image_url, timeout=timeout)
+    response.raise_for_status()
+    filename = os.path.basename(urlsplit(image_url).path) or 'image'
+    if '.' not in filename:
+        filename = f'{filename}.jpg'
+    return filename, ContentFile(response.content)
+
+
 class Command(BaseCommand):
     help = 'Siembra 10 productos de cafetería para desarrollo.'
 
@@ -106,7 +119,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        # Guard: only run in development
         if settings.DJANGO_ENV != 'development':
             self.stderr.write(
                 self.style.ERROR(
@@ -125,10 +137,19 @@ class Command(BaseCommand):
 
         for item in SEED_PRODUCTS:
             name = item['name']
+            image_url = item.get('image')
+            image_file = None
+
+            if image_url:
+                try:
+                    filename, content = download_image(image_url)
+                    image_file = (filename, content)
+                except requests.RequestException as e:
+                    self.stderr.write(f'  \u2717 {name}: falló descarga de imagen ({e})')
+
             defaults = {
                 'price': item['price'],
                 'description': item.get('description'),
-                'image': item.get('image'),
                 'modifiers': item.get('modifiers'),
                 'max_per_order': item.get('max_per_order'),
             }
@@ -138,12 +159,24 @@ class Command(BaseCommand):
                 defaults=defaults,
             )
 
+            if was_created or not obj.image:
+                if image_file:
+                    obj.image.save(*image_file)
+                    if not was_created:
+                        obj.save(update_fields=['image'])
+                elif was_created and image_url:
+                    obj.image = image_url
+                    obj.save(update_fields=['image'])
+
             if was_created:
                 created += 1
                 self.stdout.write(f'  \u2714 {name}')
             else:
-                skipped += 1
-                self.stdout.write(f'  ~ {name} (ya existe)')
+                if image_file:
+                    self.stdout.write(f'  \u21bb {name} (imagen actualizada)')
+                else:
+                    skipped += 1
+                    self.stdout.write(f'  ~ {name} (ya existe)')
 
         self.stdout.write(
             self.style.SUCCESS(

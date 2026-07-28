@@ -186,6 +186,6 @@ export function useRegisterForm() {
     toggleConfirmPasswordVisibility,
     handleInputChange,
     handleRegister,
-    handleSSORegister,
+    handleSSORegister,  
   };
 }
