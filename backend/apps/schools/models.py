@@ -5,7 +5,7 @@ from django.conf import settings
 class School(models.Model):
     admin = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        on_delete=models.PROTECT, # no eliminar usuario si tiene escuelas asociadas
         related_name='admin_schools',
         null=True,
         blank=True,
