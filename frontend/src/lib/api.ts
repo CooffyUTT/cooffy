@@ -35,8 +35,8 @@ api.interceptors.response.use(
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("userData");
         // Opcional: Redirigir al login si no estás en la página de login
-        if (!window.location.pathname.includes("/login")) {
-          window.location.href = "/login";
+        if (!window.location.pathname.includes("/")) {
+          window.location.href = "/";
         }
       }
     }
