@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import { Plus, Check } from "lucide-react";
-import Image from "next/image";
 import { useCart } from "@/context/CartContext";
+import { BaseCard, CardMedia, CardFooter } from "../layout/BaseCard";
 
 interface ProductProps {
   product: {
@@ -27,31 +27,26 @@ export default function ProductCard({ product }: ProductProps) {
   };
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/20 shadow-[0px_4px_20px_rgba(30,58,90,0.05)] hover:shadow-md transition-shadow">
-      {/* Espacio para la foto del platillo */}
-      <div className="relative h-36 bg-surface-container-low border-b border-dashed border-outline-variant/40 flex items-center justify-center">
-        {product.image ? (
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover"
-          />
-        ) : (
-          <span className="text-[11px] text-on-surface-variant/50">Foto próximamente</span>
-        )}
-      </div>
+    <BaseCard>
+      <CardMedia
+        src={product.image}
+        alt={product.name}
+        fallbackText="Foto próximamente"
+      />
 
-      <div className="p-4">
-        <div className="flex justify-between items-start gap-2 mb-1">
-          <h4 className="font-semibold text-on-surface">{product.name}</h4>
-          <span className="font-semibold text-primary whitespace-nowrap">${product.price.toFixed(2)}</span>
+      <div className="p-4 flex-1 flex flex-col justify-between">
+        <div className="space-y-1 mb-3">
+          <div className="flex justify-between items-start gap-2">
+            <h4 className="font-semibold text-on-surface text-base">{product.name}</h4>
+            <span className="font-bold text-primary whitespace-nowrap">
+              ${product.price.toFixed(2)}
+            </span>
+          </div>
+          <p className="text-xs text-on-surface-variant line-clamp-2">{product.description}</p>
         </div>
-        <p className="text-sm text-on-surface-variant line-clamp-2 mb-3">{product.description}</p>
 
-        <div className="flex justify-between items-center">
-          <span className="text-[11px] font-medium text-on-surface-variant/70 uppercase tracking-wide">
+        <CardFooter className="pt-3">
+          <span className="text-[11px] font-semibold text-on-surface-variant/70 uppercase tracking-wide">
             {product.tag}
           </span>
           <button
@@ -59,7 +54,7 @@ export default function ProductCard({ product }: ProductProps) {
             aria-label={`Agregar ${product.name} al carrito`}
             className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
               added
-                ? "border-green-600 text-green-700 bg-green-50"
+                ? "border-emerald-600 text-emerald-700 bg-emerald-50"
                 : "border-primary text-primary hover:bg-primary hover:text-white"
             }`}
           >
@@ -73,8 +68,8 @@ export default function ProductCard({ product }: ProductProps) {
               </>
             )}
           </button>
-        </div>
+        </CardFooter>
       </div>
-    </div>
+    </BaseCard>
   );
 }
