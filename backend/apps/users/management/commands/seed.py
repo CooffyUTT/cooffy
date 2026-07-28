@@ -12,7 +12,7 @@ from django.conf import settings
 
 
 class Command(BaseCommand):
-    help = 'Ejecuta todos los comandos seed (seed_users y seed_products).'
+    help = 'Ejecuta todos los comandos seed (seed_users, seed_products y seed_branches).'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -38,6 +38,9 @@ class Command(BaseCommand):
         if force:
             seed_users_kwargs['force'] = True
         call_command('seed_users', **seed_users_kwargs)
+
+        self.stdout.write(self.style.MIGRATE_HEADING("\n=== Ejecutando seed_branches ==="))
+        call_command('seed_branches')
 
         self.stdout.write(self.style.MIGRATE_HEADING("\n=== Ejecutando seed_products ==="))
         call_command('seed_products')
