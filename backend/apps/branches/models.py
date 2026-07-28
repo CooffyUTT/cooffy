@@ -46,6 +46,7 @@ class Branch(models.Model):
             models.Index(fields=['company']),
             models.Index(fields=['school_id', 'active']),
         ]
+        verbose_name_plural = 'Branches'
 
     def __str__(self):
         return self.name
