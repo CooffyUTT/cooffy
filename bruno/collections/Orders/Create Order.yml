@@ -1,0 +1,30 @@
+info:
+  name: Create Order
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: http://localhost:8000/api/orders/
+  body:
+    type: json
+    data: |-
+      {
+        "branch_id": 1,
+        "client_id": 1,
+        "payment_method": 1,
+        "comment": "orden de prueba",
+        "order_products": [
+          {"item_id": 101, "quantity": 1, "price": "10.00"},
+          {"item_id": 102, "quantity": 1, "price": "12.00"}
+        ]
+      }
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

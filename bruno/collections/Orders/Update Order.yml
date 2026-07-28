@@ -1,0 +1,26 @@
+info:
+  name: Update Order
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: http://localhost:8000/api/orders/1/
+  body:
+    type: form-urlencoded
+    data:
+      - name: state
+        type: text
+        value: progress
+      - name: payment_status
+        type: text
+        value: paid
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

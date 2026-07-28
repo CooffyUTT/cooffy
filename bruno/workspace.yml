@@ -8,6 +8,8 @@ collections:
     path: "collections/Auth"
   - name: "Products"
     path: "collections/Products"
+  - name: "Orders"
+    path: "collections/Orders"
 
 specs:
 
