@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/cup-name-logo.svg" alt="Cooffy Logo" width="200" />
+<img src="docs/media/cup-name-logo.svg" alt="Cooffy Logo" width="200" />
 
 **Sistema Gestor de Comedores Escolares**
 
