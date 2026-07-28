@@ -1,12 +1,11 @@
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { Users, Clock, DollarSign, Trash2, Pencil, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Branch } from '@/types/manager';
-import { formatCurrency } from '@/utils/formatters';
+import React from "react";
+import { Users, Clock, Trash2, Pencil, ChevronRight } from "lucide-react";
+import { Branch } from "@/types/manager";
+import { formatCurrency } from "@/utils/formatters";
+// 1. Importamos los componentes del Layout Base
+import { BaseCard, CardMedia, CardFooter } from "../layout/BaseCard";
 
 interface BranchCardProps {
   branch: Branch;
@@ -14,66 +13,80 @@ interface BranchCardProps {
 }
 
 export function BranchCard({ branch, onDelete }: BranchCardProps) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-6 group"
+  // Badge de Estado flotante
+  const statusBadge = (
+    <span
+      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-xs ${
+        branch.status === "open"
+          ? "bg-emerald-500 text-white"
+          : "bg-error text-white"
+      }`}
     >
-      <div className="flex flex-col sm:flex-row gap-5 items-start">
-        <div className="relative w-full sm:w-36 h-32 rounded-2xl overflow-hidden shrink-0 bg-stone-100 border border-stone-100">
-          <Image 
-            src={branch.imageUrl} 
-            alt={branch.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          <span className="absolute top-2 left-2 bg-emerald-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-2xs">
-            {branch.status === 'open' ? 'Abierto' : 'Cerrado'}
-          </span>
-        </div>
+      {branch.status === "open" ? "Abierto" : "Cerrado"}
+    </span>
+  );
 
-        <div className="space-y-2 flex-1">
-          <h3 className="text-xl font-extrabold text-[#5C3D2E] leading-snug">{branch.name}</h3>
-          <p className="text-xs text-stone-500 leading-relaxed font-medium">{branch.address}</p>
+  return (
+    // 2. Encapsulamos con BaseCard usando la animación
+    <BaseCard animate>
+      {/* 3. Reutilizamos CardMedia para la imagen y el badge */}
+      <CardMedia
+        src={branch.imageUrl}
+        alt={branch.name}
+        badge={statusBadge}
+        fallbackText="Sin foto disponible"
+      />
 
-          <div className="pt-2 space-y-1 text-xs font-semibold text-stone-700">
-            <div className="flex items-center gap-2">
-              <Users size={14} className="text-[#6F4E37]" />
-              <span>Empleados: <strong className="text-stone-900">{branch.employeesCount}</strong></span>
+      {/* Cuerpo principal de la tarjeta */}
+      <div className="p-4 flex-1 flex flex-col justify-between">
+        <div>
+          <div className="flex justify-between items-start gap-2 mb-1">
+            <h4 className="font-semibold text-on-surface leading-snug">{branch.name}</h4>
+            <span className="font-bold text-primary whitespace-nowrap text-sm">
+              {formatCurrency(branch.dailySales)}
+            </span>
+          </div>
+
+          <p className="text-xs text-on-surface-variant line-clamp-1 mb-3">
+            {branch.address}
+          </p>
+
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-on-surface-variant/80 pt-1 border-t border-outline-variant/10 mb-4">
+            <div className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5 text-primary" />
+              <span>{branch.employeesCount} emp.</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock size={14} className="text-[#6F4E37]" />
-              <span>Horario: <strong className="text-stone-900">{branch.schedule}</strong></span>
-            </div>
-            <div className="flex items-center gap-2">
-              <DollarSign size={14} className="text-emerald-600" />
-              <span>Venta del día: <strong className="text-emerald-700 font-extrabold">{formatCurrency(branch.dailySales)}</strong></span>
+            <div className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5 text-primary" />
+              <span>{branch.schedule}</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-stone-100">
-        <button 
-          onClick={() => onDelete(branch.id, branch.name)}
-          className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
-        >
-          <Trash2 size={14} />
-          Eliminar
-        </button>
-
-        <div className="flex items-center gap-3">
-          <button className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1 cursor-pointer">
-            <Pencil size={14} />
-            Modificar
+        {/* 4. Reutilizamos el Footer unificado */}
+        <CardFooter className="pt-3">
+          <button
+            onClick={() => onDelete(branch.id, branch.name)}
+            className="text-xs font-semibold text-error hover:opacity-80 transition-opacity flex items-center gap-1 cursor-pointer"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Eliminar
           </button>
-          <Button size="sm" className="bg-[#6F4E37] hover:bg-[#5C3D2E] text-white text-xs font-bold rounded-xl px-4 py-2 flex items-center gap-1">
-            Gestionar <ChevronRight size={14} />
-          </Button>
-        </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              aria-label={`Modificar ${branch.name}`}
+              className="p-1.5 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:text-primary hover:border-primary transition-colors cursor-pointer"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+
+            <button className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-primary text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer">
+              Gestionar <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </CardFooter>
       </div>
-    </motion.div>
+    </BaseCard>
   );
 }

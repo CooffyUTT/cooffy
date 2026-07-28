@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // 👈 Importamos useRouter
 import { Branch } from '@/types/manager';
 import { INITIAL_BRANCHES } from '@/data/mockBranches';
-import { ManagerNavbar } from './ManagerNavbar';
+import { ManagerHeader } from './ManagerHeader';
 import { BranchHeader } from './BranchHeader';
 import { BranchCard } from './BranchCard';
 
@@ -59,8 +59,8 @@ export function ManagerView() {
 
   // 👇 Renderizado normal de la vista del Gerente
   return (
-    <div className="min-h-screen bg-[#FDFBF7] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col">
-      <ManagerNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="min-h-screen bg-background font-['Plus_Jakarta_Sans',sans-serif] flex flex-col">
+      <ManagerHeader activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
         <BranchHeader onAddBranch={handleAddBranch} />
