@@ -1,9 +1,9 @@
 """
 Management command to seed default users and groups for development testing.
-
+ 
 Usage:
-    python manage.py seed_dev        # creates default groups and test users if not exist
-    python manage.py seed_dev --force  # re-creates users even if already exist
+    python manage.py seed_users        # creates default groups and test users if not exist
+    python manage.py seed_users --force  # re-creates users even if already exist
 """
 
 from django.core.management.base import BaseCommand
