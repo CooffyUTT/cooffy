@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { api } from "@/lib/api";
+import axios from 'axios';
 
 interface RegisterErrors {
   name?: string;
@@ -138,14 +140,31 @@ export function useRegisterForm() {
 
     try {
       // Simulación de petición de registro al servidor de Cooffy (1.5 segundos)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // await new Promise((resolve) => setTimeout(resolve, 1500));
       
-      toast.success("¡Registro Exitoso!", { 
-        description: "Cuenta creada. Redirigiéndote al menú..." 
+      // toast.success("¡Registro Exitoso!", { 
+      //   description: "Cuenta creada. Redirigiéndote al menú..." 
+      // });
+
+      // // Redirección inmediata a la página de inicio/menú de pedidos
+      // router.push('/menu'); 
+      const params = new URLSearchParams();
+      params.append('user', formData.user);
+      params.append('name', formData.name);
+      params.append('lastname', formData.lastname);
+      params.append('password', formData.password);
+      params.append('school_id', formData.school_id || '1');
+
+      const response = await api.post('/api/auth/register/', params.toString(), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
 
-      // Redirección inmediata a la página de inicio/menú de pedidos
-      router.push('/menu'); 
+      toast.success('¡Registro Exitoso!', {
+        description: 'Cuenta creada. Redirigiéndote al login...',
+      });
+      // Simulación de espera para que alcance a leer el toast
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      router.push('/');
       
     } catch (error) {
       toast.error("Error del sistema", { description: "No se pudo crear la cuenta." });
