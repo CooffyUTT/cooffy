@@ -14,8 +14,11 @@ class IsManagerPermission(permissions.BasePermission):
 
 class BranchViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet para consultar sucursales de una empresa.
-    
-    Requiere el query param ?company_id=<id>.
+
+    Query params opcionales:
+      ?company_id=<id>  – filtra sucursales de una empresa específica.
+      Sin company_id    – devuelve todas las sucursales activas del gerente.
+
     Solo los gerentes pueden consultar las sucursales de sus propias empresas.
     """
     serializer_class = BranchSerializer
@@ -30,11 +33,10 @@ class BranchViewSet(viewsets.ReadOnlyModelViewSet):
     def list(self, request, *args, **kwargs):
         company_id = request.query_params.get('company_id')
 
-        if not company_id:
-            return Response(
-                {"error": "El parámetro 'company_id' es obligatorio."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if company_id is None:
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         if not str(company_id).isdigit():
             return Response(

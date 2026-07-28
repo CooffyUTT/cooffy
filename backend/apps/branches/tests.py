@@ -61,10 +61,12 @@ class BranchViewSetTests(APITestCase):
         response = self.client.get(self.url, {'company_id': self.company.id})
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_missing_company_id_returns_400(self):
+    def test_missing_company_id_returns_all_branches(self):
         self._auth_as(self.gerente)
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)  # solo sucursales activas
+        self.assertEqual(response.data[0]['name'], self.branch.name)
 
     def test_non_numeric_company_id_returns_400(self):
         self._auth_as(self.gerente)
