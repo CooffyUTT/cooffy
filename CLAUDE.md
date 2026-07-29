@@ -1,0 +1,1 @@
+**Go to `AGENTS.md` for all project rules.**

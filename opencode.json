@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "ask": {
+      "description": "Default read-only Q&A agent for Cooffy. Use for 'how do I...', 'explain...', 'what's the pattern for...' questions. Reads AGENTS.md and docs/ for repo context. Never edits code — suggest approaches, reference file paths with line numbers, explain concepts. For deep domain dives, invoke @general or @explore when needed.",
+      "mode": "primary",
+      "temperature": 0.2,
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      }
+    }
+  }
+}

@@ -33,13 +33,3 @@ Depende de:
 Restricciones:
 
 - RN-13 Los pedidos seguirán únicamente la secuencia de estados definida por el sistema.
-
-## Tareas
-
-| Nombre | Descripción | Prioridad |
-| --- | --- | --- |
-| Realización de la pantalla | Realización del diseño de la pantalla de la sección | alta |
-| Línea del tiempo del estado | Creación de la línea del tiempo del estado del pedido. | baja |
-| Creación del end point | Creación del end point para poder obtener el estado del pedido e información del mismo. | alta |
-| Validación del usuario | Validar que usuario esta en la sección para poder dar correctamente el estado del pedido de ese usuario | alta |
-| Actualización del estado | Hacer revisión del estado actual del pedido para que este se actualice y así poder mostrar bien la información al usuario y que se pueda actualizar el diseño de la línea del tiempo. | media |

@@ -1,39 +1,5 @@
 # RF-05 Gestión del menú
 
-<details>
-<summary></summary>
-
-```markdown
-Responsable: @user
-Prioridad: alta, media, baja
-Actor: 
-
----
-
-## Descripción
-(Descripción y objetivo de la tarea)
-
-## Flujo
-1. Usuario hace A
-2. Usuario termina B
-
-## Dependencias y restricciones
-Depende de:
-
-- RF-0X Lorem
-
-Restricciones:
-
-- RN-0X Lorem
-
-## Tareas
-| Nombre | Descripcion | Prioridad|
-|--|--|--|
-| | alta, media, baja |
-```
-
-</details>
-
 Responsable: @Jabes Llamas Zamudio
 
 Prioridad: Alta  
@@ -68,8 +34,9 @@ Restricciones:
 
 ## Tareas
 
-| Nombre | Descripción | Prioridad |
+|     |     |     |
 | --- | --- | --- |
+| Nombre | Descripción | Prioridad |
 | Diseño de la interfaz del menú | Diseñar la pantalla para administrar el catálogo de productos | Alta |
 | Registrar producto | Permitir crear un nuevo producto con nombre, descripción, precio y fotografía. | Alta |
 | Listado de productos | Mostrar todos los productos registrados de la sucursal | Alta |
