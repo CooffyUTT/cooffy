@@ -5,9 +5,9 @@ import { ShoppingCart } from "lucide-react";
 import { CartProvider, useCart } from "@/context/CartContext";
 import { CATEGORIES, PRODUCTS } from "@/lib/menu-data";
 
-import Header from "@/components/home/Header";
-import ProductCard from "@/components/home/ProductCard";
-import CartSheet from "@/components/home/CartSheet";
+import Header from "@/components/menu/Header";
+import ProductCard from "@/components/menu/ProductCard";
+import CartSheet from "@/components/menu/CartSheet";
 
 function MenuContent() {
   const [selectedCategory, setSelectedCategory] = useState("todos");

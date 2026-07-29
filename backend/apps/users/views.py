@@ -50,7 +50,7 @@ class UserListView(APIView):
 
     def get(self, request):
         role_param = request.query_params.get('role', None)
-        allowed_roles = ['gerente', 'cliente']
+        allowed_roles = ['gerente', 'cliente', 'empleado']
 
         # 1. Base QuerySet: Solo usuarios que pertenezcan a los grupos gerente o cliente
         queryset = User.objects.filter(groups__name__in=allowed_roles).distinct()

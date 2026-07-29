@@ -37,13 +37,3 @@ Depende de:
 Restricciones:
 
 - RN-12 Cada producto podrá definir un límite máximo de unidades por pedido.
-
-## Tareas
-
-| Nombre | Descripción | Prioridad |
-| --- | --- | --- |
-| Campo para editar limite | Campo en backend y frontend para editar el limite por producto en formulario de alta | media |
-| Botón de agotado | Botón para marcar como agotado un producto y se actualicé en base de datos | media |
-| Validación de productos agotados | Impedir que un cliente pueda añadir al carrito y comprar un producto agotado | media |
-| Mostrar productos agotados | Mostrar al usuario explicitamente que un producto está agotado | media |
-| Validación de limite por producto | Validar en backend y frontend que en el pedido no exceda el limite | media |

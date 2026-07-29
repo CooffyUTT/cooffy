@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { api } from "@/lib/api";
+import axios from 'axios';
 
 interface RegisterErrors {
   name?: string;
@@ -39,14 +41,14 @@ export function useRegisterForm() {
     }
 
     if (name === 'user') {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex =  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.edu.mx$/;
     if (!emailRegex.test(value)) {
       return "Introduce un correo electrónico institucional válido.";
     }
   }
 
-    if (name === 'password' && value.length < 6) {
-      return "La contraseña debe tener al menos 6 caracteres.";
+    if (name === 'password' && value.length < 8) {
+      return "La contraseña debe tener al menos 8 caracteres.";
     }
 
     if (name === 'confirmPassword') {
@@ -87,7 +89,7 @@ export function useRegisterForm() {
 
   const getPasswordRequirements = (password: string) => {
     return {
-      hasMinLength: password.length >= 6,
+      hasMinLength: password.length >= 8,
       hasUpperAndLower: /[a-z]/.test(password) && /[A-Z]/.test(password),
       hasNumber: /[0-9]/.test(password),
       hasSpecialChar: /[^A-Za-z0-9]/.test(password),
@@ -137,15 +139,23 @@ export function useRegisterForm() {
     setIsLoading(true);
 
     try {
-      // Simulación de petición de registro al servidor de Cooffy (1.5 segundos)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      toast.success("¡Registro Exitoso!", { 
-        description: "Cuenta creada. Redirigiéndote al menú..." 
+      const params = new URLSearchParams();
+      params.append('user', formData.user);
+      params.append('name', formData.name);
+      params.append('lastname', formData.lastname);
+      params.append('password', formData.password);
+      params.append('school_id', formData.school_id || '1');
+
+      const response = await api.post('/api/auth/register/', params.toString(), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
 
-      // Redirección inmediata a la página de inicio/menú de pedidos
-      router.push('/menu'); 
+      toast.success('¡Registro Exitoso!', {
+        description: 'Cuenta creada. Redirigiéndote al login...',
+      });
+      // Simulación de espera para que alcance a leer el toast
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      router.push('/');
       
     } catch (error) {
       toast.error("Error del sistema", { description: "No se pudo crear la cuenta." });

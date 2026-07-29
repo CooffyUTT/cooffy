@@ -1,14 +1,22 @@
 info:
   name: Consultar Usuarios por Rol
   type: http
-  seq: 2
+  seq: 5
 
 http:
   method: GET
-  url: http://127.0.0.1:8000/api/auth/?role=gerente
+  url: http://127.0.0.1:8000/api/auth/?role=cliente
   params:
     - name: role
       value: gerente
+      type: query
+      disabled: true
+    - name: role
+      value: empleado
+      type: query
+      disabled: true
+    - name: role
+      value: cliente
       type: query
   auth:
     type: bearer

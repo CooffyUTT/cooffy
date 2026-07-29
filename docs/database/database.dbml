@@ -16,6 +16,35 @@ Enum "public"."payment_state" {
     "refunded"
 }
 
+Table "public"."companies" {
+  "id" bigint [pk, not null, note: 'Identificador unico de la empresa.']
+  "name" varchar(150) [not null, note: 'Nombre comercial de la empresa.']
+  "owner_id" bigint [not null, note: 'Usuario propietario o administrador principal.']
+  "active" boolean [not null, default: true, note: 'Indica si la empresa esta activa.']
+  "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creacion del registro.']
+  "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del registro.']
+
+  Note: 'Empresas propietarias de una o mas sucursales.'
+}
+
+Table "public"."branches" {
+  "id" bigint [pk, not null, increment, note: 'Identificador unico de la sucursal.']
+  "name" varchar(100) [not null, note: 'Nombre de la sucursal.']
+  "company_id" bigint [not null, note: 'Empresa propietaria de la sucursal.', ref: > "public"."companies"."id"]
+  "school_id" bigint [not null, ref: > "public"."schools"."id"]
+  "active" boolean [not null, default: true, note: 'Indica si la sucursal se encuentra operando.']
+  "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creacion del registro.']
+  "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del registro.']
+  "location" text [note: 'Descripcion de la ubicacion fisica dentro de la escuela (ej. Edificio B, planta baja).']
+
+  Indexes {
+    company_id [name: "index_2"]
+    (school_id, active) [name: "index_3"]
+  }
+
+  Note: 'Sucursales operadas por una empresa.'
+}
+
 Table "public"."schools" {
   "id" bigint [pk, not null, increment, note: 'Identificador unico de la institucion educativa.']
   "admin" bigint [not null, note: 'Usuario administrador principal de la escuela.']
@@ -25,63 +54,42 @@ Table "public"."schools" {
   "active" boolean [not null, default: true, note: 'Indica si la escuela puede utilizar el sistema.']
 }
 
-Table "public"."role_permissions" {
-  "role_id" int [not null, note: 'Rol que recibe el permiso.', ref: > "public"."roles"."id"]
-  "permission_id" int [not null, note: 'Permiso asignado al rol.', ref: > "public"."permissions"."id"]
-
-  Indexes {
-    (role_id, permission_id) [pk]
-  }
-
-  Note: 'Relacion entre roles y permisos.'
-}
-
-Table "public"."order_products" {
-  "order_id" bigint [not null, note: 'Pedido al que pertenece el producto.', ref: > "public"."orders"."id"]
-  "item_id" bigint [not null, note: 'Producto solicitado.', ref: > "public"."products"."id"]
-  "quantity" int [not null, default: 1, note: 'Cantidad solicitada.']
-  "price" numeric(10,2) [not null, note: 'Precio unitario registrado al momento de la compra.']
-  "excluded_modifiers" varchar(50)[] [note: 'Ingredientes u opciones que el cliente solicito excluir.']
-
-  Indexes {
-    (order_id, item_id) [pk]
-  }
-
-  Note: 'Productos incluidos dentro de un pedido.'
-
-  checks {
-    `quantity > 0`
-    `price > 0`
-  }
-}
-
 Table "public"."users" {
   "id" bigint [pk, not null, note: 'Identificador unico del usuario.', ref: - "public"."companies"."owner_id", ref: - "public"."schools"."admin"]
-  "user" varchar(254) [not null, note: 'Nombre de usuario o correo institucional utilizado para iniciar sesion.']
-  "password_hash" varchar(255) [not null, note: 'Contrasena almacenada de forma segura mediante hash.']
+  "user" varchar(254) [unique, not null, note: 'Nombre de usuario o correo institucional utilizado para iniciar sesion (USERNAME_FIELD).']
+  "password" varchar(128) [not null, note: 'Contrasena hasheada (gestionada automaticamente por Django).']
   "name" varchar(100) [not null, note: 'Nombre del usuario.']
   "lastname" varchar(100) [note: 'Apellidos del usuario.']
   "school_id" bigint [note: 'Sucursal a la que pertenece el usuario.', ref: > "public"."schools"."id"]
   "active" boolean [not null, default: true, note: 'Indica si la cuenta esta habilitada.']
+  "is_staff" boolean [not null, default: false, note: 'Permite acceso al admin de Django.']
+  "is_superuser" boolean [not null, default: false, note: 'Otorga todos los permisos sin asignacion explicita (PermissionsMixin).']
+  "last_login" timestamp [note: 'Ultimo inicio de sesion (AbstractBaseUser).']
   "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creacion del registro.']
   "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del registro.']
 
   Indexes {
-    (school_id, user) [unique, name: "index_2"]
+    user [unique, name: "users_user_key"]
   }
 
-  Note: 'Representa a toda persona con acceso al sistema.'
+  Note: 'Representa a toda persona con acceso al sistema. Hereda de AbstractBaseUser + PermissionsMixin.'
 }
 
-Table "public"."user_roles" {
-  "role_id" int [not null, note: 'Rol asignado.', ref: > "public"."roles"."id"]
-  "user_id" bigint [not null, note: 'Usuario que recibe el rol.', ref: > "public"."users"."id"]
+Table "public"."product_stocks" {
+  "branch_id" bigint [not null, note: 'Sucursal donde se controla el stock.', ref: > "public"."branches"."id"]
+  "product_id" bigint [not null, note: 'Producto asociado al stock.', ref: > "public"."products"."id"]
+  "stock" int [not null, default: 0, note: 'Cantidad disponible del producto.']
+  "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del stock.']
 
   Indexes {
-    (role_id, user_id) [pk]
+    (branch_id, product_id) [pk]
   }
 
-  Note: 'Relacion entre usuarios y roles.'
+  Note: 'Control de disponibilidad de productos por sucursal.'
+
+  checks {
+    `stock >= 0`
+  }
 }
 
 Table "public"."products" {
@@ -104,66 +112,23 @@ Table "public"."products" {
   }
 }
 
-Table "public"."payment_methods" {
-  "id" int [pk, not null, note: 'Identificador unico del metodo de pago.']
-  "name" varchar(50) [unique, not null, note: 'Nombre del metodo de pago.']
-  "is_digital" boolean [not null, note: 'Indica si requiere procesamiento electronico.']
-  "active" boolean [not null, default: true, note: 'Determina si el metodo esta disponible.']
-
-  Note: 'Metodos de pago aceptados por el sistema.'
-}
-
-Table "public"."product_stocks" {
-  "branch_id" bigint [not null, note: 'Sucursal donde se controla el stock.', ref: > "public"."branches"."id"]
-  "product_id" bigint [not null, note: 'Producto asociado al stock.', ref: > "public"."products"."id"]
-  "stock" int [not null, default: 0, note: 'Cantidad disponible del producto.']
-  "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del stock.']
+Table "public"."order_products" {
+  "order_id" bigint [not null, note: 'Pedido al que pertenece el producto.', ref: > "public"."orders"."id"]
+  "item_id" bigint [not null, note: 'Producto solicitado.', ref: > "public"."products"."id"]
+  "quantity" int [not null, default: 1, note: 'Cantidad solicitada.']
+  "price" numeric(10,2) [not null, note: 'Precio unitario registrado al momento de la compra.']
+  "excluded_modifiers" varchar(50)[] [note: 'Ingredientes u opciones que el cliente solicito excluir.']
 
   Indexes {
-    (branch_id, product_id) [pk]
+    (order_id, item_id) [pk]
   }
 
-  Note: 'Control de disponibilidad de productos por sucursal.'
+  Note: 'Productos incluidos dentro de un pedido.'
 
   checks {
-    `stock >= 0`
+    `quantity > 0`
+    `price > 0`
   }
-}
-
-Table "public"."branches" {
-  "id" bigint [pk, not null, increment, note: 'Identificador unico de la sucursal.']
-  "name" varchar(100) [not null, note: 'Nombre de la sucursal.']
-  "company_id" bigint [not null, note: 'Empresa propietaria de la sucursal.', ref: > "public"."companies"."id"]
-  "school_id" bigint [not null, ref: > "public"."schools"."id"]
-  "active" boolean [not null, default: true, note: 'Indica si la sucursal se encuentra operando.']
-  "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creacion del registro.']
-  "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del registro.']
-  "location" text [note: 'Descripcion de la ubicacion fisica dentro de la escuela (ej. Edificio B, planta baja).']
-
-  Indexes {
-    company_id [name: "index_2_1"]
-    (school_id, active) [name: "index_3"]
-  }
-
-  Note: 'Sucursales operadas por una empresa.'
-}
-
-Table "public"."companies" {
-  "id" bigint [pk, not null, note: 'Identificador unico de la empresa.']
-  "name" varchar(150) [not null, note: 'Nombre comercial de la empresa.']
-  "owner_id" bigint [not null, note: 'Usuario propietario o administrador principal.']
-  "active" boolean [not null, default: true, note: 'Indica si la empresa esta activa.']
-  "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creacion del registro.']
-  "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del registro.']
-
-  Note: 'Empresas propietarias de una o mas sucursales.'
-}
-
-Table "public"."permissions" {
-  "id" int [pk, not null, note: 'Identificador unico del permiso.']
-  "name" varchar(100) [unique, not null, note: 'Nombre descriptivo del permiso.']
-
-  Note: 'Permisos que pueden ser asignados a los roles.'
 }
 
 Table "public"."orders" {
@@ -183,9 +148,9 @@ Table "public"."orders" {
   "comment" text [note: 'Comentarios extras del usuario del pedido.']
 
   Indexes {
-    client_id [name: "index_3_2"]
+    client_id [name: "index_3_1"]
     (branch_id, state) [name: "index_4"]
-    (order_number, date, branch_id) [unique, name: "index_2_3"]
+    (order_number, date, branch_id) [unique, name: "index_2_2"]
   }
 
   Note: 'Pedidos realizados por los clientes.'
@@ -195,10 +160,60 @@ Table "public"."orders" {
   }
 }
 
-Table "public"."roles" {
-  "id" int [pk, not null, note: 'Identificador unico del rol.']
-  "name" varchar(50) [unique, not null, note: 'Nombre del rol.']
-  "active" boolean [not null, default: true, note: 'Indica si el rol esta disponible para asignacion.']
+Table "public"."payment_methods" {
+  "id" int [pk, not null, note: 'Identificador unico del metodo de pago.']
+  "name" varchar(50) [unique, not null, note: 'Nombre del metodo de pago.']
+  "is_digital" boolean [not null, note: 'Indica si requiere procesamiento electronico.']
+  "active" boolean [not null, default: true, note: 'Determina si el metodo esta disponible.']
 
-  Note: 'Roles disponibles dentro del sistema.'
+  Note: 'Metodos de pago aceptados por el sistema.'
+}
+
+Table "django_auth"."group" {
+  "id" int [pk, not null]
+  "name" varchar(150) [unique, not null, note: 'Nombre del grupo (equivale a un rol: cliente, cocinero, admin).']
+
+  Note: 'Grupos de usuarios. Sustituye a la tabla roles manual.'
+}
+
+Table "django_auth"."permission" {
+  "id" int [pk, not null]
+  "name" varchar(255) [not null, note: 'Nombre descriptivo del permiso.']
+  "codename" varchar(100) [not null, note: 'Codigo interno (add_product, change_order, etc.).']
+  "content_type_id" int [not null, note: 'FK a django_content_type (modelo al que aplica).']
+
+  Note: 'Permisos individuales. Django los genera por modelo (add, change, delete, view).'
+}
+
+Table "django_auth"."group_permissions" {
+  "group_id" int [not null, ref: > "django_auth"."group"."id"]
+  "permission_id" int [not null, ref: > "django_auth"."permission"."id"]
+
+  Indexes {
+    (group_id, permission_id) [pk]
+  }
+
+  Note: 'Relacion M:M entre grupos y permisos.'
+}
+
+Table "django_auth"."user_groups" {
+  "user_id" bigint [not null, ref: > "public"."users"."id"]
+  "group_id" int [not null, ref: > "django_auth"."group"."id"]
+
+  Indexes {
+    (user_id, group_id) [pk]
+  }
+
+  Note: 'Relacion M:M entre usuarios y grupos. Ej: usuario asignado al grupo cliente.'
+}
+
+Table "django_auth"."user_user_permissions" {
+  "user_id" bigint [not null, ref: > "public"."users"."id"]
+  "permission_id" int [not null, ref: > "django_auth"."permission"."id"]
+
+  Indexes {
+    (user_id, permission_id) [pk]
+  }
+
+  Note: 'Permisos directos asignados a un usuario (sin pasar por grupo).'
 }

@@ -68,84 +68,60 @@ Sucursales operadas por una empresa dentro de una escuela.
 
 ## Users
 
-Representa a toda persona con acceso al sistema.
+Representa a toda persona con acceso al sistema. El modelo extiende `AbstractBaseUser` + `PermissionsMixin` de Django, lo que habilita el sistema de autenticación nativo.
 
 | Nombre | Dato | Default | Restricción | Comentario |
 | --- | --- | --- | --- | --- |
 | id  | bigint | \-  | PK, NOT NULL | Identificador único del usuario. |
-| user | varchar(254) | \-  | NOT NULL | Nombre de usuario o correo institucional utilizado para iniciar sesión. |
-| password_hash | varchar(255) | \-  | NOT NULL | Contraseña almacenada de forma segura mediante hash. |
+| user | varchar(254) | \-  | UNIQUE, NOT NULL | Nombre de usuario o correo institucional utilizado para iniciar sesión (`USERNAME_FIELD`). |
+| password | varchar(128) | \-  | NOT NULL | Contraseña hasheada (Django la gestiona automáticamente). |
 | name | varchar(100) | \-  | NOT NULL | Nombre del usuario. |
 | lastname | varchar(100) | \-  | \-  | Apellidos del usuario. |
 | school_id | bigint | \-  | FK  | Sucursal (escuela) a la que pertenece el usuario. |
 | active | boolean | true | NOT NULL | Indica si la cuenta está habilitada. |
+| is_staff | boolean | false | NOT NULL | Permite acceso al admin de Django. |
+| is_superuser | boolean | false | NOT NULL | Otorga todos los permisos sin asignación explícita (heredado de `PermissionsMixin`). |
+| last_login | timestamp | \-  | \-  | Último inicio de sesión (heredado de `AbstractBaseUser`). |
 | created_at | timestamp | CURRENT_TIMESTAMP | NOT NULL | Fecha de creación del registro. |
 | updated_at | timestamp | CURRENT_TIMESTAMP | NOT NULL | Última actualización del registro. |
 
 | Relaciones | Índices |
 | --- | --- |
-| \- 1:1 companies (owner_id) - 1:1 schools (admin) - M:1 schools (school_id) - 1:M orders (client_id) - 1:M user_roles | \- (id) PK - (school_id, user) UNIQUE "index_2" |
+| \- 1:1 companies (owner_id) - 1:1 schools (admin) - M:1 schools (school_id) - 1:M orders (client_id) - M:M auth_group vía auth_user_groups - M:M auth_permission vía auth_user_user_permissions | \- (id) PK - (user) UNIQUE |
 
 ---
 
-## Roles
+## Roles y permisos (Django auth)
 
-Roles disponibles dentro del sistema.
+En lugar de implementar tablas propias de roles y permisos, se optó por usar el sistema de autenticación y autorización nativo de Django (`django.contrib.auth`), que ya provee grupos, permisos y sus relaciones. Las tablas son gestionadas automáticamente por Django y se crean con la migración inicial.
+
+### auth_group (Grupos)
+
+Equivalente al concepto de "roles". Un grupo agrupa permisos y puede asignarse a múltiples usuarios. Ejemplo de uso actual: al registrarse, el usuario se asigna al grupo `"cliente"` (`Group.objects.get_or_create(name="cliente")`).
 
 | Nombre | Dato | Default | Restricción | Comentario |
 | --- | --- | --- | --- | --- |
-| id  | int | \-  | PK, NOT NULL | Identificador único del rol. |
-| name | varchar(50) | \-  | UNIQUE, NOT NULL | Nombre del rol. |
-| active | boolean | true | NOT NULL | Indica si el rol está disponible para asignación. |
+| id  | int | \-  | PK, NOT NULL | Identificador único del grupo. |
+| name | varchar(150) | \-  | UNIQUE, NOT NULL | Nombre del grupo (ej. cliente, cocinero, administrador). |
 
-| Relaciones | Índices |
-| --- | --- |
-| \- 1:M role_permissions - 1:M user_roles | \- (id) PK - (name) UNIQUE |
+### auth_permission (Permisos)
 
----
-
-## Permissions
-
-Permisos que pueden ser asignados a los roles.
+Permisos individuales. Django los genera automáticamente para cada modelo registrado (add, change, delete, view). También pueden crearse permisos personalizados vía `Meta.permissions` en los modelos.
 
 | Nombre | Dato | Default | Restricción | Comentario |
 | --- | --- | --- | --- | --- |
 | id  | int | \-  | PK, NOT NULL | Identificador único del permiso. |
-| name | varchar(100) | \-  | UNIQUE, NOT NULL | Nombre descriptivo del permiso. |
+| name | varchar(255) | \-  | NOT NULL | Nombre descriptivo del permiso. |
+| codename | varchar(100) | \-  | NOT NULL | Código interno (ej. add_product, change_order). |
+| content_type_id | int | \-  | FK, NOT NULL | Modelo al que aplica el permiso. |
 
-| Relaciones | Índices |
-| --- | --- |
-| \- 1:M role_permissions | \- (id) PK - (name) UNIQUE |
+### Tablas de relación (M:M)
 
----
-
-## Role_permissions
-
-Relación entre roles y permisos.
-
-| Nombre | Dato | Default | Restricción | Comentario |
-| --- | --- | --- | --- | --- |
-| role_id | int | \-  | PK, NOT NULL, FK | Rol que recibe el permiso. |
-| permission_id | int | \-  | PK, NOT NULL, FK | Permiso asignado al rol. |
-
-| Relaciones | Índices |
-| --- | --- |
-| \- M:1 roles (role_id) - M:1 permissions (permission_id) | \- (role_id, permission_id) PK |
-
----
-
-## User_roles
-
-Relación entre usuarios y roles.
-
-| Nombre | Dato | Default | Restricción | Comentario |
-| --- | --- | --- | --- | --- |
-| role_id | int | \-  | PK, NOT NULL, FK | Rol asignado. |
-| user_id | bigint | \-  | PK, NOT NULL, FK | Usuario que recibe el rol. |
-
-| Relaciones | Índices |
-| --- | --- |
-| \- M:1 roles (role_id) - M:1 users (user_id) | \- (role_id, user_id) PK |
+| Tabla | Relación | Comentario |
+| --- | --- | --- |
+| `auth_group_permissions` | group_id ↔ permission_id | Permisos asignados a cada grupo. |
+| `auth_user_groups` | user_id ↔ group_id | Grupos a los que pertenece cada usuario. |
+| `auth_user_user_permissions` | user_id ↔ permission_id | Permisos directos asignados a un usuario (sin pasar por grupo). |
 
 ---
 
