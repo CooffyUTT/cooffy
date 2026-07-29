@@ -1,0 +1,29 @@
+info:
+  name: Login Cliente
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://localhost:8000/api/auth/login/
+  body:
+    type: form-urlencoded
+    data:
+      - name: user
+        value: cliente1
+      - name: password
+        value: admin123
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        bru.setGlobalEnvVar("access_token", res.body.access);
+        bru.setGlobalEnvVar("refresh_token", res.body.refresh);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
