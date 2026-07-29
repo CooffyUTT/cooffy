@@ -8,7 +8,7 @@ http:
   url: http://localhost:8000/api/schools/
   auth:
     type: bearer
-    token: ""
+    token: "{{access_token}}"
 
 settings:
   encodeUrl: true
