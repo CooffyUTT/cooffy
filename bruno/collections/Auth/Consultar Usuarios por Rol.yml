@@ -1,7 +1,7 @@
 info:
   name: Consultar Usuarios por Rol
   type: http
-  seq: 2
+  seq: 5
 
 http:
   method: GET
