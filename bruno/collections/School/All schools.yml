@@ -5,8 +5,10 @@ info:
 
 http:
   method: GET
-  url: ""
-  auth: inherit
+  url: http://localhost:8000/api/schools/
+  auth:
+    type: bearer
+    token: ""
 
 settings:
   encodeUrl: true
