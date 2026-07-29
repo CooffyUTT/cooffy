@@ -4,9 +4,9 @@ Guidance for AI Agents sessions (ClaudeCode, OpenCode, GithubCopilot) working in
 
 ## Repo shape
 
-Monorepo, two pnpm workspaces plus a Django app and an API client:
+Monorepo, two pnpm-ish packages plus a Django app:
 
-- `backend/` — Django 6.0.7 + DRF + SimpleJWT, run via `uv` (Python 3.14). Entry package is `config` (`config.settings`, `config.urls`); apps live under `backend/apps/`.
+- `backend/` — Django 6.0.7 + DRF + SimpleJWT, run via `uv` (Python 3.14, `requires-python = ">=3.14"` in `pyproject.toml`). Entry package is `config` (`config.settings`, `config.urls`); apps live under `backend/apps/`. Dependencies live in `backend/pyproject.toml`; the resolved lockfile `backend/uv.lock` is **committed** for reproducible installs. There is no `requirements.txt` — adding/removing deps is done in `pyproject.toml` (or with `uv add` / `uv remove`) followed by `uv lock`.
 - `frontend/` — Next.js 16 (App Router) + React 19 + Tailwind 4, its own `package.json` and `pnpm-lock.yaml`.
 - `bruno/` — versioned API request collections (Bruno CLI is a devDependency at root).
 - `docs/` — requirements, architecture, DB diagram (`docs/database/`). No codegen.
@@ -22,7 +22,7 @@ All commands run from repo root on `package.json`. Backend is invoked through `u
 - `pnpm front` / `pnpm back` — start one side. `pnpm back` = `manage.py runserver`.
 - `pnpm back:manage <args>` — proxy for `python manage.py <args>` (e.g. `pnpm back:manage makemigrations`).
 - `pnpm front:install` — run `pnpm install` on `frontend/` directory.
-- `pnpm back:install` — creates `backend/.venv` with `uv venv` and installs `requirements.txt`.
+- `pnpm back:install` — runs `uv sync` in `backend/`: creates `backend/.venv` if missing, installs the exact versions from `uv.lock`, and prunes anything not in `pyproject.toml`. Use `uv add <pkg>` / `uv remove <pkg>` (or edit `pyproject.toml` and run `pnpm back:lock`) to change deps.
 
 Postgres is required and runs only via `docker compose up -d` (docker-compose.yml at root). The backend cannot start without it.
 

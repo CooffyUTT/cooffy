@@ -3,10 +3,10 @@
         "bru:auth": "cross-env-shell \"cd bruno/collections/Auth && bru run\"",
         "front": "pnpm --dir frontend dev",
         "front:install": "pnpm --dir frontend install",
-        "back:uv": "uv --directory backend",
+        "back": "uv --directory backend run python -u manage.py runserver",
         "back:manage": "uv --directory backend run python -u manage.py",
-        "back": "pnpm back:manage runserver",
-        "back:install": "cross-env-shell \"pnpm back:uv venv --allow-existing && pnpm back:uv pip install -r requirements.txt\"",
+        "back:install": "uv --directory backend sync",
+        "back:lock": "uv --directory backend lock",
         "dev": "concurrently -n back,front \"pnpm back\" \"pnpm front\"",
         "install:all": "cross-env-shell \"pnpm install && pnpm front:install && pnpm back:install\"",
         "init:all": "cross-env-shell \"pnpm install:all && docker compose up -d && pnpm back:manage migrate && pnpm back:manage seed && pnpm dev\""
