@@ -35,7 +35,7 @@ Cooffy es un servicio web que conecta a **estudiantes y personal** con el **áre
 
 - Node.js ≥ 20
 - pnpm ≥ 9
-- Python ≥ 3.12
+- Python ≥ 3.14
 - Docker y Docker Compose
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
     <details>
@@ -79,7 +79,7 @@ Script solo para instalar
 ```bash
 pnpm install:all    # Instalar front y back
 
-pnpm back:install   # Instalar solo backend
+pnpm back:install   # Instalar solo backend (uv sync)
 pnpm front:install  # Instalar solo frontend
 ```
 
@@ -119,31 +119,25 @@ Iniciar el backend (Django)
 cd backend
 ```
 
-2. **Crear el entorno virtual**
+2. **Sincronizar dependencias** (crea `.venv` la primera vez y deja el entorno igual a `uv.lock`)
 
 ```bash
-uv venv
+uv sync
 ```
 
-3. **Instalar dependencias**
-
-```bash
-uv pip install -r requirements.txt
-```
-
-4. **Ejecutar migraciones de base de datos**
+3. **Ejecutar migraciones de base de datos**
 
 ```bash
 uv run python manage.py migrate
 ```
 
-5. **Crear datos base**
+4. **Crear datos base**
 
 ```bash
 uv run python manage.py seed
 ```
 
-6. **Iniciar el servidor**
+5. **Iniciar el servidor**
 
 ```bash
 uv run python manage.py runserver
@@ -151,7 +145,7 @@ uv run python manage.py runserver
 
 El servidor estará disponible en `http://localhost:8000/`
 
-**Nota:** El entorno virtual debe estar activado cada vez que abras una nueva terminal para trabajar en el backend.
+**Nota:** Todos los comandos del backend se ejecutan a través de `uv run`, que activa el entorno virtual automáticamente. No hace falta `source .venv/bin/activate`.
 
 # 📁 Estructura
 
