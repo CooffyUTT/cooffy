@@ -1,4 +1,5 @@
 import { Branch } from '@/types/manager';
+import { SchoolBranch } from '@/types/school';
 
 export const INITIAL_BRANCHES: Branch[] = [
   {
@@ -21,4 +22,10 @@ export const INITIAL_BRANCHES: Branch[] = [
     status: 'open',
     imageUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80&w=600'
   }
+];
+
+export const INITIAL_SCHOOL_BRANCHES: SchoolBranch[] = [
+  { id: '1', name: 'Cafetería Refugio', manager: 'Juan Pérez',  location: 'Edificio A, Planta Baja' },
+  { id: '2', name: 'Cafetería Otay',    manager: 'María López', location: 'Edificio B, Segundo Piso' },
+  { id: '3', name: 'Cafetería Central', manager: 'Juan Pérez',  location: 'Edificio C, Lobby' },
 ];
