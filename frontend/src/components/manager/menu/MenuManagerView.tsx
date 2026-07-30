@@ -135,13 +135,19 @@ export function MenuManagerView() {
         </Button>
       </div>
 
-      <form onSubmit={handleSearchSubmit} className="flex gap-2 max-w-sm">
+      <form
+        onSubmit={handleSearchSubmit}
+        className="flex gap-2"
+        style={{ width: "100%", maxWidth: "384px" }}
+      >
         <Input
+          className="min-w-0"
+          style={{ flex: "1 1 auto", width: "100%" }}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar producto..."
         />
-        <Button type="submit" variant="outline">
+        <Button type="submit" variant="outline" className="shrink-0">
           Buscar
         </Button>
       </form>
