@@ -10,9 +10,9 @@ interface ProductProps {
     id: number;
     name: string;
     price: number;
-    description: string;
-    tag: string;
-    image?: string;
+    description?: string;
+    tag?: string;
+    image?: string | null;
   };
 }
 
@@ -42,13 +42,19 @@ export default function ProductCard({ product }: ProductProps) {
               ${product.price.toFixed(2)}
             </span>
           </div>
-          <p className="text-xs text-on-surface-variant line-clamp-2">{product.description}</p>
+          {product.description && (
+            <p className="text-xs text-on-surface-variant line-clamp-2">{product.description}</p>
+          )}
         </div>
 
         <CardFooter className="pt-3">
-          <span className="text-[11px] font-semibold text-on-surface-variant/70 uppercase tracking-wide">
-            {product.tag}
-          </span>
+          {product.tag ? (
+            <span className="text-[11px] font-semibold text-on-surface-variant/70 uppercase tracking-wide">
+              {product.tag}
+            </span>
+          ) : (
+            <span />
+          )}
           <button
             onClick={handleAdd}
             aria-label={`Agregar ${product.name} al carrito`}

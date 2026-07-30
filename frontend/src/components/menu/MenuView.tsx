@@ -1,23 +1,23 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, AlertCircle } from "lucide-react";
 import { CartProvider, useCart } from "@/context/CartContext";
-import { CATEGORIES, PRODUCTS } from "@/lib/menu-data";
+import { useProducts } from "@/hooks/useProducts";
 
 import Header from "@/components/menu/Header";
 import ProductCard from "@/components/menu/ProductCard";
 import CartSheet from "@/components/menu/CartSheet";
 
 function MenuContent() {
-  const [selectedCategory, setSelectedCategory] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
   const { setIsCartOpen, totalItems } = useCart();
 
-  const visibleProducts = PRODUCTS.filter((p) => {
-    const matchesCategory = selectedCategory === "todos" || p.category === selectedCategory;
+  const { data: apiProducts, isLoading, error } = useProducts();
+
+  const visibleProducts = (apiProducts ?? []).filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return matchesSearch;
   });
 
   const today = new Intl.DateTimeFormat("es-MX", {
@@ -37,31 +37,30 @@ function MenuContent() {
           <p className="text-sm text-on-surface-variant capitalize mt-1">{today}</p>
         </section>
 
-        {/* Pestañas de categoría */}
-        <section className="mb-6 border-b border-outline-variant/40">
-          <div className="flex overflow-x-auto gap-6 hide-scrollbar">
-            {CATEGORIES.map((cat) => {
-              const isActive = selectedCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`shrink-0 pb-3 text-sm font-semibold border-b-2 transition-colors ${
-                    isActive
-                      ? "text-primary border-primary"
-                      : "text-on-surface-variant border-transparent hover:text-on-surface"
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              );
-            })}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="animate-pulse rounded-2xl border border-outline-variant/20 bg-surface-container-low overflow-hidden">
+                <div className="h-40 bg-surface-container-highest" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-surface-container-highest rounded w-3/4" />
+                  <div className="h-3 bg-surface-container-highest rounded w-1/2" />
+                  <div className="h-3 bg-surface-container-highest rounded w-full" />
+                </div>
+              </div>
+            ))}
           </div>
-        </section>
-
-        {visibleProducts.length === 0 ? (
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <AlertCircle className="h-12 w-12 text-error mb-3" />
+            <p className="text-on-surface font-medium">Error al cargar el menú</p>
+            <p className="text-sm text-on-surface-variant mt-1">
+              {error instanceof Error ? error.message : "No se pudo conectar con el servidor"}
+            </p>
+          </div>
+        ) : visibleProducts.length === 0 ? (
           <p className="text-on-surface-variant text-sm text-center py-12">
-            No hay platillos en esta categoría todavía.
+            No hay productos disponibles.
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
