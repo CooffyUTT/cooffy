@@ -10,9 +10,10 @@ import { BaseCard, CardMedia, CardFooter } from "../layout/BaseCard";
 interface BranchCardProps {
   branch: Branch;
   onDelete: (id: string, name: string) => void;
+  onManage?: (id: string) => void;
 }
 
-export function BranchCard({ branch, onDelete }: BranchCardProps) {
+export function BranchCard({ branch, onDelete, onManage }: BranchCardProps) {
   // Badge de Estado flotante
   const statusBadge = (
     <span
@@ -81,7 +82,10 @@ export function BranchCard({ branch, onDelete }: BranchCardProps) {
               <Pencil className="h-3.5 w-3.5" />
             </button>
 
-            <button className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-primary text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer">
+            <button
+              onClick={() => onManage?.(branch.id)}
+              className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-primary text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer"
+            >
               Gestionar <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>

@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; // 👈 Importamos useRouter
+import { useRouter } from 'next/navigation'; 
 import { Branch } from '@/types/manager';
 import { INITIAL_BRANCHES } from '@/data/mockBranches';
 import { ManagerHeader } from './ManagerHeader';
 import { BranchHeader } from './BranchHeader';
 import { BranchCard } from './BranchCard';
+import { MenuManagerView } from './menu/MenuManagerView';
 
 export function ManagerView() {
   const router = useRouter();
@@ -19,16 +20,17 @@ export function ManagerView() {
 
     try {
       const userData = JSON.parse(userDataStr);
-      return Boolean(userData.groups && userData.groups.includes("gerente"));
+      const groups: string[] = userData.groups ?? [];
+      return groups.includes("gerente") || groups.includes("supervisor");
     } catch {
       return false;
     }
   });
 
   const [branches, setBranches] = useState<Branch[]>(INITIAL_BRANCHES);
-  const [activeTab, setActiveTab] = useState<'branches' | 'users' | 'dashboard'>('branches');
+  const [activeTab, setActiveTab] = useState<'branches' | 'menu' | 'users' | 'dashboard'>('branches');
 
-  // 👈 useEffect para proteger la ruta
+
   useEffect(() => {
     if (!isAuthorized) {
       router.push("/");
@@ -45,7 +47,11 @@ export function ManagerView() {
     alert("Modal de agregar sucursal próximamente...");
   };
 
-  // 👈 Pantalla de carga mientras verificamos los permisos
+  const handleManageBranch = () => {
+    setActiveTab('menu');
+  };
+
+  //  Pantalla de carga mientras verificamos los permisos
   if (!isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] font-['Plus_Jakarta_Sans',sans-serif]">
@@ -57,23 +63,30 @@ export function ManagerView() {
     );
   }
 
-  // 👇 Renderizado normal de la vista del Gerente
+  //  Renderizado normal de la vista del Gerente
   return (
     <div className="min-h-screen bg-background font-['Plus_Jakarta_Sans',sans-serif] flex flex-col">
       <ManagerHeader activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
-        <BranchHeader onAddBranch={handleAddBranch} />
+        {activeTab === 'menu' ? (
+          <MenuManagerView />
+        ) : (
+          <>
+            <BranchHeader onAddBranch={handleAddBranch} />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-          {branches.map((branch) => (
-            <BranchCard 
-              key={branch.id} 
-              branch={branch} 
-              onDelete={handleDeleteBranch} 
-            />
-          ))}
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+              {branches.map((branch) => (
+                <BranchCard
+                  key={branch.id}
+                  branch={branch}
+                  onDelete={handleDeleteBranch}
+                  onManage={handleManageBranch}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
