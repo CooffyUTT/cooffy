@@ -13,11 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { SchoolBranch } from "@/types/school";
-import { MockCompany } from "@/data/mockBranches";
+import { SchoolBranch, SchoolCompany } from "@/types/school";
 import { useBranchForm } from "./branch-form/useBranchForm";
 import { CompanyPicker } from "./branch-form/CompanyPicker";
-import { InviteCompanySection } from "./branch-form/InviteCompanySection";
 import { BranchInfoFields } from "./branch-form/BranchInfoFields";
 import { BranchDetails } from "./branch-form/BranchDetails";
 
@@ -29,8 +27,7 @@ interface BranchDialogProps {
   mode: BranchDialogMode;
   branch?: SchoolBranch;
   onModeChange: (mode: BranchDialogMode) => void;
-  companies: MockCompany[];
-  setCompanies: React.Dispatch<React.SetStateAction<MockCompany[]>>;
+  companies: SchoolCompany[];
   setBranches: React.Dispatch<React.SetStateAction<SchoolBranch[]>>;
 }
 
@@ -53,7 +50,6 @@ export function BranchDialog({
   branch,
   onModeChange,
   companies,
-  setCompanies,
   setBranches,
 }: BranchDialogProps) {
   const company = branch
@@ -101,10 +97,9 @@ export function BranchDialog({
           />
         ) : (
           <BranchFormBody
-            mode={mode}
+            mode={mode as "create" | "edit"}
             branch={branch}
             companies={companies}
-            setCompanies={setCompanies}
             setBranches={setBranches}
             onSuccess={handleClose}
             onCancel={handleClose}
@@ -118,8 +113,7 @@ export function BranchDialog({
 interface BranchFormBodyProps {
   mode: "create" | "edit";
   branch?: SchoolBranch;
-  companies: MockCompany[];
-  setCompanies: React.Dispatch<React.SetStateAction<MockCompany[]>>;
+  companies: SchoolCompany[];
   setBranches: React.Dispatch<React.SetStateAction<SchoolBranch[]>>;
   onSuccess: () => void;
   onCancel: () => void;
@@ -129,7 +123,6 @@ function BranchFormBody({
   mode,
   branch,
   companies,
-  setCompanies,
   setBranches,
   onSuccess,
   onCancel,
@@ -138,7 +131,6 @@ function BranchFormBody({
     mode,
     initialBranch: branch,
     companies,
-    setCompanies,
     setBranches,
     onSuccess,
   });
@@ -157,18 +149,8 @@ function BranchFormBody({
       ) : (
         <CompanyPicker
           value={form.companyValue}
-          onChange={form.selectCompany}
+          onChange={form.setCompanyValue}
           availableCompanies={form.availableCompanies}
-          hasInvitableCompanies={form.notInSchoolCompanies.length > 0}
-        />
-      )}
-
-      {!isEditing && form.isInviting && (
-        <InviteCompanySection
-          invitedCompanyId={form.invitedCompanyId}
-          onChange={form.setInvitedCompanyId}
-          notInSchoolCompanies={form.notInSchoolCompanies}
-          invitedCompany={form.invitedCompany}
         />
       )}
 

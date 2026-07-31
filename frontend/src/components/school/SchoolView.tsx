@@ -2,23 +2,31 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { SchoolBranch } from '@/types/school';
-import { INITIAL_SCHOOL_BRANCHES, MOCK_COMPANIES, MockCompany } from '@/data/mockBranches';
+import { SchoolBranch, SchoolCompanyWithMeta } from '@/types/school';
+import { INITIAL_SCHOOL_BRANCHES, MOCK_COMPANIES } from '@/data/mockBranches';
 import { SchoolHeader } from './SchoolHeader';
 import { BranchHeader } from '@/components/manager/BranchHeader';
 import { SchoolBranchTable } from './SchoolBranchTable';
 import { BranchDialog, BranchDialogMode } from './BranchDialog';
+import { CompanyHeader } from './company/CompanyHeader';
+import { CompanyTable } from './company/CompanyTable';
+import { AddCompanyDialog } from './company/AddCompanyDialog';
+import { CompanyDetailsDialog } from './company/CompanyDetailsDialog';
 
 export function SchoolView() {
   const router = useRouter();
 
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [activeTab, setActiveTab] = useState<'branches' | 'companies'>('branches');
   const [branches, setBranches] = useState<SchoolBranch[]>(INITIAL_SCHOOL_BRANCHES);
-  const [companies, setCompanies] = useState<MockCompany[]>(MOCK_COMPANIES);
+  const [companies, setCompanies] = useState(MOCK_COMPANIES);
 
   const [dialogMode, setDialogMode] = useState<BranchDialogMode>('create');
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isBranchDialogOpen, setIsBranchDialogOpen] = useState(false);
+
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const [isAddCompanyDialogOpen, setIsAddCompanyDialogOpen] = useState(false);
 
   useEffect(() => {
     const userDataStr = localStorage.getItem("userData");
@@ -44,28 +52,61 @@ export function SchoolView() {
     [branches],
   );
 
+  const inSchoolCompanies = useMemo(
+    () => companies.filter((c) => c.inSchool),
+    [companies],
+  );
+
+  const companiesWithMeta: SchoolCompanyWithMeta[] = useMemo(
+    () =>
+      inSchoolCompanies.map((c) => ({
+        ...c,
+        branchCount: branches.filter(
+          (b) => b.company === c.name && b.active,
+        ).length,
+      })),
+    [inSchoolCompanies, branches],
+  );
+
   const selectedBranch = useMemo(
     () => branches.find((b) => b.id === selectedBranchId),
     [branches, selectedBranchId],
   );
 
+  const selectedCompany = useMemo(
+    () => companies.find((c) => c.id === selectedCompanyId),
+    [companies, selectedCompanyId],
+  );
+
   const openCreate = () => {
     setSelectedBranchId(null);
     setDialogMode('create');
-    setIsDialogOpen(true);
+    setIsBranchDialogOpen(true);
   };
 
   const openView = (branch: SchoolBranch) => {
     setSelectedBranchId(branch.id);
     setDialogMode('view');
-    setIsDialogOpen(true);
+    setIsBranchDialogOpen(true);
   };
 
-  const handleDialogOpenChange = (open: boolean) => {
-    setIsDialogOpen(open);
+  const handleBranchDialogOpenChange = (open: boolean) => {
+    setIsBranchDialogOpen(open);
     if (!open) {
       setSelectedBranchId(null);
     }
+  };
+
+  const openAddCompany = () => {
+    setIsAddCompanyDialogOpen(true);
+  };
+
+  const openCompanyDetails = (company: SchoolCompanyWithMeta) => {
+    setSelectedCompanyId(company.id);
+  };
+
+  const handleCompanyDetailsClose = () => {
+    setSelectedCompanyId(null);
   };
 
   if (!isAuthorized) {
@@ -81,27 +122,53 @@ export function SchoolView() {
 
   return (
     <div className="min-h-screen bg-background font-['Plus_Jakarta_Sans',sans-serif] flex flex-col">
-      <SchoolHeader />
+      <SchoolHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
-        <BranchHeader onAddBranch={openCreate} />
-
-        <SchoolBranchTable
-          branches={activeBranches}
-          onView={openView}
-        />
+        {activeTab === 'branches' ? (
+          <>
+            <BranchHeader onAddBranch={openCreate} />
+            <SchoolBranchTable
+              branches={activeBranches}
+              onView={openView}
+            />
+          </>
+        ) : (
+          <>
+            <CompanyHeader onAddCompany={openAddCompany} />
+            <CompanyTable
+              companies={companiesWithMeta}
+              onRowClick={openCompanyDetails}
+            />
+          </>
+        )}
       </main>
 
       <BranchDialog
-        open={isDialogOpen}
-        onOpenChange={handleDialogOpenChange}
+        open={isBranchDialogOpen}
+        onOpenChange={handleBranchDialogOpenChange}
         mode={dialogMode}
         branch={selectedBranch}
         onModeChange={setDialogMode}
         companies={companies}
-        setCompanies={setCompanies}
         setBranches={setBranches}
       />
+
+      <AddCompanyDialog
+        open={isAddCompanyDialogOpen}
+        onOpenChange={setIsAddCompanyDialogOpen}
+        companies={companies}
+        setCompanies={setCompanies}
+      />
+
+      {selectedCompany && (
+        <CompanyDetailsDialog
+          open={!!selectedCompany}
+          onOpenChange={(open) => !open && handleCompanyDetailsClose()}
+          company={companiesWithMeta.find((c) => c.id === selectedCompany.id)!}
+          branches={branches}
+        />
+      )}
     </div>
   );
 }

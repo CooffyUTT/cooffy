@@ -1,14 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
+import { DataTable, Column } from "@/components/layout/DataTable";
 import { SchoolBranch } from "@/types/school";
 
 interface SchoolBranchTableProps {
@@ -16,31 +9,29 @@ interface SchoolBranchTableProps {
   onView: (branch: SchoolBranch) => void;
 }
 
+const COLUMNS: Column<SchoolBranch>[] = [
+  {
+    header: "Nombre",
+    render: (b) => b.name,
+    cellClassName: "font-semibold text-on-surface",
+  },
+  {
+    header: "Compañía",
+    render: (b) => b.company,
+  },
+  {
+    header: "Ubicación",
+    render: (b) => b.location,
+  },
+];
+
 export function SchoolBranchTable({ branches, onView }: SchoolBranchTableProps) {
   return (
-    <div className="bg-surface rounded-2xl border border-outline-variant/20 shadow-[0px_4px_20px_rgba(30,58,90,0.05)] overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-surface-container-low hover:bg-surface-container-low">
-            <TableHead className="font-bold text-on-surface">Nombre</TableHead>
-            <TableHead className="font-bold text-on-surface">Compañía</TableHead>
-            <TableHead className="font-bold text-on-surface">Ubicación</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {branches.map((branch) => (
-            <TableRow
-              key={branch.id}
-              onClick={() => onView(branch)}
-              className="cursor-pointer"
-            >
-              <TableCell className="font-semibold text-on-surface">{branch.name}</TableCell>
-              <TableCell className="text-on-surface-variant">{branch.company}</TableCell>
-              <TableCell className="text-on-surface-variant">{branch.location}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable
+      data={branches}
+      columns={COLUMNS}
+      keyExtractor={(b) => b.id}
+      onRowClick={onView}
+    />
   );
 }

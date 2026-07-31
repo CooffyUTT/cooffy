@@ -8,32 +8,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MockCompany } from "@/data/mockBranches";
-import { INVITE_VALUE } from "./useBranchForm";
+import { SchoolCompany } from "@/types/school";
 
 interface CompanyPickerProps {
   value: string;
   onChange: (value: string) => void;
-  availableCompanies: MockCompany[];
-  hasInvitableCompanies: boolean;
+  availableCompanies: SchoolCompany[];
 }
 
 export function CompanyPicker({
   value,
   onChange,
   availableCompanies,
-  hasInvitableCompanies,
 }: CompanyPickerProps) {
   const selectedCompany = availableCompanies.find((c) => c.id === value);
-  const displayValue =
-    value === INVITE_VALUE
-      ? "Invitar otra compañía…"
-      : selectedCompany?.name;
+  const displayValue = selectedCompany?.name;
 
   return (
     <div className="space-y-2">
       <Label htmlFor="company-select">Compañía</Label>
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value} onValueChange={(v) => onChange(v ?? "")}>
         <SelectTrigger id="company-select" className="w-full">
           <SelectValue placeholder="Selecciona una compañía">
             {displayValue}
@@ -45,11 +39,6 @@ export function CompanyPicker({
               {c.name}
             </SelectItem>
           ))}
-          {hasInvitableCompanies && (
-            <SelectItem value={INVITE_VALUE}>
-              Invitar otra compañía…
-            </SelectItem>
-          )}
         </SelectContent>
       </Select>
     </div>

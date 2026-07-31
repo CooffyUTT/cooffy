@@ -1,5 +1,5 @@
 import { Branch } from '@/types/manager';
-import { SchoolBranch } from '@/types/school';
+import { SchoolBranch, SchoolCompany } from '@/types/school';
 
 export const INITIAL_BRANCHES: Branch[] = [
   {
@@ -30,16 +30,9 @@ export const INITIAL_SCHOOL_BRANCHES: SchoolBranch[] = [
   { id: '3', name: 'Cafetería Central', company: 'Cafeterías del Norte', location: 'Edificio C, Lobby',        active: true,  createdAt: '2026-03-05T11:45:00Z', updatedAt: '2026-03-05T11:45:00Z' },
 ];
 
-export interface MockCompany {
-  id: string;
-  name: string;
-  ownerName: string;
-  inSchool: boolean;
-}
-
-export const MOCK_COMPANIES: MockCompany[] = [
-  { id: 'c1', name: 'El Círculo',           ownerName: 'Juan Pérez',  inSchool: true  },
-  { id: 'c2', name: 'Cafeterías del Norte', ownerName: 'Carlos Ruiz', inSchool: true  },
-  { id: 'c3', name: 'Cooffy S.A.',          ownerName: 'María López', inSchool: false },
-  { id: 'c4', name: 'Bocaditos UTT',        ownerName: 'Ana Torres',  inSchool: false },
+export const MOCK_COMPANIES: SchoolCompany[] = [
+  { id: 'c1', name: 'El Círculo',           ownerName: 'Juan Pérez',  contact: 'juan@elcirculo.com',  inSchool: true  },
+  { id: 'c2', name: 'Cafeterías del Norte', ownerName: 'Carlos Ruiz', contact: 'carlos@cdn.com',      inSchool: true  },
+  { id: 'c3', name: 'Cooffy S.A.',          ownerName: 'María López', contact: 'maria@cooffy.mx',     inSchool: false },
+  { id: 'c4', name: 'Bocaditos UTT',        ownerName: 'Ana Torres',  contact: 'ana@bocaditos.edu',   inSchool: false },
 ];

@@ -7,3 +7,15 @@ export interface SchoolBranch {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface SchoolCompany {
+  id: string;
+  name: string;
+  ownerName: string;
+  contact: string;
+  inSchool: boolean;
+}
+
+export interface SchoolCompanyWithMeta extends SchoolCompany {
+  branchCount: number;
+}

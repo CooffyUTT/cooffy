@@ -2,13 +2,12 @@
 
 import React from "react";
 import { Pencil, PowerOff, Building2, MapPin, User, Calendar, Hash } from "lucide-react";
-import { SchoolBranch } from "@/types/school";
-import { MockCompany } from "@/data/mockBranches";
+import { SchoolBranch, SchoolCompany } from "@/types/school";
 import { Button } from "@/components/ui/button";
 
 interface BranchDetailsProps {
   branch: SchoolBranch;
-  company: MockCompany | undefined;
+  company: SchoolCompany | undefined;
   onEdit: () => void;
   onDeactivate: () => void;
 }

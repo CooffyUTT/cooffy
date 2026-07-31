@@ -4,7 +4,12 @@ import React, { useState, useEffect } from "react";
 import { User } from "lucide-react";
 import { HeaderBase } from "../layout/HeaderBase";
 
-export function SchoolHeader() {
+interface SchoolHeaderProps {
+  activeTab: "branches" | "companies";
+  onTabChange: (tab: "branches" | "companies") => void;
+}
+
+export function SchoolHeader({ activeTab, onTabChange }: SchoolHeaderProps) {
   const [adminName, setAdminName] = useState("Admin");
 
   useEffect(() => {
@@ -18,15 +23,29 @@ export function SchoolHeader() {
     } catch {}
   }, []);
 
+  const tabs = [
+    { id: "branches", label: "Sucursales" },
+    { id: "companies", label: "Compañías" },
+  ] as const;
+
   return (
     <HeaderBase
       navigation={
-        <button
-          className="text-sm font-semibold transition-colors pb-1 border-b-2 capitalize text-primary border-primary cursor-default"
-          aria-current="page"
-        >
-          Sucursales
-        </button>
+        <>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={`text-sm font-semibold transition-colors pb-1 border-b-2 capitalize ${
+                activeTab === tab.id
+                  ? "text-primary border-primary"
+                  : "text-on-surface-variant border-transparent hover:text-primary"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </>
       }
       actions={
         <button
