@@ -2,16 +2,22 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
-export interface CartItem {
+export interface CartProduct {
   id: number;
   name: string;
   price: number;
+  description?: string;
+  tag?: string;
+  image?: string | null;
+}
+
+export interface CartItem extends CartProduct {
   quantity: number;
 }
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: any) => void;
+  addToCart: (product: CartProduct) => void;
   updateQuantity: (id: number, delta: number) => void;
   removeFromCart: (id: number) => void;
   totalItems: number;
@@ -28,7 +34,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const addToCart = (product: any) => {
+  const addToCart = (product: CartProduct) => {
     setCart((prev) => {
       const exists = prev.find((item) => item.id === product.id);
       if (exists) {

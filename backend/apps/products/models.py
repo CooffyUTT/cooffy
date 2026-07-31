@@ -8,9 +8,30 @@ from django.db.models import Q, CheckConstraint
 from PIL import Image
 
 
+class Category(models.Model):
+    name = models.CharField(max_length=80, unique=True)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'categories'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class Product(models.Model):
     name = models.CharField(max_length=120)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.PROTECT,
+        related_name='products',
+        null=True,
+        blank=True,
+    )
     active = models.BooleanField(default=True)
     max_per_order = models.IntegerField(null=True, blank=True)
     image = models.ImageField(upload_to='products/', max_length=2048, null=True, blank=True)

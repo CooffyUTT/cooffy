@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import type { ProductList, ProductDetail } from "@/types/product";
+import type { Category, ProductList, ProductDetail } from "@/types/product";
 
 interface PaginatedResponse<T> {
   count: number;
@@ -11,6 +11,12 @@ interface PaginatedResponse<T> {
 interface GetProductsParams {
   search?: string;
   ordering?: string;
+  category?: number;
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const { data } = await api.get<PaginatedResponse<Category>>("/api/menu/categories/");
+  return data.results;
 }
 
 export async function getProducts(

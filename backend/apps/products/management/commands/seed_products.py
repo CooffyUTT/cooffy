@@ -13,12 +13,21 @@ import requests
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from apps.products.models import Product
+from apps.products.models import Category, Product
+
+SEED_CATEGORIES = [
+    {"name": "Burritos"},
+    {"name": "Sándwiches"},
+    {"name": "Bebidas"},
+    {"name": "Hamburguesas"},
+    {"name": "Snacks"},
+]
 
 SEED_PRODUCTS = [
     {
         "name": "Burrito de carne asada",
         "price": 55.00,
+        "category": "Burritos",
         "description": "Burrito grande con carne asada, frijoles, arroz, pico de gallo y guacamole.",
         "image": "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=400",
         "modifiers": ["sin cebolla", "sin cilantro", "extra queso", "salsa picante"],
@@ -27,6 +36,7 @@ SEED_PRODUCTS = [
     {
         "name": "Burrito de frijoles con queso",
         "price": 45.00,
+        "category": "Burritos",
         "description": "Burrito vegetariano con frijoles refritos, queso derretido, arroz y verduras.",
         "image": "https://images.unsplash.com/photo-1584208632869-05fa2b2a5934?w=400",
         "modifiers": ["sin crema", "extra queso", "con rajas", "salsa verde"],
@@ -35,6 +45,7 @@ SEED_PRODUCTS = [
     {
         "name": "Sandwich de jamón y queso",
         "price": 40.00,
+        "category": "Sándwiches",
         "description": "Sandwich caliente con jamón de pavo, queso manchego, lechuga, jitomate y aderezo.",
         "image": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400",
         "modifiers": ["sin jitomate", "sin aderezo", "pan integral", "doble jamón"],
@@ -43,6 +54,7 @@ SEED_PRODUCTS = [
     {
         "name": "Sandwich de pollo",
         "price": 48.00,
+        "category": "Sándwiches",
         "description": "Pechuga de pollo a la plancha con aguacate, lechuga, jitomate y mayonesa de chipotle.",
         "image": "https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=400",
         "modifiers": ["sin aguacate", "sin chipotle", "pan integral", "doble pollo"],
@@ -51,6 +63,7 @@ SEED_PRODUCTS = [
     {
         "name": "Agua embotellada 500ml",
         "price": 15.00,
+        "category": "Bebidas",
         "description": "Botella de agua purificada de 500 ml.",
         "image": "https://images.unsplash.com/photo-1616118132534-381148898bb4?w=400",
         "modifiers": ["natural", "mineral"],
@@ -59,6 +72,7 @@ SEED_PRODUCTS = [
     {
         "name": "Agua embotellada 1L",
         "price": 22.00,
+        "category": "Bebidas",
         "description": "Botella de agua purificada de 1 litro.",
         "image": "https://images.unsplash.com/photo-1616118132534-381148898bb4?w=400",
         "modifiers": ["natural", "mineral"],
@@ -67,6 +81,7 @@ SEED_PRODUCTS = [
     {
         "name": "Hamburguesa clásica",
         "price": 55.00,
+        "category": "Hamburguesas",
         "description": "Carne de res 150g, lechuga, jitomate, cebolla, pepinillos y aderezo de la casa.",
         "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400",
         "modifiers": ["sin cebolla", "sin pepinillos", "doble carne", "tocino extra"],
@@ -75,6 +90,7 @@ SEED_PRODUCTS = [
     {
         "name": "Hamburguesa con queso",
         "price": 62.00,
+        "category": "Hamburguesas",
         "description": "Carne de res 150g con doble queso americano, lechuga, jitomate y salsa especial.",
         "image": "https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=400",
         "modifiers": ["sin jitomate", "doble carne", "tocino extra", "queso manchego"],
@@ -83,6 +99,7 @@ SEED_PRODUCTS = [
     {
         "name": "Rebanada de pizza pepperoni",
         "price": 35.00,
+        "category": "Snacks",
         "description": "Rebanada grande de pizza con pepperoni, queso mozzarella y salsa de tomate artesanal.",
         "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400",
         "modifiers": ["orilla de queso", "sin pepperoni", "chile quebrado", "orégano extra"],
@@ -91,6 +108,7 @@ SEED_PRODUCTS = [
     {
         "name": "Papas fritas",
         "price": 25.00,
+        "category": "Snacks",
         "description": "Bolsa de papas fritas. Elige tu favorita.",
         "image": "https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400",
         "modifiers": ["Sabritas original", "Cheetos", "Doritos"],
@@ -132,6 +150,13 @@ class Command(BaseCommand):
             deleted, _ = Product.objects.all().delete()
             self.stdout.write(f'{deleted} producto(s) eliminado(s).\n')
 
+        # Crear categorías
+        categories = {}
+        for cat_data in SEED_CATEGORIES:
+            cat, _ = Category.objects.get_or_create(name=cat_data['name'])
+            categories[cat.name] = cat
+        self.stdout.write(f'{len(categories)} categoría(s) creada(s).')
+
         created = 0
         skipped = 0
 
@@ -145,10 +170,11 @@ class Command(BaseCommand):
                     filename, content = download_image(image_url)
                     image_file = (filename, content)
                 except requests.RequestException as e:
-                    self.stderr.write(f'  \u2717 {name}: falló descarga de imagen ({e})')
+                    self.stderr.write(f'  [FAIL] {name}: falló descarga de imagen ({e})')
 
             defaults = {
                 'price': item['price'],
+                'category': categories.get(item.get('category')),
                 'description': item.get('description'),
                 'modifiers': item.get('modifiers'),
                 'max_per_order': item.get('max_per_order'),
@@ -170,13 +196,13 @@ class Command(BaseCommand):
 
             if was_created:
                 created += 1
-                self.stdout.write(f'  \u2714 {name}')
+                self.stdout.write(f'  [OK] {name}')
             else:
                 if image_file:
-                    self.stdout.write(f'  \u21bb {name} (imagen actualizada)')
+                    self.stdout.write(f'  [UPDATE] {name} (imagen actualizada)')
                 else:
                     skipped += 1
-                    self.stdout.write(f'  ~ {name} (ya existe)')
+                    self.stdout.write(f'  [SKIP] {name} (ya existe)')
 
         self.stdout.write(
             self.style.SUCCESS(
