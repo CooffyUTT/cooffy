@@ -47,11 +47,6 @@ export function SchoolView() {
     }
   }, [router]);
 
-  const activeBranches = useMemo(
-    () => branches.filter((b) => b.active),
-    [branches],
-  );
-
   const inSchoolCompanies = useMemo(
     () => companies.filter((c) => c.inSchool),
     [companies],
@@ -129,7 +124,7 @@ export function SchoolView() {
           <>
             <BranchHeader onAddBranch={openCreate} />
             <SchoolBranchTable
-              branches={activeBranches}
+              branches={branches}
               companies={companies}
               onView={openView}
             />
