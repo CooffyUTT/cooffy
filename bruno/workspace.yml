@@ -14,7 +14,9 @@ collections:
     path: "collections/School"
   - name: "Branches"
     path: "collections/Branches"
+  - name: "School"
+    path: "collections/School"
 
 specs:
 
-docs: ''
+docs: ""

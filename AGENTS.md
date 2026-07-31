@@ -20,6 +20,8 @@ All commands run from repo root on `package.json`. Backend is invoked through `u
 - `pnpm init:all` — install everything, up Postgres, migrate, seed, start dev servers (one-shot first run).
 - `pnpm dev` — start backend + frontend together (via `concurrently`).
 - `pnpm front` / `pnpm back` — start one side. `pnpm back` = `manage.py runserver`.
+- `pnpm front:lint` / Execute two checks: the lint on frontend side (replace `pnpm --dir frontend lint`) and execute `tsc --noEmit`.
+- `pnpm front:typecheck` / Validate TS types with `pnpm --dir frontend typecheck` (`tsc --noEmit`).
 - `pnpm back:manage <args>` — proxy for `python manage.py <args>` (e.g. `pnpm back:manage makemigrations`).
 - `pnpm front:install` — run `pnpm install` on `frontend/` directory.
 - `pnpm back:install` — runs `uv sync` in `backend/`: creates `backend/.venv` if missing, installs the exact versions from `uv.lock`, and prunes anything not in `pyproject.toml`. Use `uv add <pkg>` / `uv remove <pkg>` (or edit `pyproject.toml` and run `pnpm back:lock`) to change deps.
@@ -42,7 +44,7 @@ Key vars: `DJANGO_ENV` (controls `DEBUG` and CORS behavior), `POSTGRES_*`, `NEXT
 - **Product model** converts uploaded images to WEBP (800×800, quality 85) on `save()` and uses `ArrayField` for `modifiers` (Postgres-only). Don't write a SQLite test setup without changing that.
 - Seeds are **dev-only** (guarded by `DJANGO_ENV == 'development'`, they abort otherwise):
   - `pnpm back:manage seed` → consolidated: runs `seed_users` + `seed_branches` + `seed_products` and other seeds (`--force` to recreate users).
-  - `seed_users` → groups + users: `admin`/`admin123` (gerente, superuser), `cocina1`/`admin123` (empleado), `cliente1`/`admin123` (cliente).
+  - `seed_users` → groups + users: `admin`/`admin123` (gerente, superuser), `cocina1`/`admin123` (empleado), `cliente1`/`admin123` (cliente), `admin_escolar1`/`admin123` (admin_escolar).
   - `seed_branches` → 2 companies (El Circulo, Cooffy) and 3 branches; requires the `admin` user to exist (run `seed_users` first if calling individually).
   - `seed_products` → 10 demo products. **Downloads product images from `images.unsplash.com` at seed time** — needs network; will skip image on failure.
 - **No backend lint/format/test config exists.** `apps/*/tests.py` are empty stubs from the Django startapp template and are not currently being implemented. Don't invent pytest/ruff configs. The only test runner is Django's default: `pnpm back:manage test` (nothing meaningful to run yet).
