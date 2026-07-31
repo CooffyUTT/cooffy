@@ -16,9 +16,9 @@
 ## Application
 
 - Django entry package: `config/`; apps: `apps.users`, `apps.products`,
-  `apps.branches` and `apps.orders`.
-- API prefixes: `/api/auth/`, `/api/menu/products/`, `/api/branches/` and
-  `/api/orders/`. Admin is at `/admin/`.
+  `apps.branches`, `apps.orders` and `apps.schools`.
+- API prefixes: `/api/auth/`, `/api/menu/`, `/api/branches/`, `/api/orders/`
+  and `/api/schools/`. Admin is at `/admin/`.
 - Development media is served at `/media/`; production expects a proxy or CDN.
 - DRF defaults use JWT authentication, global `IsAuthenticated`, page size 20,
   30-minute access tokens and 14-day refresh tokens.
@@ -31,6 +31,8 @@
 - Seed groups include `gerente`, `cliente`, `empleado` and `admin_escolar`.
 - Branch manager permissions allow only `gerente`; order views restrict clients
   by `client_id` unless the user is staff.
+- School endpoints require authentication; school viewset querysets scope
+  non-staff users to schools whose `admin_id` matches their user id.
 
 ## Products and seeds
 

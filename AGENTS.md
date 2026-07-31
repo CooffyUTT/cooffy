@@ -1,41 +1,50 @@
 # Cooffy
 
-Monorepo for a Django + Next.js cafeteria ordering system.
+Monorepo for a Django/DRF API and Next.js cafeteria ordering system.
 
-## Structure
+## Boundaries
 
-- `backend/` - Django + DRF. See `backend/AGENTS.md`.
-- `frontend/` - Next.js + React. See `frontend/AGENTS.md`.
-- `bruno/` - versioned API request collections.
-- `docs/` - requirements, architecture and database diagrams.
+- `backend/` - Django project (`config/`) with apps for users, products,
+  branches, orders and schools. See `backend/AGENTS.md` before backend changes.
+- `frontend/` - Next.js App Router application. See `frontend/AGENTS.md` before
+  frontend changes.
+- `bruno/` contains versioned API collections; `docs/` contains project
+  requirements and architecture/database documentation.
 
 ## Commands
 
-Run commands from the repository root. Use the existing `pnpm` scripts; do not
-run `cd backend` manually.
+Run commands from the repository root and use the existing `pnpm` scripts. The
+backend scripts invoke `uv` with `backend/`; do not create or activate a manual
+virtualenv.
 
-- `pnpm init:all` - install, start PostgreSQL, migrate, seed and run both apps.
-- `pnpm install:all` - install root, frontend and backend dependencies.
-- `pnpm dev` - run backend and frontend together.
-- `pnpm front` / `pnpm back` - run one application.
-- `pnpm front:lint` - lint and typecheck the frontend.
-- `pnpm front:typecheck` - run the frontend TypeScript check.
-- `pnpm back:manage <command>` - run a Django management command.
-- `pnpm back:install` / `pnpm back:lock` - sync or update backend dependencies.
+- `cp .env.example .env` then `pnpm init:all` for the full local setup.
+- `pnpm init:all` installs dependencies, starts PostgreSQL, migrates, seeds and
+  starts both apps.
+- `pnpm install:all` installs root, frontend and backend dependencies.
+- `pnpm dev`, `pnpm front` and `pnpm back` run both apps, the frontend only or
+  the backend only.
+- `pnpm back:manage <command>` proxies to `manage.py`; common commands are
+  `migrate`, `makemigrations`, `seed` and `test`.
+- `pnpm front:lint` runs ESLint followed by the TypeScript check;
+  `pnpm front:typecheck` runs only `tsc --noEmit`.
+- `pnpm --dir frontend build` creates a production frontend build.
+- `pnpm bru:auth` runs the Bruno Auth collection.
 
-PostgreSQL is required and runs with `docker compose up -d`.
+PostgreSQL 16 is required; start it with `docker compose up -d` when not using
+`pnpm init:all`.
 
-## Environment and safety
+## Constraints
 
-- Keep `.env` at the repository root; never create `backend/.env`.
-- Do not read or commit secrets, `.env` files or `backend/media/`.
-- Check the relevant area-specific instructions before changing backend or
-  frontend code.
-- Do not invent lint, format or test configuration that is not in the repo.
+- Keep `.env` at the repository root; never create `backend/.env`. Do not read
+  or commit secrets, `.env` files or `backend/media/`.
+- Seeds require `DJANGO_ENV=development`; product seeding may download images
+  from Unsplash and can skip them offline.
+- Do not invent lint, formatter or test configuration; use the scripts and
+  config already present in the repository.
 
-## Git
+## Workflow
 
-- The integration branch is `develop`, not `main`.
-- Use `feature/`, `fix/`, `docs/`, `chore/`, `refactor/` or `hotfix/` branches.
-- Use Conventional Commits.
-- PRs target `develop` and follow the RF-XX conventions in `CONTRIBUTING.md`.
+- Integrate into `develop`, not `main`. For RF work, branch as
+  `<type>/rf-XX-short-description` and keep one PR per subtask.
+- Use Conventional Commits and target PRs at `develop`; see `CONTRIBUTING.md`
+  for the RF issue and review flow.

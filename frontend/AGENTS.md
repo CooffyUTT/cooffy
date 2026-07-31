@@ -4,7 +4,8 @@
 
 - Next.js 16 App Router, React 19, Tailwind 4 and Turbopack.
 - React Compiler is enabled in `next.config.ts`.
-- Routes live under `src/app`: `menu`, `kitchen`, `manager` and `register`.
+- Routes live under `src/app`: `/` (login), `/menu`, `/kitchen`, `/manager`,
+  `/school` and `/register`.
 - Use the `@/*` path alias from `tsconfig.json`; avoid long relative imports.
 
 ## UI and state
@@ -22,9 +23,11 @@
 
 - Use the Axios instance in `src/lib/api.ts`; it reads `NEXT_PUBLIC_API_URL`,
   sends credentials and attaches the stored access token.
-- On a 401, the API client clears local storage and redirects to `/login`.
-- `src/lib/menu-data.ts` is currently mock data. Check `MenuView.tsx` before
-  assuming the menu is connected to `/api/menu/products/`.
+- Product and category queries use `src/services/productService.ts` and the
+  `/api/menu/` endpoints.
+- On a 401, the API client clears local storage and redirects to `/`.
+- Kitchen and school views still use mock data; do not assume those screens are
+  connected to the backend APIs.
 
 ## Verification
 
