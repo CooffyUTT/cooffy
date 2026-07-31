@@ -16,6 +16,7 @@ interface BackendBranch {
   school_id: number | null;
   school_name: string | null;
   location: string | null;
+  schedule: string | null;
   image: string | null;
   active: boolean;
   created_at: string;
@@ -28,7 +29,7 @@ function toBranch(b: BackendBranch): Branch {
     name: b.name,
     address: b.location || '',
     employeesCount: 0,
-    schedule: '',
+    schedule: b.schedule || '',
     dailySales: 0,
     status: b.active ? 'open' : 'closed',
     imageUrl: b.image ? b.image : '',

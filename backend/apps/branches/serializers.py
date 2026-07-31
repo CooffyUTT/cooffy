@@ -17,6 +17,7 @@ class BranchSerializer(serializers.ModelSerializer):
             'school_id',
             'school_name',
             'location',
+            'schedule',
             'image',
             'active',
             'created_at',

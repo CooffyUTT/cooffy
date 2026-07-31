@@ -40,6 +40,7 @@ class Branch(models.Model):
     )
     school_id = models.BigIntegerField()
     location = models.TextField(blank=True, null=True)
+    schedule = models.CharField(max_length=100, blank=True, null=True)
     image = models.ImageField(upload_to='branches/', max_length=2048, null=True, blank=True)
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
