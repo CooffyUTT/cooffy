@@ -25,9 +25,9 @@ export const INITIAL_BRANCHES: Branch[] = [
 ];
 
 export const INITIAL_SCHOOL_BRANCHES: SchoolBranch[] = [
-  { id: '1', name: 'Cafetería Refugio', company: 'El Círculo',           location: 'Edificio A, Planta Baja' },
-  { id: '2', name: 'Cafetería Otay',    company: 'El Círculo',           location: 'Edificio B, Segundo Piso' },
-  { id: '3', name: 'Cafetería Central', company: 'Cafeterías del Norte', location: 'Edificio C, Lobby' },
+  { id: '1', name: 'Cafetería Refugio', company: 'El Círculo',           location: 'Edificio A, Planta Baja', active: true,  createdAt: '2026-01-15T10:00:00Z', updatedAt: '2026-01-15T10:00:00Z' },
+  { id: '2', name: 'Cafetería Otay',    company: 'El Círculo',           location: 'Edificio B, Segundo Piso', active: true,  createdAt: '2026-02-20T09:30:00Z', updatedAt: '2026-03-10T14:15:00Z' },
+  { id: '3', name: 'Cafetería Central', company: 'Cafeterías del Norte', location: 'Edificio C, Lobby',        active: true,  createdAt: '2026-03-05T11:45:00Z', updatedAt: '2026-03-05T11:45:00Z' },
 ];
 
 export interface MockCompany {

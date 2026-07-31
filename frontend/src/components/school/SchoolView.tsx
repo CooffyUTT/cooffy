@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { SchoolBranch } from '@/types/school';
 import { INITIAL_SCHOOL_BRANCHES, MOCK_COMPANIES, MockCompany } from '@/data/mockBranches';
 import { SchoolHeader } from './SchoolHeader';
 import { BranchHeader } from '@/components/manager/BranchHeader';
 import { SchoolBranchTable } from './SchoolBranchTable';
-import { AddBranchDialog } from './AddBranchDialog';
+import { BranchDialog, BranchDialogMode } from './BranchDialog';
 
 export function SchoolView() {
   const router = useRouter();
@@ -15,7 +15,10 @@ export function SchoolView() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [branches, setBranches] = useState<SchoolBranch[]>(INITIAL_SCHOOL_BRANCHES);
   const [companies, setCompanies] = useState<MockCompany[]>(MOCK_COMPANIES);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  const [dialogMode, setDialogMode] = useState<BranchDialogMode>('create');
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     const userDataStr = localStorage.getItem("userData");
@@ -36,15 +39,34 @@ export function SchoolView() {
     }
   }, [router]);
 
-  const handleViewBranch = (branch: SchoolBranch) => {
-    alert(`Ver detalles de "${branch.name}" próximamente...`);
+  const activeBranches = useMemo(
+    () => branches.filter((b) => b.active),
+    [branches],
+  );
+
+  const selectedBranch = useMemo(
+    () => branches.find((b) => b.id === selectedBranchId),
+    [branches, selectedBranchId],
+  );
+
+  const openCreate = () => {
+    setSelectedBranchId(null);
+    setDialogMode('create');
+    setIsDialogOpen(true);
   };
 
-  const handleEditBranch = (branch: SchoolBranch) => {
-    alert(`Editar "${branch.name}" próximamente...`);
+  const openView = (branch: SchoolBranch) => {
+    setSelectedBranchId(branch.id);
+    setDialogMode('view');
+    setIsDialogOpen(true);
   };
 
-  const handleAddBranch = () => setIsAddDialogOpen(true);
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setSelectedBranchId(null);
+    }
+  };
 
   if (!isAuthorized) {
     return (
@@ -62,21 +84,23 @@ export function SchoolView() {
       <SchoolHeader />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
-        <BranchHeader onAddBranch={handleAddBranch} />
+        <BranchHeader onAddBranch={openCreate} />
 
         <SchoolBranchTable
-          branches={branches}
-          onView={handleViewBranch}
-          onEdit={handleEditBranch}
+          branches={activeBranches}
+          onView={openView}
         />
       </main>
 
-      <AddBranchDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        setBranches={setBranches}
+      <BranchDialog
+        open={isDialogOpen}
+        onOpenChange={handleDialogOpenChange}
+        mode={dialogMode}
+        branch={selectedBranch}
+        onModeChange={setDialogMode}
         companies={companies}
         setCompanies={setCompanies}
+        setBranches={setBranches}
       />
     </div>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Pencil } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -15,10 +14,9 @@ import { SchoolBranch } from "@/types/school";
 interface SchoolBranchTableProps {
   branches: SchoolBranch[];
   onView: (branch: SchoolBranch) => void;
-  onEdit: (branch: SchoolBranch) => void;
 }
 
-export function SchoolBranchTable({ branches, onView, onEdit }: SchoolBranchTableProps) {
+export function SchoolBranchTable({ branches, onView }: SchoolBranchTableProps) {
   return (
     <div className="bg-surface rounded-2xl border border-outline-variant/20 shadow-[0px_4px_20px_rgba(30,58,90,0.05)] overflow-hidden">
       <Table>
@@ -27,7 +25,6 @@ export function SchoolBranchTable({ branches, onView, onEdit }: SchoolBranchTabl
             <TableHead className="font-bold text-on-surface">Nombre</TableHead>
             <TableHead className="font-bold text-on-surface">Compañía</TableHead>
             <TableHead className="font-bold text-on-surface">Ubicación</TableHead>
-            <TableHead className="font-bold text-on-surface text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -40,20 +37,6 @@ export function SchoolBranchTable({ branches, onView, onEdit }: SchoolBranchTabl
               <TableCell className="font-semibold text-on-surface">{branch.name}</TableCell>
               <TableCell className="text-on-surface-variant">{branch.company}</TableCell>
               <TableCell className="text-on-surface-variant">{branch.location}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(branch);
-                    }}
-                    aria-label={`Editar ${branch.name}`}
-                    className="p-1.5 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:text-primary hover:border-primary transition-colors cursor-pointer"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </TableCell>
             </TableRow>
           ))}
         </TableBody>

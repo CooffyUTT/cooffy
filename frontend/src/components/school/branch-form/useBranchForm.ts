@@ -7,21 +7,32 @@ import { MockCompany } from "@/data/mockBranches";
 
 export const INVITE_VALUE = "__invite__";
 
-interface UseAddBranchFormProps {
+export type BranchFormMode = "create" | "edit";
+
+interface UseBranchFormProps {
+  mode: BranchFormMode;
+  initialBranch?: SchoolBranch;
   companies: MockCompany[];
   setCompanies: React.Dispatch<React.SetStateAction<MockCompany[]>>;
   setBranches: React.Dispatch<React.SetStateAction<SchoolBranch[]>>;
+  onSuccess: () => void;
 }
 
-export function useAddBranchForm({
+export function useBranchForm({
+  mode,
+  initialBranch,
   companies,
   setCompanies,
   setBranches,
-}: UseAddBranchFormProps) {
-  const [companyValue, setCompanyValue] = useState<string>("");
+  onSuccess,
+}: UseBranchFormProps) {
+  const [companyValue, setCompanyValue] = useState<string>(() => {
+    if (mode !== "edit" || !initialBranch) return "";
+    return companies.find((c) => c.name === initialBranch.company)?.id ?? "";
+  });
   const [invitedCompanyId, setInvitedCompanyId] = useState<string>("");
-  const [name, setName] = useState("");
-  const [location, setLocation] = useState("");
+  const [name, setName] = useState(initialBranch?.name ?? "");
+  const [location, setLocation] = useState(initialBranch?.location ?? "");
 
   const availableCompanies = companies.filter((c) => c.inSchool);
   const notInSchoolCompanies = companies.filter((c) => !c.inSchool);
@@ -53,7 +64,10 @@ export function useAddBranchForm({
 
     let chosenCompany: MockCompany | undefined;
 
-    if (isInviting) {
+    if (mode === "edit" && initialBranch) {
+      chosenCompany = companies.find((c) => c.name === initialBranch.company);
+      if (!chosenCompany) return;
+    } else if (isInviting) {
       chosenCompany = notInSchoolCompanies.find((c) => c.id === invitedCompanyId);
       if (!chosenCompany) return;
       setCompanies((prev) =>
@@ -66,26 +80,45 @@ export function useAddBranchForm({
       if (!chosenCompany) return;
     }
 
-    const newBranch: SchoolBranch = {
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      company: chosenCompany.name,
-      location: location.trim(),
-    };
+    const now = new Date().toISOString();
 
-    setBranches((prev) => [newBranch, ...prev]);
-
-    if (isInviting) {
-      toast.success("Sucursal creada e invitación enviada", {
-        description: `${newBranch.name} agregada a ${chosenCompany.name}. Invitación enviada a ${chosenCompany.ownerName} (mock).`,
+    if (mode === "edit" && initialBranch) {
+      const updated: SchoolBranch = {
+        ...initialBranch,
+        name: name.trim(),
+        location: location.trim(),
+        company: chosenCompany.name,
+        updatedAt: now,
+      };
+      setBranches((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+      toast.success("Sucursal actualizada", {
+        description: `${updated.name} actualizada.`,
       });
     } else {
-      toast.success("Sucursal creada", {
-        description: `${newBranch.name} agregada a ${chosenCompany.name}.`,
-      });
+      const newBranch: SchoolBranch = {
+        id: crypto.randomUUID(),
+        name: name.trim(),
+        company: chosenCompany.name,
+        location: location.trim(),
+        active: true,
+        createdAt: now,
+        updatedAt: now,
+      };
+      setBranches((prev) => [newBranch, ...prev]);
+
+      if (isInviting) {
+        toast.success("Sucursal creada e invitación enviada", {
+          description: `${newBranch.name} agregada a ${chosenCompany.name}. Invitación enviada a ${chosenCompany.ownerName} (mock).`,
+        });
+      } else {
+        toast.success("Sucursal creada", {
+          description: `${newBranch.name} agregada a ${chosenCompany.name}.`,
+        });
+      }
     }
 
     reset();
+    onSuccess();
   };
 
   return {

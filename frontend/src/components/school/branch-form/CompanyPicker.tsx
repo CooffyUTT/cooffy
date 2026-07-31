@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MockCompany } from "@/data/mockBranches";
-import { INVITE_VALUE } from "./useAddBranchForm";
+import { INVITE_VALUE } from "./useBranchForm";
 
 interface CompanyPickerProps {
   value: string;

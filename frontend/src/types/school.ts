@@ -3,4 +3,7 @@ export interface SchoolBranch {
   name: string;
   company: string;
   location: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
