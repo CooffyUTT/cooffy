@@ -1,6 +1,6 @@
 ---
 name: django-expert
-description: Expert Django backend development guidance. Use when creating Django models, views, serializers, or APIs; debugging ORM queries or migrations; optimizing database performance; implementing authentication; writing tests; or working with Django REST Framework. Follows Django best practices and modern patterns.
+description: Use only for Django or Django REST Framework models, views, serializers, APIs, ORM queries, migrations, authentication, testing, or backend performance work.
 ---
 
 # Django Expert
