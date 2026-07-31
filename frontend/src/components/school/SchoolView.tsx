@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SchoolBranch, SchoolCompanyWithMeta } from '@/types/school';
 import { INITIAL_SCHOOL_BRANCHES, MOCK_COMPANIES } from '@/data/mockBranches';
 import { SchoolHeader } from './SchoolHeader';
-import { BranchHeader } from '@/components/manager/BranchHeader';
+import { BranchPageHeader } from './BranchPageHeader';
 import { SchoolBranchTable } from './SchoolBranchTable';
 import { BranchDialog, BranchDialogMode } from './BranchDialog';
 import { CompanyHeader } from './company/CompanyHeader';
@@ -122,7 +122,7 @@ export function SchoolView() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
         {activeTab === 'branches' ? (
           <>
-            <BranchHeader onAddBranch={openCreate} />
+            <BranchPageHeader onAddBranch={openCreate} />
             <SchoolBranchTable
               branches={branches}
               companies={companies}
