@@ -142,7 +142,12 @@ export function SchoolView() {
     <div className="min-h-screen bg-background font-['Plus_Jakarta_Sans',sans-serif] flex flex-col">
       <SchoolHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
+      <main
+        id={`panel-${activeTab}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${activeTab}`}
+        className="flex-1 max-w-7xl w-full mx-auto px-6 py-10 space-y-8"
+      >
         {activeTab === 'branches' ? (
           <>
             <BranchPageHeader onAddBranch={openCreate} />
