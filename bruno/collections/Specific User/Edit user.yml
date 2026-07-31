@@ -5,14 +5,12 @@ info:
 
 http:
   method: PUT
-  url: http://127.0.0.1:8000/api/auth/pk/
+  url: http://127.0.0.1:8000/api/auth/{{?id}}/
   body:
     type: json
     data: |-
-      {"user":"alumno@univ.edu.mx",
-       "name":"cliente editado",
-       "lastname":"generico",
-       "school_id":1,
+      {
+       "user":"alumna@univ.edu.mx",
        "active":true
       }
   auth:

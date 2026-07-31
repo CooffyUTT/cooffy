@@ -5,10 +5,10 @@ info:
 
 http:
   method: DELETE
-  url: http://localhost:8000/api/auth/pk/
+  url: http://localhost:8000/api/auth/{{?id}}/
   auth:
     type: bearer
-    token: "{{access_token}}" 
+    token: "{{access_token}}"
 
 settings:
   encodeUrl: true

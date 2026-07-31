@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://127.0.0.1:8000/api/auth/<pk>
+  url: http://127.0.0.1:8000/api/auth/{{?id}}
   auth:
     type: bearer
-    token: "{{access_token}}" 
+    token: "{{access_token}}"
 
 settings:
   encodeUrl: true
