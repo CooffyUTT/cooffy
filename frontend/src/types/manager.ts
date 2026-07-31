@@ -8,3 +8,11 @@ export interface Branch {
   status: 'open' | 'closed';
   imageUrl: string;
 }
+
+export interface BranchUpdateData {
+  name: string;
+  location: string;
+  schedule: string;
+  active: boolean;
+  imageFile?: File | null;
+}

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Branch } from '@/types/manager';
+import { toast } from 'sonner';
+import { Branch, BranchUpdateData } from '@/types/manager';
 import { api } from '@/lib/api';
 import { ManagerHeader } from './ManagerHeader';
 import { BranchHeader } from './BranchHeader';
@@ -34,6 +35,18 @@ function toBranch(b: BackendBranch): Branch {
     status: b.active ? 'open' : 'closed',
     imageUrl: b.image ? b.image : '',
   };
+}
+
+function buildBranchFormData(data: BranchUpdateData): FormData {
+  const formData = new FormData();
+  formData.append('name', data.name);
+  formData.append('location', data.location);
+  formData.append('schedule', data.schedule);
+  formData.append('active', String(data.active));
+  if (data.imageFile) {
+    formData.append('image', data.imageFile);
+  }
+  return formData;
 }
 
 export function ManagerView() {
@@ -94,6 +107,32 @@ export function ManagerView() {
     }
   };
 
+  const handleUpdateBranch = async (id: string, data: BranchUpdateData): Promise<boolean> => {
+    const path = `/api/branches/${id}/update/`;
+
+    try {
+      const { data: updated } = data.imageFile
+        ? await api.put<BackendBranch>(path, buildBranchFormData(data))
+        : await api.put<BackendBranch>(path, {
+            name: data.name,
+            location: data.location,
+            schedule: data.schedule,
+            active: data.active,
+          });
+
+      setBranches(prev => prev.map(b => (b.id === id ? toBranch(updated) : b)));
+      toast.success('Sucursal actualizada', {
+        description: `Los cambios en "${updated.name}" se guardaron correctamente.`,
+      });
+      return true;
+    } catch {
+      toast.error('Error al actualizar la sucursal', {
+        description: 'No se pudieron guardar los cambios. Intenta de nuevo.',
+      });
+      return false;
+    }
+  };
+
   const handleAddBranch = () => {
     alert("Modal de agregar sucursal próximamente...");
   };
@@ -135,6 +174,7 @@ export function ManagerView() {
                 key={branch.id}
                 branch={branch}
                 onDelete={handleDeleteBranch}
+                onSave={handleUpdateBranch}
               />
             ))}
           </div>

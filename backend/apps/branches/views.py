@@ -69,6 +69,6 @@ class BranchViewSet(viewsets.ReadOnlyModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(
-            BranchSerializer(branch).data,
+            BranchSerializer(branch, context={'request': request}).data,
             status=status.HTTP_200_OK,
         )
