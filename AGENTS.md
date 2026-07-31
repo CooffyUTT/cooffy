@@ -20,7 +20,8 @@ All commands run from repo root on `package.json`. Backend is invoked through `u
 - `pnpm init:all` — install everything, up Postgres, migrate, seed, start dev servers (one-shot first run).
 - `pnpm dev` — start backend + frontend together (via `concurrently`).
 - `pnpm front` / `pnpm back` — start one side. `pnpm back` = `manage.py runserver`.
-- `pnpm front:lint` / Execute the lint on frontend side (replace `pnpm --dir frontend lint`).
+- `pnpm front:lint` / Execute two checks: the lint on frontend side (replace `pnpm --dir frontend lint`) and execute `tsc --noEmit`.
+- `pnpm front:typecheck` / Validate TS types with `pnpm --dir frontend typecheck` (`tsc --noEmit`).
 - `pnpm back:manage <args>` — proxy for `python manage.py <args>` (e.g. `pnpm back:manage makemigrations`).
 - `pnpm front:install` — run `pnpm install` on `frontend/` directory.
 - `pnpm back:install` — runs `uv sync` in `backend/`: creates `backend/.venv` if missing, installs the exact versions from `uv.lock`, and prunes anything not in `pyproject.toml`. Use `uv add <pkg>` / `uv remove <pkg>` (or edit `pyproject.toml` and run `pnpm back:lock`) to change deps.
