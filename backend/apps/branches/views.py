@@ -1,8 +1,9 @@
 from rest_framework import viewsets, status, permissions
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import Company, Branch
-from .serializers import BranchSerializer
+from .serializers import BranchSerializer, BranchUpdateSerializer
 
 
 class IsManagerPermission(permissions.BasePermission):
@@ -55,3 +56,19 @@ class BranchViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = self.get_queryset().filter(company_id=company_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["put"], url_path="update")
+    def update_branch(self, request, pk=None):
+        """Actualiza solo los campos name, location, schedule, image y active."""
+        branch = self.get_object()
+        serializer = BranchUpdateSerializer(
+            branch,
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            BranchSerializer(branch).data,
+            status=status.HTTP_200_OK,
+        )

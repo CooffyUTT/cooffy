@@ -28,3 +28,9 @@ class BranchSerializer(serializers.ModelSerializer):
     def get_school_name(self, obj):
         school = School.objects.filter(pk=obj.school_id).first()
         return school.short_name if school else None
+
+
+class BranchUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = ['name', 'location', 'schedule', 'image', 'active']
