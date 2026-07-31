@@ -26,18 +26,18 @@ interface AddCompanyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   companies: SchoolCompany[];
-  setCompanies: React.Dispatch<React.SetStateAction<SchoolCompany[]>>;
+  onLinkCompany: (companyId: number) => void;
 }
 
 export function AddCompanyDialog({
   open,
   onOpenChange,
   companies,
-  setCompanies,
+  onLinkCompany,
 }: AddCompanyDialogProps) {
   const form = useAddCompany({
     companies,
-    setCompanies,
+    onLinkCompany,
     onSuccess: () => onOpenChange(false),
   });
 

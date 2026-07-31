@@ -10,7 +10,8 @@ interface UseBranchFormProps {
   mode: BranchFormMode;
   initialBranch?: SchoolBranch;
   companies: SchoolCompany[];
-  setBranches: React.Dispatch<React.SetStateAction<SchoolBranch[]>>;
+  onCreate: (branch: SchoolBranch) => void;
+  onUpdate: (branch: SchoolBranch) => void;
   onSuccess: () => void;
 }
 
@@ -20,7 +21,8 @@ export function useBranchForm({
   mode,
   initialBranch,
   companies,
-  setBranches,
+  onCreate,
+  onUpdate,
   onSuccess,
 }: UseBranchFormProps) {
   const [companyValue, setCompanyValue] = useState<number | null>(() => {
@@ -60,7 +62,7 @@ export function useBranchForm({
         companyName: chosenCompany.name,
         updatedAt: now,
       };
-      setBranches((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+      onUpdate(updated);
       toast.success("Sucursal actualizada", {
         description: `${updated.name} actualizada.`,
       });
@@ -76,8 +78,7 @@ export function useBranchForm({
         createdAt: now,
         updatedAt: now,
       };
-      setBranches((prev) => [newBranch, ...prev]);
-
+      onCreate(newBranch);
       toast.success("Sucursal creada", {
         description: `${newBranch.name} agregada a ${chosenCompany.name}.`,
       });

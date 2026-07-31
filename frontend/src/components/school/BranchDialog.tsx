@@ -28,7 +28,9 @@ interface BranchDialogProps {
   branch?: SchoolBranch;
   onModeChange: (mode: BranchDialogMode) => void;
   companies: SchoolCompany[];
-  setBranches: React.Dispatch<React.SetStateAction<SchoolBranch[]>>;
+  onCreate: (branch: SchoolBranch) => void;
+  onUpdate: (branch: SchoolBranch) => void;
+  onDeactivate: (branchId: number) => void;
 }
 
 const TITLES: Record<BranchDialogMode, string> = {
@@ -50,7 +52,9 @@ export function BranchDialog({
   branch,
   onModeChange,
   companies,
-  setBranches,
+  onCreate,
+  onUpdate,
+  onDeactivate,
 }: BranchDialogProps) {
   const company = branch
     ? companies.find((c) => c.id === branch.companyId)
@@ -68,12 +72,7 @@ export function BranchDialog({
       )
     )
       return;
-    const now = new Date().toISOString();
-    setBranches((prev) =>
-      prev.map((b) =>
-        b.id === branch.id ? { ...b, active: false, updatedAt: now } : b,
-      ),
-    );
+    onDeactivate(branch.id);
     toast.success("Sucursal dada de baja", {
       description: `${branch.name} ya no aparece como activa.`,
     });
@@ -100,7 +99,8 @@ export function BranchDialog({
             mode={mode as "create" | "edit"}
             branch={branch}
             companies={companies}
-            setBranches={setBranches}
+            onCreate={onCreate}
+            onUpdate={onUpdate}
             onSuccess={handleClose}
             onCancel={handleClose}
           />
@@ -114,7 +114,8 @@ interface BranchFormBodyProps {
   mode: "create" | "edit";
   branch?: SchoolBranch;
   companies: SchoolCompany[];
-  setBranches: React.Dispatch<React.SetStateAction<SchoolBranch[]>>;
+  onCreate: (branch: SchoolBranch) => void;
+  onUpdate: (branch: SchoolBranch) => void;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -123,7 +124,8 @@ function BranchFormBody({
   mode,
   branch,
   companies,
-  setBranches,
+  onCreate,
+  onUpdate,
   onSuccess,
   onCancel,
 }: BranchFormBodyProps) {
@@ -131,7 +133,8 @@ function BranchFormBody({
     mode,
     initialBranch: branch,
     companies,
-    setBranches,
+    onCreate,
+    onUpdate,
     onSuccess,
   });
 

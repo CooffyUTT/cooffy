@@ -6,13 +6,13 @@ import { SchoolCompany } from "@/types/school";
 
 interface UseAddCompanyProps {
   companies: SchoolCompany[];
-  setCompanies: React.Dispatch<React.SetStateAction<SchoolCompany[]>>;
+  onLinkCompany: (companyId: number) => void;
   onSuccess: () => void;
 }
 
 export function useAddCompany({
   companies,
-  setCompanies,
+  onLinkCompany,
   onSuccess,
 }: UseAddCompanyProps) {
   const [companyId, setCompanyId] = useState<number | null>(null);
@@ -31,12 +31,7 @@ export function useAddCompany({
 
     if (!selectedCompany) return;
 
-    setCompanies((prev) =>
-      prev.map((c) =>
-        c.id === companyId ? { ...c, inSchool: true } : c,
-      ),
-    );
-
+    onLinkCompany(companyId);
     toast.success("Compañía vinculada", {
       description: `${selectedCompany.name} agregada a la escuela.`,
     });

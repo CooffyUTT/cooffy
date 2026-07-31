@@ -104,6 +104,29 @@ export function SchoolView() {
     setSelectedCompanyId(null);
   };
 
+  const handleCreateBranch = (branch: SchoolBranch) => {
+    setBranches((prev) => [branch, ...prev]);
+  };
+
+  const handleUpdateBranch = (branch: SchoolBranch) => {
+    setBranches((prev) => prev.map((b) => (b.id === branch.id ? branch : b)));
+  };
+
+  const handleDeactivateBranch = (branchId: number) => {
+    const now = new Date().toISOString();
+    setBranches((prev) =>
+      prev.map((b) =>
+        b.id === branchId ? { ...b, active: false, updatedAt: now } : b,
+      ),
+    );
+  };
+
+  const handleLinkCompany = (companyId: number) => {
+    setCompanies((prev) =>
+      prev.map((c) => (c.id === companyId ? { ...c, inSchool: true } : c)),
+    );
+  };
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] font-['Plus_Jakarta_Sans',sans-serif]">
@@ -147,14 +170,16 @@ export function SchoolView() {
         branch={selectedBranch}
         onModeChange={setDialogMode}
         companies={companies}
-        setBranches={setBranches}
+        onCreate={handleCreateBranch}
+        onUpdate={handleUpdateBranch}
+        onDeactivate={handleDeactivateBranch}
       />
 
       <AddCompanyDialog
         open={isAddCompanyDialogOpen}
         onOpenChange={setIsAddCompanyDialogOpen}
         companies={companies}
-        setCompanies={setCompanies}
+        onLinkCompany={handleLinkCompany}
       />
 
       {selectedCompany && (
