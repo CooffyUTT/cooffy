@@ -47,6 +47,7 @@ export function CardMedia({ src, alt, badge, fallbackText, className = "h-36 w-f
           src={src}
           alt={alt}
           fill
+          unoptimized
           sizes="(max-width: 768px) 100vw, 33vw"
           className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
