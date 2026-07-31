@@ -1,0 +1,26 @@
+info:
+  name: Edit user
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: http://127.0.0.1:8000/api/auth/pk/
+  body:
+    type: json
+    data: |-
+      {"user":"alumno@univ.edu.mx",
+       "name":"cliente editado",
+       "lastname":"generico",
+       "school_id":1,
+       "active":true
+      }
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -6,8 +6,12 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from apps.users.models import User
-from .serializers import LoginSerializer, UserSerializer
-from .serializers import LoginSerializer, UserSerializer, CreateClientSerializer
+from .serializers import (
+    LoginSerializer,
+    UserSerializer,
+    CreateClientSerializer,
+    UpdateUserSerializer,
+) # serializadores del CRUD de usuarios
 
 
 # Create your views here.
@@ -69,6 +73,68 @@ class UserListView(APIView):
         # 3. Serializar y responder
         serializer = UserSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserDetailView(APIView):
+    """
+    Endpoint para consultar, editar o dar de baja a un usuario especifico.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        user = self.get_object(pk)
+        if user is None:
+            return Response(
+                {"error": "Usuario no encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, pk):
+        return self._update(request, pk, partial=True)
+
+    def put(self, request, pk):
+        return self._update(request, pk, partial=False)
+
+    def _update(self, request, pk, partial):
+        user = self.get_object(pk)
+        if user is None:
+            return Response(
+                {"error": "Usuario no encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = UpdateUserSerializer(user, data=request.data, partial=partial)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        """desactiva al usuario"""
+        user = self.get_object(pk)
+        if user is None:
+            return Response(
+                {"error": "Usuario no encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        user.active = False
+        user.save(update_fields=["active", "updated_at"])
+        return Response(
+            {"message": "Usuario dado de baja correctamente."},
+            status=status.HTTP_200_OK,
+        )
+
+
 class CreateClientView(APIView):
     permission_classes = []
     authentication_classes = []

@@ -21,6 +21,9 @@ class LoginSerializer(serializers.Serializer):
         if not user.check_password(password_input):
             raise serializers.ValidationError("Credenciales inválidas")
 
+        if not user.active:
+            raise serializers.ValidationError("La cuenta está desactivada.")
+
         data['user_obj'] = user
         return data
 
@@ -63,6 +66,28 @@ class CreateClientSerializer(serializers.Serializer):
         new_user.groups.add(cliente_group)
 
         return new_user
+
+class UpdateUserSerializer(serializers.ModelSerializer):
+    """Serializador para editar un usuario existente."""
+
+    class Meta:
+        model = User
+        fields = [
+            'user',
+            'name',
+            'lastname',
+            'school_id',
+            'active',
+        ]
+
+    def validate_user(self, value):
+        value = value.strip()
+
+        if User.objects.filter(user=value).exclude(pk=self.instance.pk if self.instance else None).exists():
+            raise serializers.ValidationError("El correo ya se encuentra registrado.")
+
+        return value
+
 
 class UserSerializer(serializers.ModelSerializer):
     groups = serializers.SerializerMethodField()
