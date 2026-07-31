@@ -130,6 +130,7 @@ export function SchoolView() {
             <BranchHeader onAddBranch={openCreate} />
             <SchoolBranchTable
               branches={activeBranches}
+              companies={companies}
               onView={openView}
             />
           </>
