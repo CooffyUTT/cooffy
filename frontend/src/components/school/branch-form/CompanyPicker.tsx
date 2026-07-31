@@ -11,8 +11,8 @@ import {
 import { SchoolCompany } from "@/types/school";
 
 interface CompanyPickerProps {
-  value: string;
-  onChange: (value: string) => void;
+  value: number | null;
+  onChange: (value: number | null) => void;
   availableCompanies: SchoolCompany[];
 }
 
@@ -23,11 +23,15 @@ export function CompanyPicker({
 }: CompanyPickerProps) {
   const selectedCompany = availableCompanies.find((c) => c.id === value);
   const displayValue = selectedCompany?.name;
+  const triggerValue = value != null ? String(value) : "";
 
   return (
     <div className="space-y-2">
       <Label htmlFor="company-select">Compañía</Label>
-      <Select value={value} onValueChange={(v) => onChange(v ?? "")}>
+      <Select
+        value={triggerValue}
+        onValueChange={(v) => onChange(v ? Number(v) : null)}
+      >
         <SelectTrigger id="company-select" className="w-full">
           <SelectValue placeholder="Selecciona una compañía">
             {displayValue}
@@ -35,7 +39,7 @@ export function CompanyPicker({
         </SelectTrigger>
         <SelectContent>
           {availableCompanies.map((c) => (
-            <SelectItem key={c.id} value={c.id}>
+            <SelectItem key={c.id} value={String(c.id)}>
               {c.name}
             </SelectItem>
           ))}

@@ -25,14 +25,14 @@ export const INITIAL_BRANCHES: Branch[] = [
 ];
 
 export const INITIAL_SCHOOL_BRANCHES: SchoolBranch[] = [
-  { id: '1', name: 'Cafetería Refugio', company: 'El Círculo',           location: 'Edificio A, Planta Baja', active: true,  createdAt: '2026-01-15T10:00:00Z', updatedAt: '2026-01-15T10:00:00Z' },
-  { id: '2', name: 'Cafetería Otay',    company: 'El Círculo',           location: 'Edificio B, Segundo Piso', active: true,  createdAt: '2026-02-20T09:30:00Z', updatedAt: '2026-03-10T14:15:00Z' },
-  { id: '3', name: 'Cafetería Central', company: 'Cafeterías del Norte', location: 'Edificio C, Lobby',        active: true,  createdAt: '2026-03-05T11:45:00Z', updatedAt: '2026-03-05T11:45:00Z' },
+  { id: 1, name: 'Cafetería Refugio', companyId: 1, companyName: 'El Círculo',           location: 'Edificio A, Planta Baja', active: true,  createdAt: '2026-01-15T10:00:00Z', updatedAt: '2026-01-15T10:00:00Z' },
+  { id: 2, name: 'Cafetería Otay',    companyId: 1, companyName: 'El Círculo',           location: 'Edificio B, Segundo Piso', active: true,  createdAt: '2026-02-20T09:30:00Z', updatedAt: '2026-03-10T14:15:00Z' },
+  { id: 3, name: 'Cafetería Central', companyId: 2, companyName: 'Cafeterías del Norte', location: null,                    active: true,  createdAt: '2026-03-05T11:45:00Z', updatedAt: '2026-03-05T11:45:00Z' },
 ];
 
 export const MOCK_COMPANIES: SchoolCompany[] = [
-  { id: 'c1', name: 'El Círculo',           ownerName: 'Juan Pérez',  contact: 'juan@elcirculo.com',  inSchool: true  },
-  { id: 'c2', name: 'Cafeterías del Norte', ownerName: 'Carlos Ruiz', contact: 'carlos@cdn.com',      inSchool: true  },
-  { id: 'c3', name: 'Cooffy S.A.',          ownerName: 'María López', contact: 'maria@cooffy.mx',     inSchool: false },
-  { id: 'c4', name: 'Bocaditos UTT',        ownerName: 'Ana Torres',  contact: 'ana@bocaditos.edu',   inSchool: false },
+  { id: 1, name: 'El Círculo',           ownerName: 'Juan Pérez',  contact: 'juan@elcirculo.com',  inSchool: true  },
+  { id: 2, name: 'Cafeterías del Norte', ownerName: 'Carlos Ruiz', contact: 'carlos@cdn.com',      inSchool: true  },
+  { id: 3, name: 'Cooffy S.A.',          ownerName: 'María López', contact: 'maria@cooffy.mx',     inSchool: false },
+  { id: 4, name: 'Bocaditos UTT',        ownerName: 'Ana Torres',  contact: 'ana@bocaditos.edu',   inSchool: false },
 ];

@@ -53,7 +53,7 @@ export function BranchDialog({
   setBranches,
 }: BranchDialogProps) {
   const company = branch
-    ? companies.find((c) => c.name === branch.company)
+    ? companies.find((c) => c.id === branch.companyId)
     : undefined;
 
   const handleClose = () => {
@@ -143,7 +143,7 @@ function BranchFormBody({
         <div className="space-y-2">
           <Label>Compañía</Label>
           <div className="rounded-lg border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm text-on-surface">
-            {branch.company}
+            {branch.companyName}
           </div>
         </div>
       ) : (

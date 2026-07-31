@@ -14,6 +14,8 @@ interface UseBranchFormProps {
   onSuccess: () => void;
 }
 
+let mockIdCounter = 1000;
+
 export function useBranchForm({
   mode,
   initialBranch,
@@ -21,38 +23,41 @@ export function useBranchForm({
   setBranches,
   onSuccess,
 }: UseBranchFormProps) {
-  const [companyValue, setCompanyValue] = useState<string>(() => {
-    if (mode !== "edit" || !initialBranch) return "";
-    return companies.find((c) => c.name === initialBranch.company)?.id ?? "";
+  const [companyValue, setCompanyValue] = useState<number | null>(() => {
+    if (mode !== "edit" || !initialBranch) return null;
+    return initialBranch.companyId;
   });
   const [name, setName] = useState(initialBranch?.name ?? "");
   const [location, setLocation] = useState(initialBranch?.location ?? "");
 
   const availableCompanies = companies.filter((c) => c.inSchool);
 
-  const canSubmit = name.trim().length > 0 && companyValue.length > 0;
+  const canSubmit =
+    name.trim().length > 0 && companyValue != null;
 
   const reset = () => {
-    setCompanyValue("");
+    setCompanyValue(null);
     setName("");
     setLocation("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || companyValue == null) return;
 
     const chosenCompany = companies.find((c) => c.id === companyValue);
     if (!chosenCompany) return;
 
     const now = new Date().toISOString();
+    const trimmedLocation = location.trim();
 
     if (mode === "edit" && initialBranch) {
       const updated: SchoolBranch = {
         ...initialBranch,
         name: name.trim(),
-        location: location.trim(),
-        company: chosenCompany.name,
+        location: trimmedLocation.length > 0 ? trimmedLocation : null,
+        companyId: chosenCompany.id,
+        companyName: chosenCompany.name,
         updatedAt: now,
       };
       setBranches((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
@@ -60,11 +65,13 @@ export function useBranchForm({
         description: `${updated.name} actualizada.`,
       });
     } else {
+      mockIdCounter += 1;
       const newBranch: SchoolBranch = {
-        id: crypto.randomUUID(),
+        id: mockIdCounter,
         name: name.trim(),
-        company: chosenCompany.name,
-        location: location.trim(),
+        companyId: chosenCompany.id,
+        companyName: chosenCompany.name,
+        location: trimmedLocation.length > 0 ? trimmedLocation : null,
         active: true,
         createdAt: now,
         updatedAt: now,

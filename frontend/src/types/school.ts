@@ -1,15 +1,16 @@
 export interface SchoolBranch {
-  id: string;
+  id: number;
   name: string;
-  company: string;
-  location: string;
+  companyId: number;
+  companyName: string;
+  location: string | null;
   active: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface SchoolCompany {
-  id: string;
+  id: number;
   name: string;
   ownerName: string;
   contact: string;

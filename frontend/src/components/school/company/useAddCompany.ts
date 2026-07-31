@@ -15,18 +15,19 @@ export function useAddCompany({
   setCompanies,
   onSuccess,
 }: UseAddCompanyProps) {
-  const [companyId, setCompanyId] = useState("");
-  const selectedCompany = companies.find((c) => c.id === companyId);
+  const [companyId, setCompanyId] = useState<number | null>(null);
+  const selectedCompany =
+    companyId != null ? companies.find((c) => c.id === companyId) : undefined;
 
-  const canSubmit = companyId.length > 0;
+  const canSubmit = companyId != null;
 
   const reset = () => {
-    setCompanyId("");
+    setCompanyId(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || companyId == null) return;
 
     if (!selectedCompany) return;
 

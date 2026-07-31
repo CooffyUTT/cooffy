@@ -67,7 +67,7 @@ export function BranchDetails({
       </div>
 
       <div className="space-y-3 rounded-lg border border-outline-variant/20 bg-surface-container-low p-4 text-sm">
-        <Field icon={Building2} label="Compañía" value={branch.company} />
+        <Field icon={Building2} label="Compañía" value={branch.companyName} />
         {company && (
           <Field icon={User} label="Gerente" value={company.ownerName} />
         )}
@@ -76,7 +76,7 @@ export function BranchDetails({
           label="Ubicación"
           value={branch.location || "Sin ubicación especificada"}
         />
-        <Field icon={Hash} label="ID" value={branch.id} mono />
+        <Field icon={Hash} label="ID" value={String(branch.id)} mono />
         <div className="grid grid-cols-2 gap-3 pt-2 border-t border-outline-variant/20">
           <Field
             icon={Calendar}

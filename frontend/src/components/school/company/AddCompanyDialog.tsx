@@ -60,7 +60,10 @@ export function AddCompanyDialog({
         <form onSubmit={form.handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="company-select">Compañía</Label>
-            <Select value={form.companyId} onValueChange={(v) => form.setCompanyId(v ?? "")}>
+            <Select
+              value={form.companyId != null ? String(form.companyId) : ""}
+              onValueChange={(v) => form.setCompanyId(v ? Number(v) : null)}
+            >
               <SelectTrigger id="company-select" className="w-full">
                 <SelectValue placeholder="Selecciona una compañía">
                   {form.selectedCompany?.name}
@@ -68,7 +71,7 @@ export function AddCompanyDialog({
               </SelectTrigger>
               <SelectContent>
                 {availableCompanies.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
+                  <SelectItem key={c.id} value={String(c.id)}>
                     {c.name}
                   </SelectItem>
                 ))}

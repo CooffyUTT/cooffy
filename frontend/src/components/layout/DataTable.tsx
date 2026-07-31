@@ -20,7 +20,7 @@ export interface Column<T> {
 interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
-  keyExtractor: (item: T) => string;
+  keyExtractor: (item: T) => string | number;
   onRowClick?: (item: T) => void;
 }
 

@@ -12,7 +12,9 @@ interface SchoolBranchTableProps {
 }
 
 interface CompanyGroup {
-  company: SchoolCompany | null;
+  companyId: number | null;
+  companyName: string;
+  ownerName: string | null;
   branches: SchoolBranch[];
 }
 
@@ -42,22 +44,23 @@ export function SchoolBranchTable({
   onView,
 }: SchoolBranchTableProps) {
   const groups = useMemo<CompanyGroup[]>(() => {
-    const byCompany = new Map<string, SchoolBranch[]>();
+    const byCompany = new Map<number, SchoolBranch[]>();
     for (const branch of branches) {
-      const list = byCompany.get(branch.company) ?? [];
+      const list = byCompany.get(branch.companyId) ?? [];
       list.push(branch);
-      byCompany.set(branch.company, list);
+      byCompany.set(branch.companyId, list);
     }
     return Array.from(byCompany.entries())
-      .map(([name, groupBranches]) => ({
-        company: companies.find((c) => c.name === name) ?? null,
-        branches: groupBranches,
-      }))
-      .sort((a, b) => {
-        const aName = a.company?.name ?? a.branches[0]?.company ?? "";
-        const bName = b.company?.name ?? b.branches[0]?.company ?? "";
-        return aName.localeCompare(bName);
-      });
+      .map(([companyId, groupBranches]) => {
+        const company = companies.find((c) => c.id === companyId) ?? null;
+        return {
+          companyId,
+          companyName: company?.name ?? groupBranches[0]?.companyName ?? "Compañía sin asignar",
+          ownerName: company?.ownerName ?? null,
+          branches: groupBranches,
+        };
+      })
+      .sort((a, b) => a.companyName.localeCompare(b.companyName));
   }, [branches, companies]);
 
   if (groups.length === 0) {
@@ -78,7 +81,7 @@ export function SchoolBranchTable({
     <div className="space-y-6">
       {groups.map((group) => (
         <section
-          key={group.company?.id ?? group.branches[0]?.company}
+          key={group.companyId}
           className="space-y-3"
         >
           <header className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3">
@@ -88,12 +91,12 @@ export function SchoolBranchTable({
               </span>
               <div className="min-w-0">
                 <h2 className="text-sm font-bold text-on-surface truncate">
-                  {group.company?.name ?? "Compañía sin asignar"}
+                  {group.companyName}
                 </h2>
-                {group.company?.ownerName && (
+                {group.ownerName && (
                   <p className="text-xs text-on-surface-variant inline-flex items-center gap-1">
                     <User className="h-3 w-3" />
-                    Gerente: {group.company.ownerName}
+                    Gerente: {group.ownerName}
                   </p>
                 )}
               </div>

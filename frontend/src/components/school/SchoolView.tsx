@@ -22,10 +22,10 @@ export function SchoolView() {
   const [companies, setCompanies] = useState(MOCK_COMPANIES);
 
   const [dialogMode, setDialogMode] = useState<BranchDialogMode>('create');
-  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
+  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
   const [isBranchDialogOpen, setIsBranchDialogOpen] = useState(false);
 
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [isAddCompanyDialogOpen, setIsAddCompanyDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export function SchoolView() {
       inSchoolCompanies.map((c) => ({
         ...c,
         branchCount: branches.filter(
-          (b) => b.company === c.name && b.active,
+          (b) => b.companyId === c.id && b.active,
         ).length,
       })),
     [inSchoolCompanies, branches],

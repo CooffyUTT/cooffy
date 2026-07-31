@@ -12,7 +12,9 @@ interface CompanyDetailsProps {
 }
 
 export function CompanyDetails({ company, branches, onClose }: CompanyDetailsProps) {
-  const companyBranches = branches.filter(b => b.company === company.name && b.active);
+  const companyBranches = branches.filter(
+    (b) => b.companyId === company.id && b.active,
+  );
 
   return (
     <div className="space-y-4">
@@ -43,7 +45,9 @@ export function CompanyDetails({ company, branches, onClose }: CompanyDetailsPro
                 <MapPin className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                 <div className="flex-1">
                   <p className="font-medium text-on-surface">{branch.name}</p>
-                  <p className="text-xs text-on-surface-variant">{branch.location}</p>
+                  <p className="text-xs text-on-surface-variant">
+                    {branch.location ?? "Sin ubicación especificada"}
+                  </p>
                 </div>
               </li>
             ))}
