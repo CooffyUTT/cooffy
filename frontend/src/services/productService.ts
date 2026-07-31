@@ -12,6 +12,13 @@ interface GetProductsParams {
   search?: string;
   ordering?: string;
   category?: number;
+  page?: number;
+}
+
+export interface PaginatedProducts {
+  count: number;
+  next: string | null;
+  results: ProductList[];
 }
 
 export async function getCategories(): Promise<Category[]> {
@@ -21,13 +28,19 @@ export async function getCategories(): Promise<Category[]> {
 
 export async function getProducts(
   params?: GetProductsParams
-): Promise<ProductList[]> {
+): Promise<PaginatedProducts> {
   const { data } = await api.get<PaginatedResponse<ProductList>>(
     "/api/menu/products/",
     { params }
   );
-  return data.results.map((p) => ({ ...p, price: Number(p.price) }));
+  return {
+    count: data.count,
+    next: data.next,
+    results: data.results.map((p) => ({ ...p, price: Number(p.price) })),
+  };
 }
+
+
 
 export async function getProduct(id: number): Promise<ProductDetail> {
   const { data } = await api.get<ProductDetail>(`/api/menu/products/${id}/`);

@@ -24,7 +24,8 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
   const { data: product, isLoading, error } = useProduct(productId);
   
   // Obtenemos todos los productos para filtrar similares y venta cruzada
-  const { data: allProducts } = useProducts();
+  const { data: productsData } = useProducts();
+  const allProducts = productsData?.results ?? [];
 
   const isAvailable = product?.isAvailable ?? true;
 
