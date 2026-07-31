@@ -31,7 +31,11 @@ export function SchoolHeader({ activeTab, onTabChange }: SchoolHeaderProps) {
   return (
     <HeaderBase
       navigation={
-        <nav role="tablist" aria-label="Secciones del panel escolar">
+        <div
+          role="tablist"
+          aria-label="Secciones del panel escolar"
+          className="flex items-center gap-6"
+        >
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -53,7 +57,7 @@ export function SchoolHeader({ activeTab, onTabChange }: SchoolHeaderProps) {
               </button>
             );
           })}
-        </nav>
+        </div>
       }
       actions={
         <button
