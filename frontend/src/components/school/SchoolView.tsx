@@ -3,35 +3,38 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SchoolBranch } from '@/types/school';
-import { INITIAL_SCHOOL_BRANCHES } from '@/data/mockBranches';
+import { INITIAL_SCHOOL_BRANCHES, MOCK_COMPANIES, MockCompany } from '@/data/mockBranches';
 import { SchoolHeader } from './SchoolHeader';
 import { BranchHeader } from '@/components/manager/BranchHeader';
 import { SchoolBranchTable } from './SchoolBranchTable';
+import { AddBranchDialog } from './AddBranchDialog';
 
 export function SchoolView() {
   const router = useRouter();
 
-  const [isAuthorized, setIsAuthorized] = useState(() => {
-    if (typeof window === "undefined") return false;
-
-    const userDataStr = localStorage.getItem("userData");
-    if (!userDataStr) return false;
-
-    try {
-      const userData = JSON.parse(userDataStr);
-      return Boolean(userData.groups && userData.groups.includes("admin_escolar"));
-    } catch {
-      return false;
-    }
-  });
-
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [branches, setBranches] = useState<SchoolBranch[]>(INITIAL_SCHOOL_BRANCHES);
+  const [companies, setCompanies] = useState<MockCompany[]>(MOCK_COMPANIES);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (!isAuthorized) {
+    const userDataStr = localStorage.getItem("userData");
+    if (!userDataStr) {
+      router.push("/");
+      return;
+    }
+    try {
+      const userData = JSON.parse(userDataStr);
+      if (userData.groups && userData.groups.includes("admin_escolar")) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsAuthorized(true);
+      } else {
+        router.push("/");
+      }
+    } catch {
       router.push("/");
     }
-  }, [isAuthorized, router]);
+  }, [router]);
 
   const handleViewBranch = (branch: SchoolBranch) => {
     alert(`Ver detalles de "${branch.name}" próximamente...`);
@@ -41,9 +44,7 @@ export function SchoolView() {
     alert(`Editar "${branch.name}" próximamente...`);
   };
 
-  const handleAddBranch = () => {
-    alert("Modal de agregar sucursal próximamente...");
-  };
+  const handleAddBranch = () => setIsAddDialogOpen(true);
 
   if (!isAuthorized) {
     return (
@@ -69,6 +70,14 @@ export function SchoolView() {
           onEdit={handleEditBranch}
         />
       </main>
+
+      <AddBranchDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        setBranches={setBranches}
+        companies={companies}
+        setCompanies={setCompanies}
+      />
     </div>
   );
 }

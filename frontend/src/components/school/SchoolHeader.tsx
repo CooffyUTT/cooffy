@@ -1,20 +1,22 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { User } from "lucide-react";
 import { HeaderBase } from "../layout/HeaderBase";
 
 export function SchoolHeader() {
-  let adminName = "Admin";
-  if (typeof window !== "undefined") {
+  const [adminName, setAdminName] = useState("Admin");
+
+  useEffect(() => {
     try {
       const userDataStr = localStorage.getItem("userData");
       if (userDataStr) {
         const userData = JSON.parse(userDataStr);
-        adminName = userData.name || "Admin";
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setAdminName(userData.name || "Admin");
       }
     } catch {}
-  }
+  }, []);
 
   return (
     <HeaderBase

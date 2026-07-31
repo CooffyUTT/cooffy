@@ -25,7 +25,7 @@ export function SchoolBranchTable({ branches, onView, onEdit }: SchoolBranchTabl
         <TableHeader>
           <TableRow className="bg-surface-container-low hover:bg-surface-container-low">
             <TableHead className="font-bold text-on-surface">Nombre</TableHead>
-            <TableHead className="font-bold text-on-surface">Gerente</TableHead>
+            <TableHead className="font-bold text-on-surface">Compañía</TableHead>
             <TableHead className="font-bold text-on-surface">Ubicación</TableHead>
             <TableHead className="font-bold text-on-surface text-right">Acciones</TableHead>
           </TableRow>
@@ -38,7 +38,7 @@ export function SchoolBranchTable({ branches, onView, onEdit }: SchoolBranchTabl
               className="cursor-pointer"
             >
               <TableCell className="font-semibold text-on-surface">{branch.name}</TableCell>
-              <TableCell className="text-on-surface-variant">{branch.manager}</TableCell>
+              <TableCell className="text-on-surface-variant">{branch.company}</TableCell>
               <TableCell className="text-on-surface-variant">{branch.location}</TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-2">

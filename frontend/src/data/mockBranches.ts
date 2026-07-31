@@ -25,7 +25,21 @@ export const INITIAL_BRANCHES: Branch[] = [
 ];
 
 export const INITIAL_SCHOOL_BRANCHES: SchoolBranch[] = [
-  { id: '1', name: 'Cafetería Refugio', manager: 'Juan Pérez',  location: 'Edificio A, Planta Baja' },
-  { id: '2', name: 'Cafetería Otay',    manager: 'María López', location: 'Edificio B, Segundo Piso' },
-  { id: '3', name: 'Cafetería Central', manager: 'Juan Pérez',  location: 'Edificio C, Lobby' },
+  { id: '1', name: 'Cafetería Refugio', company: 'El Círculo',           location: 'Edificio A, Planta Baja' },
+  { id: '2', name: 'Cafetería Otay',    company: 'El Círculo',           location: 'Edificio B, Segundo Piso' },
+  { id: '3', name: 'Cafetería Central', company: 'Cafeterías del Norte', location: 'Edificio C, Lobby' },
+];
+
+export interface MockCompany {
+  id: string;
+  name: string;
+  ownerName: string;
+  inSchool: boolean;
+}
+
+export const MOCK_COMPANIES: MockCompany[] = [
+  { id: 'c1', name: 'El Círculo',           ownerName: 'Juan Pérez',  inSchool: true  },
+  { id: 'c2', name: 'Cafeterías del Norte', ownerName: 'Carlos Ruiz', inSchool: true  },
+  { id: 'c3', name: 'Cooffy S.A.',          ownerName: 'María López', inSchool: false },
+  { id: 'c4', name: 'Bocaditos UTT',        ownerName: 'Ana Torres',  inSchool: false },
 ];

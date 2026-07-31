@@ -1,6 +1,6 @@
 export interface SchoolBranch {
   id: string;
   name: string;
-  manager: string;
+  company: string;
   location: string;
 }
