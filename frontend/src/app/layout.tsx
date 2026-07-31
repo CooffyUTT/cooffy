@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
+import Providers from "./providers";
 import "./globals.css";
 
 // Fuente principal de Cooffy
@@ -29,8 +30,10 @@ export default function RootLayout({
       className={`${plusJakarta.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
-        <Toaster position="top-right" richColors closeButton />
+        <Providers>
+          {children}
+          <Toaster position="top-right" richColors closeButton />
+        </Providers>
       </body>
     </html>
   );

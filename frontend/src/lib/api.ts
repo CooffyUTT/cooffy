@@ -24,18 +24,17 @@ api.interceptors.request.use(
   }
 );
 
-// 3. Interceptor opcional: Manejo global de expiración de token (401)
+// 3. Interceptor: Manejo global de expiración de token (401)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Si el servidor responde 401 Unauthorized, el token expiró o es inválido
       if (typeof window !== "undefined") {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("userData");
-        // Opcional: Redirigir al login si no estás en la página de login
-        if (!window.location.pathname.includes("/")) {
+        // Redirigir al login si no estás ya en la página de inicio
+        if (window.location.pathname !== "/") {
           window.location.href = "/";
         }
       }
