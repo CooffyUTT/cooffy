@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface CompanyHeaderProps {
-  onAddCompany: () => void;
+  onAddCompany?: () => void;
 }
 
 export function CompanyHeader({ onAddCompany }: CompanyHeaderProps) {
@@ -16,13 +16,15 @@ export function CompanyHeader({ onAddCompany }: CompanyHeaderProps) {
         <p className="text-xs text-on-surface-variant mt-1">Compañías vinculadas a tu escuela.</p>
       </div>
 
-      <Button
-        onClick={onAddCompany}
-        className="font-bold text-sm px-6 py-3 rounded-full shadow-md transition-all active:scale-[0.98] flex items-center gap-2"
-      >
-        <Plus size={18} />
-        Agregar compañía
-      </Button>
+      {onAddCompany && (
+        <Button
+          onClick={onAddCompany}
+          className="font-bold text-sm px-6 py-3 rounded-full shadow-md transition-all active:scale-[0.98] flex items-center gap-2"
+        >
+          <Plus size={18} />
+          Agregar compañía
+        </Button>
+      )}
     </div>
   );
 }

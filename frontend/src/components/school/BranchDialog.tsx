@@ -28,9 +28,9 @@ interface BranchDialogProps {
   branch?: SchoolBranch;
   onModeChange: (mode: BranchDialogMode) => void;
   companies: SchoolCompany[];
-  onCreate: (branch: SchoolBranch) => void;
-  onUpdate: (branch: SchoolBranch) => void;
-  onDeactivate: (branchId: number) => void;
+  onCreate: (branch: SchoolBranch) => Promise<void>;
+  onUpdate: (branch: SchoolBranch) => Promise<void>;
+  onDeactivate: (branchId: number) => Promise<void>;
 }
 
 const TITLES: Record<BranchDialogMode, string> = {
@@ -64,7 +64,7 @@ export function BranchDialog({
     onOpenChange(false);
   };
 
-  const handleDeactivate = () => {
+  const handleDeactivate = async () => {
     if (!branch) return;
     if (
       !confirm(
@@ -72,11 +72,15 @@ export function BranchDialog({
       )
     )
       return;
-    onDeactivate(branch.id);
-    toast.success("Sucursal dada de baja", {
-      description: `${branch.name} ya no aparece como activa.`,
-    });
-    handleClose();
+    try {
+      await onDeactivate(branch.id);
+      toast.success("Sucursal dada de baja", {
+        description: `${branch.name} ya no aparece como activa.`,
+      });
+      handleClose();
+    } catch {
+      toast.error("No se pudo dar de baja la sucursal");
+    }
   };
 
   return (
@@ -114,8 +118,8 @@ interface BranchFormBodyProps {
   mode: "create" | "edit";
   branch?: SchoolBranch;
   companies: SchoolCompany[];
-  onCreate: (branch: SchoolBranch) => void;
-  onUpdate: (branch: SchoolBranch) => void;
+  onCreate: (branch: SchoolBranch) => Promise<void>;
+  onUpdate: (branch: SchoolBranch) => Promise<void>;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -173,7 +177,7 @@ function BranchFormBody({
           <X className="h-4 w-4" />
           Cancelar
         </Button>
-        <Button type="submit" disabled={!form.canSubmit}>
+        <Button type="submit" disabled={!form.canSubmit || form.isSubmitting}>
           {isEditing ? (
             <>
               <Save className="h-4 w-4" />
