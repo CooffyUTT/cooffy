@@ -1,153 +1,64 @@
 ---
 name: next-best-practices
-description: Next.js best practices - file conventions, RSC boundaries, data patterns, async APIs, metadata, error handling, route handlers, image/font optimization, bundling
-user-invocable: false
+description: Use only for Next.js App Router, React Server Components, async APIs, route handlers, performance, metadata, images, fonts, or bundling.
 ---
 
-# Next.js Best Practices
+# Next.js and React
 
-Apply these rules when writing or reviewing Next.js code.
+Apply these rules only when the task involves Next.js, React or frontend
+performance. Read the existing code and configuration before changing it.
 
-## File Conventions
+## Project context
 
-See [file-conventions.md](./file-conventions.md) for:
-- Project structure and special files
-- Route segments (dynamic, catch-all, groups)
-- Parallel and intercepting routes
-- Middleware rename in v16 (middleware → proxy)
+- Next.js 16 App Router with React 19 and the React Compiler.
+- Routes live under `frontend/src/app`.
+- Use the `@/*` TypeScript alias.
+- Prefer the Node.js runtime unless the task has a clear Edge requirement.
 
-## RSC Boundaries
+## App Router rules
 
-Detect invalid React Server Component patterns.
+- Keep browser-only state, effects and event handlers in Client Components.
+- Keep Server Component props serializable and as small as practical.
+- Treat Server Actions and Route Handlers as public endpoints: validate input,
+  authenticate and authorize inside the handler.
+- Use the current async APIs for `params`, `searchParams`, `cookies()` and
+  `headers()`.
+- Use the standard file conventions for `loading.tsx`, `error.tsx`,
+  `not-found.tsx` and `generateMetadata`.
+- Add a Suspense boundary when an isolated async section should stream without
+  blocking the surrounding UI.
 
-See [rsc-boundaries.md](./rsc-boundaries.md) for:
-- Async client component detection (invalid)
-- Non-serializable props detection
-- Server Action exceptions
+## Performance rules
 
-## Async Patterns
+- Start independent requests together with `Promise.all` and defer requests
+  that are needed only on conditional paths.
+- Avoid Server Component data waterfalls by composing async components or
+  starting promises before awaiting them.
+- Dynamically load heavy, non-critical client components.
+- Avoid barrel imports when they materially increase the bundle.
+- Do not keep request-specific mutable data at module scope.
+- Derive values during render instead of syncing derived state in effects.
+- Put interaction side effects in event handlers, not state-triggered effects.
+- Use functional state updates when the next value depends on previous state.
+- Use `startTransition` or `useDeferredValue` for expensive non-urgent UI work.
+- Respect React Compiler; do not add `useMemo`, `useCallback` or `memo` without
+  a measured reason or an existing project convention.
 
-Next.js 15+ async API changes.
+## Assets and styling
 
-See [async-patterns.md](./async-patterns.md) for:
-- Async `params` and `searchParams`
-- Async `cookies()` and `headers()`
-- Migration codemod
+- Prefer `next/image` and configure new remote hosts in `next.config.ts`.
+- Use `next/font` for application fonts.
+- Keep CSS imports and Tailwind configuration aligned with the existing setup.
 
-## Runtime Selection
+## Workflow
 
-See [runtime-selection.md](./runtime-selection.md) for:
-- Default to Node.js runtime
-- When Edge runtime is appropriate
+1. Identify whether the task is routing, RSC boundaries, data fetching,
+   performance, hydration, assets or bundling.
+2. Read the relevant implementation and configuration.
+3. Make the smallest correct change.
+4. Check loading, error, authorization and hydration behavior.
+5. Run `pnpm front:lint` and `pnpm front:typecheck`.
 
-## Directives
-
-See [directives.md](./directives.md) for:
-- `'use client'`, `'use server'` (React)
-- `'use cache'` (Next.js)
-
-## Functions
-
-See [functions.md](./functions.md) for:
-- Navigation hooks: `useRouter`, `usePathname`, `useSearchParams`, `useParams`
-- Server functions: `cookies`, `headers`, `draftMode`, `after`
-- Generate functions: `generateStaticParams`, `generateMetadata`
-
-## Error Handling
-
-See [error-handling.md](./error-handling.md) for:
-- `error.tsx`, `global-error.tsx`, `not-found.tsx`
-- `redirect`, `permanentRedirect`, `notFound`
-- `forbidden`, `unauthorized` (auth errors)
-- `unstable_rethrow` for catch blocks
-
-## Data Patterns
-
-See [data-patterns.md](./data-patterns.md) for:
-- Server Components vs Server Actions vs Route Handlers
-- Avoiding data waterfalls (`Promise.all`, Suspense, preload)
-- Client component data fetching
-
-## Route Handlers
-
-See [route-handlers.md](./route-handlers.md) for:
-- `route.ts` basics
-- GET handler conflicts with `page.tsx`
-- Environment behavior (no React DOM)
-- When to use vs Server Actions
-
-## Metadata & OG Images
-
-See [metadata.md](./metadata.md) for:
-- Static and dynamic metadata
-- `generateMetadata` function
-- OG image generation with `next/og`
-- File-based metadata conventions
-
-## Image Optimization
-
-See [image.md](./image.md) for:
-- Always use `next/image` over `<img>`
-- Remote images configuration
-- Responsive `sizes` attribute
-- Blur placeholders
-- Priority loading for LCP
-
-## Font Optimization
-
-See [font.md](./font.md) for:
-- `next/font` setup
-- Google Fonts, local fonts
-- Tailwind CSS integration
-- Preloading subsets
-
-## Bundling
-
-See [bundling.md](./bundling.md) for:
-- Server-incompatible packages
-- CSS imports (not link tags)
-- Polyfills (already included)
-- ESM/CommonJS issues
-- Bundle analysis
-
-## Scripts
-
-See [scripts.md](./scripts.md) for:
-- `next/script` vs native script tags
-- Inline scripts need `id`
-- Loading strategies
-- Google Analytics with `@next/third-parties`
-
-## Hydration Errors
-
-See [hydration-error.md](./hydration-error.md) for:
-- Common causes (browser APIs, dates, invalid HTML)
-- Debugging with error overlay
-- Fixes for each cause
-
-## Suspense Boundaries
-
-See [suspense-boundaries.md](./suspense-boundaries.md) for:
-- CSR bailout with `useSearchParams` and `usePathname`
-- Which hooks require Suspense boundaries
-
-## Parallel & Intercepting Routes
-
-See [parallel-routes.md](./parallel-routes.md) for:
-- Modal patterns with `@slot` and `(.)` interceptors
-- `default.tsx` for fallbacks
-- Closing modals correctly with `router.back()`
-
-## Self-Hosting
-
-See [self-hosting.md](./self-hosting.md) for:
-- `output: 'standalone'` for Docker
-- Cache handlers for multi-instance ISR
-- What works vs needs extra setup
-
-## Debug Tricks
-
-See [debug-tricks.md](./debug-tricks.md) for:
-- MCP endpoint for AI-assisted debugging
-- Rebuild specific routes with `--debug-build-paths`
-
+Load detailed guidance only when needed from the reference files in this skill
+directory, especially `async-patterns.md`, `data-patterns.md`,
+`rsc-boundaries.md`, `bundling.md` and `hydration-error.md`.

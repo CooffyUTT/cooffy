@@ -18,6 +18,8 @@ collections:
     path: "collections/Branches"
   - name: "User"
     path: "collections/User"
+  - name: "School"
+    path: "collections/School"
 
 specs:
 

@@ -1,0 +1,36 @@
+info:
+  name: Update Branch
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: http://localhost:8000/api/branches/1/update/
+  body:
+    type: multipart-form
+    data:
+      - name: name
+        value: La Cafe
+        type: text
+      - name: location
+        value: Entre Docencia 1 y 6
+        type: text
+      - name: schedule
+        value: 09:00 - 19:00
+        type: text
+      - name: active
+        value: "true"
+        type: text
+      - name: image
+        type: file
+        value: ""
+        disabled: true
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

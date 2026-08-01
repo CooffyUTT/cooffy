@@ -40,7 +40,7 @@ class Command(BaseCommand):
         # ============================================================
         self.stdout.write(self.style.MIGRATE_HEADING("--- Creando Grupos ---"))
 
-        groups_config = ['gerente', 'cliente', 'empleado']
+        groups_config = ['gerente', 'cliente', 'empleado', 'admin_escolar']
         groups = {}
 
         for group_name in groups_config:
@@ -80,6 +80,14 @@ class Command(BaseCommand):
                 'lastname': 'Cliente',
                 'is_superuser': False,
                 'groups': [groups['cliente']],
+            },
+            {
+                'username': 'admin_escolar1',
+                'password': 'admin123',
+                'name': 'María',
+                'lastname': 'Escolar',
+                'is_superuser': False,
+                'groups': [groups['admin_escolar']],
             },
         ]
 

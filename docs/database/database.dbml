@@ -92,10 +92,21 @@ Table "public"."product_stocks" {
   }
 }
 
+Table "public"."categories" {
+  "id" bigint [pk, not null, increment, note: 'Identificador unico de la categoria.']
+  "name" varchar(80) [unique, not null, note: 'Nombre de la categoria.']
+  "active" boolean [not null, default: true, note: 'Indica si la categoria esta activa.']
+  "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creacion del registro.']
+  "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del registro.']
+
+  Note: 'Categorias utilizadas para organizar los productos del menu.'
+}
+
 Table "public"."products" {
   "id" bigint [pk, not null, note: 'Identificador unico del producto.']
   "name" varchar(120) [not null, note: 'Nombre mostrado al cliente.']
   "price" numeric(10,2) [not null, note: 'Precio de venta actual.']
+  "category_id" bigint [note: 'Categoria del producto.', ref: > "public"."categories"."id"]
   "active" boolean [not null, default: true, note: 'Determina si el producto puede ser solicitado.']
   "max_per_order" int [note: 'Cantidad maxima permitida por pedido.']
   "image" varchar(2048) [note: 'URL de la imagen del producto.']

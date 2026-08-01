@@ -23,7 +23,7 @@ export function useLoginForm() {
     user: '',
     password: '',
   });
-  
+
   const [errors, setErrors] = useState<FormErrors>({});
 
   // --- MANEJADORES VISUALES Y HELPERS ---
@@ -103,17 +103,19 @@ export function useLoginForm() {
       // 3. Lógica de Redirección según el Rol/Grupo devuelto por Django[cite: 3]
       const groups: string[] = data.user.groups || [];
 
-     if (groups.includes('gerente')) {
+      if (groups.includes('gerente')) {
         router.push('/manager');
-      } else if (groups.includes('empleado')) { 
+      } else if (groups.includes('admin_escolar')) {
+        router.push('/school');
+      } else if (groups.includes('empleado')) {
         router.push('/kitchen');
       } else if (groups.includes('cliente')) {
         router.push('/menu');
       } else {
-        router.push('/dashboard');
+        router.push('/menu');
       }
 
-    }  catch (error) {
+    } catch (error) {
       console.error('Error en el login', error);
 
       // Verificamos si el error proviene de Axios
