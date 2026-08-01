@@ -1,5 +1,28 @@
 from rest_framework import serializers
-from .models import Branch
+from .models import Branch, Company
+
+
+class CompanySerializer(serializers.ModelSerializer):
+    owner_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Company
+        fields = [
+            'id',
+            'name',
+            'owner',
+            'owner_name',
+            'active',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'owner', 'owner_name', 'created_at', 'updated_at']
+
+    def get_owner_name(self, obj):
+        owner = obj.owner
+        if not owner:
+            return None
+        return f'{owner.name} {owner.lastname or ""}'.strip()
 
 
 class BranchSerializer(serializers.ModelSerializer):
