@@ -13,8 +13,8 @@ Un administrador escolar podrá dar de alta, editar y dar de baja sucursales/tie
 
 1. Administrador escolar inicia sesión en su cuenta
 2. Mira su panel principal
-3. Da de alta una sucursal, con un gerente asignado y la información básica de la sucursal
-4. Regresando a su panel principal, ve la lista de todas las sucursales de su escuela, clasificados por gerente
+3. Da de alta una sucursal, con una compañia asignada y la información básica de la sucursal
+4. Regresando a su panel principal, ve la lista de todas las sucursales de su escuela, clasificados por compañia
 5. Al presionar una sucursal, ve los detalles de la sucursal
 6. Edita la información básica de una sucursal
 7. Da de baja a una sucursal (soft delete)

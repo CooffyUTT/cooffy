@@ -10,9 +10,13 @@ collections:
     path: "collections/Products"
   - name: "Orders"
     path: "collections/Orders"
+  - name: "School"
+    path: "collections/School"
   - name: "Branches"
     path: "collections/Branches"
+  - name: "School"
+    path: "collections/School"
 
 specs:
 
-docs: ''
+docs: ""

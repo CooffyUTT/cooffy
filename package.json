@@ -2,6 +2,8 @@
     "scripts": {
         "bru:auth": "cross-env-shell \"cd bruno/collections/Auth && bru run\"",
         "front": "pnpm --dir frontend dev",
+        "front:lint": "cross-env-shell \"pnpm --dir frontend lint; pnpm front:typecheck\"",
+        "front:typecheck": "pnpm --dir frontend typecheck",
         "front:install": "pnpm --dir frontend install",
         "back:uv": "uv --directory backend",
         "back": "pnpm back:uv run python -u manage.py runserver",
@@ -16,5 +18,6 @@
         "@usebruno/cli": "^3.5.2",
         "concurrently": "^10.0.3",
         "cross-env": "^7.0.3"
-    }
+    },
+    "packageManager": "pnpm@11.18.0+sha512.33d83c77da82f49fba836925c6f1b841181ec3132b670639bd012f7075f5c7cf634c5f870147c19aae7478fac01df09d8892e880454896edd23ee9b33757563c"
 }

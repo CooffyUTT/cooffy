@@ -37,9 +37,10 @@ interface CardMediaProps {
   badge?: React.ReactNode;
   fallbackText?: string;
   className?: string;
+  imageClassName?: string;
 }
 
-export function CardMedia({ src, alt, badge, fallbackText, className = "h-36 w-full" }: CardMediaProps) {
+export function CardMedia({ src, alt, badge, fallbackText, className = "h-36 w-full", imageClassName = "" }: CardMediaProps) {
   return (
     <div className={`relative bg-surface-container-low overflow-hidden shrink-0 ${className}`}>
       {src ? (
@@ -47,8 +48,9 @@ export function CardMedia({ src, alt, badge, fallbackText, className = "h-36 w-f
           src={src}
           alt={alt}
           fill
+          unoptimized
           sizes="(max-width: 768px) 100vw, 33vw"
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          className={`object-cover group-hover:scale-105 transition-transform duration-300 ${imageClassName}`}
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center text-[11px] text-on-surface-variant/50">

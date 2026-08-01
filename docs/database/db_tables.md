@@ -125,6 +125,24 @@ Permisos individuales. Django los genera automáticamente para cada modelo regis
 
 ---
 
+## Categories
+
+Categorías utilizadas para organizar los productos del menú.
+
+| Nombre | Dato | Default | Restricción | Comentario |
+| --- | --- | --- | --- | --- |
+| id | bigint | \- | PK, NOT NULL, AUTO_INCREMENT | Identificador único de la categoría. |
+| name | varchar(80) | \- | UNIQUE, NOT NULL | Nombre de la categoría. |
+| active | boolean | true | NOT NULL | Indica si la categoría está activa. |
+| created_at | timestamp | CURRENT_TIMESTAMP | NOT NULL | Fecha de creación del registro. |
+| updated_at | timestamp | CURRENT_TIMESTAMP | NOT NULL | Última actualización del registro. |
+
+| Relaciones | Índices |
+| --- | --- |
+| \- 1:M products (category_id) | \- (id) PK - (name) UNIQUE |
+
+---
+
 ## Products
 
 Productos disponibles para ser vendidos en el menú.
@@ -134,6 +152,7 @@ Productos disponibles para ser vendidos en el menú.
 | id  | bigint | \-  | PK, NOT NULL | Identificador único del producto. |
 | name | varchar(120) | \-  | NOT NULL | Nombre mostrado al cliente. |
 | price | numeric(10,2) | \-  | NOT NULL, CHECK (price > 0) | Precio de venta actual. |
+| category_id | bigint | \- | FK, NULL | Categoría a la que pertenece el producto. |
 | active | boolean | true | NOT NULL | Determina si el producto puede ser solicitado. |
 | max_per_order | int | \-  | CHECK (max_per_order IS NULL OR max_per_order > 0) | Cantidad máxima permitida por pedido. |
 | image | varchar(2048) | \-  | \-  | URL de la imagen del producto. |
@@ -144,7 +163,7 @@ Productos disponibles para ser vendidos en el menú.
 
 | Relaciones | Índices |
 | --- | --- |
-| \- 1:M product_stocks - 1:M order_products (item_id) | \- (id) PK |
+| \- M:1 categories (category_id) - 1:M product_stocks - 1:M order_products (item_id) | \- (id) PK - (category_id) INDEX |
 
 ---
 

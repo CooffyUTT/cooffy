@@ -1,26 +1,41 @@
+
 from django.shortcuts import render
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, filters, status, generics
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import Product
+from .models import Product, Category
 from .permissions import IsManagerOrSupervisor
 from .serializers import (
+    CategorySerializer,
     ProductMenuListSerializer,
     ProductMenuDetailSerializer,
     ProductManageSerializer,
 )
 
-class ProductMenuView(viewsets.ReadOnlyModelViewSet):
-    """Endpoint /api/menu/products/"""
-    queryset = Product.objects.filter(active=True)        # solo activos
+
+class CategoryListView(generics.ListAPIView):
+    """GET /api/menu/categories/"""
+    queryset = Category.objects.filter(active=True)
+    serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
 
+
+class ProductMenuView(viewsets.ReadOnlyModelViewSet):
+    """Endpoint /api/menu/products/"""
+    permission_classes = [IsAuthenticated]
     # Search and ordering configuration for Django
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'price', 'created_at']
     ordering = ['name']
+
+    def get_queryset(self):
+        qs = Product.objects.filter(active=True).select_related('category')
+        category = self.request.query_params.get('category')
+        if category:
+            qs = qs.filter(category_id=category)
+        return qs
 
     def get_serializer_class(self):
         if self.action == 'list':

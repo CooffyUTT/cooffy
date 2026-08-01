@@ -1,5 +1,10 @@
+from io import BytesIO
+import uuid
+
 from django.conf import settings
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models
+from PIL import Image
 
 
 class Company(models.Model):
@@ -35,6 +40,8 @@ class Branch(models.Model):
     )
     school_id = models.BigIntegerField()
     location = models.TextField(blank=True, null=True)
+    schedule = models.CharField(max_length=100, blank=True, null=True)
+    image = models.ImageField(upload_to='branches/', max_length=2048, null=True, blank=True)
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -47,6 +54,32 @@ class Branch(models.Model):
             models.Index(fields=['school_id', 'active']),
         ]
         verbose_name_plural = 'Branches'
+
+    """ Convert image to webp, resize and change name on save """
+    def save(self, *args, **kwargs):
+        if self.image and self.image.name:
+            img = Image.open(self.image)
+
+            img.thumbnail((800, 800), Image.Resampling.LANCZOS)
+
+            output = BytesIO()
+            if img.mode in ('RGBA', 'LA', 'P'):
+                img = img.convert('RGB')
+            img.save(output, format='WEBP', quality=85)
+            output.seek(0)
+
+            new_filename = f"{uuid.uuid4()}.webp"
+
+            self.image = InMemoryUploadedFile(
+                output,
+                'ImageField',
+                new_filename,
+                'image/webp',
+                output.getbuffer().nbytes,
+                None
+            )
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
