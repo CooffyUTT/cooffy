@@ -31,6 +31,8 @@ export interface PaginatedResponse<T> {
   next: string | null;
   previous: string | null;
   results: T[];
+}
+
 export interface Category {
   id: number;
   name: string;

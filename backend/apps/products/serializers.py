@@ -47,6 +47,7 @@ class ProductManageSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'price',
+            'category',
             'active',
             'max_per_order',
             'image',
