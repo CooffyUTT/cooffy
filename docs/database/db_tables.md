@@ -22,7 +22,7 @@ Instituciones educativas registradas en el sistema.
 
 | Relaciones | Índices |
 | --- | --- |
-| \- 1:1 users (admin) - 1:M branches - 1:M users (school_id) | \- (id) PK - (full_name) UNIQUE - (short_name) UNIQUE |
+| \- 1:1 users (admin) - 1:M branches - 1:M users (school_id) - M:M companies vía company_schools | \- (id) PK - (full_name) UNIQUE - (short_name) UNIQUE |
 
 ---
 
@@ -41,7 +41,26 @@ Empresas propietarias de una o más sucursales.
 
 | Relaciones | Índices |
 | --- | --- |
-| \- 1:1 users (owner_id) - 1:M branches | \- (id) PK |
+| \- 1:1 users (owner_id) - 1:M branches - M:M schools vía company_schools | \- (id) PK |
+
+---
+
+## Company_schools
+
+Tabla de unión (M:M) que vincula una compañía con las escuelas donde puede operar. Una compañía puede operar en varias escuelas y una escuela puede tener varias compañías. Solo se pueden crear sucursales con compañías vinculadas a la escuela.
+
+| Nombre | Dato | Default | Restricción | Comentario |
+| --- | --- | --- | --- | --- |
+| id  | bigint | \-  | PK, NOT NULL, AUTO_INCREMENT | Identificador único del vínculo. |
+| company_id | bigint | \-  | NOT NULL, FK | Compañía vinculada. |
+| school_id | bigint | \-  | NOT NULL, FK | Escuela vinculada. |
+| active | boolean | true | NOT NULL | Indica si la compañía puede operar en la escuela. |
+| created_at | timestamp | CURRENT_TIMESTAMP | NOT NULL | Fecha de creación del vínculo. |
+| updated_at | timestamp | CURRENT_TIMESTAMP | NOT NULL | Última actualización del vínculo. |
+
+| Relaciones | Índices |
+| --- | --- |
+| \- M:1 companies (company_id) - M:1 schools (school_id) | \- (id) PK - (company_id, school_id) UNIQUE - (school_id, active) INDEX - (company_id, active) INDEX |
 
 ---
 

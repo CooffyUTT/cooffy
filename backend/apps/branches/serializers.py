@@ -1,11 +1,11 @@
 from rest_framework import serializers
 from .models import Branch
-from apps.schools.models import School
 
 
 class BranchSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
     school_name = serializers.SerializerMethodField()
+    school_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Branch
@@ -26,8 +26,10 @@ class BranchSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_school_name(self, obj):
-        school = School.objects.filter(pk=obj.school_id).first()
-        return school.short_name if school else None
+        return obj.school.short_name if obj.school_id else None
+
+    def get_school_id(self, obj):
+        return obj.school_id
 
 
 class BranchUpdateSerializer(serializers.ModelSerializer):
