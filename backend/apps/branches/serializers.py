@@ -55,6 +55,28 @@ class BranchSerializer(serializers.ModelSerializer):
         return obj.school_id
 
 
+class BranchCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = ['name', 'company', 'location', 'schedule', 'image']
+
+    def validate_company(self, company):
+        if not company.active:
+            raise serializers.ValidationError(
+                'La compañía seleccionada está inactiva.'
+            )
+
+        school = self.context.get('school')
+        if school is None or not company.school_links.filter(
+            school=school,
+            active=True,
+        ).exists():
+            raise serializers.ValidationError(
+                'La compañía no está vinculada a la escuela administrada.'
+            )
+        return company
+
+
 class BranchUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Branch

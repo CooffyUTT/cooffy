@@ -10,12 +10,13 @@ from .permissions import (
 )
 from .serializers import (
     BranchSerializer,
+    BranchCreateSerializer,
     BranchUpdateSerializer,
     CompanySerializer,
 )
 
 
-class BranchViewSet(viewsets.ReadOnlyModelViewSet):
+class BranchViewSet(viewsets.ModelViewSet):
     """Consulta de sucursales para gerentes y administradores escolares.
 
     Query params opcionales:
@@ -93,6 +94,58 @@ class BranchViewSet(viewsets.ReadOnlyModelViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        if not request.user.groups.filter(name='admin_escolar').exists():
+            return Response(
+                {'detail': 'Solo los administradores escolares pueden crear sucursales.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        school = self.get_school()
+        serializer = BranchCreateSerializer(
+            data=request.data,
+            context={'request': request, 'school': school},
+        )
+        serializer.is_valid(raise_exception=True)
+        branch = serializer.save(school=school)
+        return Response(
+            BranchSerializer(branch, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        branch = self.get_object()
+        serializer = BranchUpdateSerializer(
+            branch,
+            data=request.data,
+            partial=partial,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            BranchSerializer(branch, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        branch = self.get_object()
+        if not branch.active:
+            return Response(
+                {'detail': 'La sucursal ya está dada de baja.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        branch.active = False
+        branch.save(update_fields=['active', 'updated_at'])
+        return Response(
+            BranchSerializer(branch, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=['delete'], url_path='deactivate')
+    def deactivate(self, request, pk=None):
+        return self.destroy(request, pk=pk)
 
     @action(detail=True, methods=["put"], url_path="update")
     def update_branch(self, request, pk=None):
