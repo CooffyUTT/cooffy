@@ -49,6 +49,9 @@ class BranchPermissionsTests(APITestCase):
         self.other_company = Company.objects.create(
             name='Otra Empresa', owner=self.manager
         )
+        self.available_company = Company.objects.create(
+            name='Empresa Disponible', owner=self.manager
+        )
         CompanySchool.objects.create(company=self.company, school=self.school)
         CompanySchool.objects.create(
             company=self.other_company, school=self.other_school
@@ -151,6 +154,72 @@ class BranchPermissionsTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.branch.refresh_from_db()
         self.assertFalse(self.branch.active)
+
+    def test_school_admin_lists_available_companies(self):
+        self.authenticate(self.school_admin)
+        response = self.client.get('/api/branches/companies/available/')
+        self.assertEqual(response.status_code, 200)
+        ids = [company['id'] for company in response.json()]
+        self.assertIn(self.available_company.id, ids)
+        self.assertNotIn(self.company.id, ids)
+
+    def test_school_admin_links_existing_company(self):
+        self.authenticate(self.school_admin)
+        response = self.client.post(
+            '/api/branches/companies/link/',
+            {'company': self.available_company.id},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(
+            CompanySchool.objects.filter(
+                company=self.available_company,
+                school=self.school,
+                active=True,
+            ).exists()
+        )
+        self.assertFalse(
+            Branch.objects.filter(company=self.available_company).exists()
+        )
+
+    def test_school_admin_can_reactivate_company_link(self):
+        link = CompanySchool.objects.create(
+            company=self.available_company,
+            school=self.school,
+            active=False,
+        )
+        self.authenticate(self.school_admin)
+        response = self.client.post(
+            '/api/branches/companies/link/',
+            {'company': self.available_company.id},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 200)
+        link.refresh_from_db()
+        self.assertTrue(link.active)
+
+    def test_school_admin_cannot_link_company_twice(self):
+        self.authenticate(self.school_admin)
+        self.client.post(
+            '/api/branches/companies/link/',
+            {'company': self.available_company.id},
+            format='json',
+        )
+        response = self.client.post(
+            '/api/branches/companies/link/',
+            {'company': self.available_company.id},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_manager_cannot_link_company(self):
+        self.authenticate(self.manager)
+        response = self.client.post(
+            '/api/branches/companies/link/',
+            {'company': self.available_company.id},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 403)
 
     def test_manager_cannot_create_branch(self):
         self.authenticate(self.manager)

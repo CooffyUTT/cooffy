@@ -1,8 +1,10 @@
+from django.db import transaction
+from django.db.models import Q
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import Company, Branch
+from .models import Company, CompanySchool, Branch
 from .permissions import (
     IsManagerPermission,
     IsSchoolAdminPermission,
@@ -12,6 +14,7 @@ from .serializers import (
     BranchSerializer,
     BranchCreateSerializer,
     BranchUpdateSerializer,
+    CompanyLinkSerializer,
     CompanySerializer,
 )
 
@@ -177,7 +180,39 @@ class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
         school = get_admin_school(self.request.user)
         if school is None:
             return Company.objects.none()
-        return Company.objects.filter(
-            schools=school,
-            active=True,
-        ).select_related('owner').distinct()
+        queryset = Company.objects.filter(active=True).select_related('owner')
+        if self.action == 'available':
+            return queryset.exclude(
+                Q(school_links__school=school, school_links__active=True),
+            ).distinct()
+        return queryset.filter(
+            school_links__school=school,
+            school_links__active=True,
+        ).distinct()
+
+    @action(detail=False, methods=['get'], url_path='available')
+    def available(self, request):
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], url_path='link')
+    def link(self, request):
+        school = get_admin_school(request.user)
+        serializer = CompanyLinkSerializer(
+            data=request.data,
+            context={'request': request, 'school': school},
+        )
+        serializer.is_valid(raise_exception=True)
+        company = serializer.validated_data['company']
+
+        with transaction.atomic():
+            _, created = CompanySchool.objects.update_or_create(
+                company=company,
+                school=school,
+                defaults={'active': True},
+            )
+
+        return Response(
+            CompanySerializer(company, context={'request': request}).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )

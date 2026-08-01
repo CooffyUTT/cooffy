@@ -25,6 +25,24 @@ class CompanySerializer(serializers.ModelSerializer):
         return f'{owner.name} {owner.lastname or ""}'.strip()
 
 
+class CompanyLinkSerializer(serializers.Serializer):
+    company = serializers.PrimaryKeyRelatedField(
+        queryset=Company.objects.filter(active=True),
+    )
+
+    def validate_company(self, company):
+        school = self.context.get('school')
+        if school is None:
+            raise serializers.ValidationError(
+                'El administrador no tiene una escuela activa asignada.'
+            )
+        if company.school_links.filter(school=school, active=True).exists():
+            raise serializers.ValidationError(
+                'La compañía ya está vinculada a esta escuela.'
+            )
+        return company
+
+
 class BranchSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
     school_name = serializers.SerializerMethodField()
