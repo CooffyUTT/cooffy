@@ -15,6 +15,21 @@ export async function getSchoolCompanies(): Promise<SchoolCompanyApi[]> {
   return response.data.results;
 }
 
+export async function getAvailableSchoolCompanies(): Promise<SchoolCompanyApi[]> {
+  const response = await api.get<SchoolCompanyApi[]>(
+    '/api/branches/companies/available/',
+  );
+  return response.data;
+}
+
+export async function linkSchoolCompany(companyId: number): Promise<SchoolCompanyApi> {
+  const response = await api.post<SchoolCompanyApi>(
+    '/api/branches/companies/link/',
+    { company: companyId },
+  );
+  return response.data;
+}
+
 export async function createSchoolBranch(input: {
   name: string;
   company: number;

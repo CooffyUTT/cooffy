@@ -26,7 +26,7 @@ interface AddCompanyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   companies: SchoolCompany[];
-  onLinkCompany: (companyId: number) => void;
+  onLinkCompany: (companyId: number) => Promise<void>;
 }
 
 export function AddCompanyDialog({
@@ -103,7 +103,7 @@ export function AddCompanyDialog({
               <X className="h-4 w-4" />
               Cancelar
             </Button>
-            <Button type="submit" disabled={!form.canSubmit}>
+            <Button type="submit" disabled={!form.canSubmit || form.isSubmitting}>
               <Building2 className="h-4 w-4" />
               Vincular compañía
             </Button>

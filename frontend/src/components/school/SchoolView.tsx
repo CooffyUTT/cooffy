@@ -6,8 +6,10 @@ import { SchoolBranch, SchoolCompany, SchoolCompanyWithMeta } from "@/types/scho
 import {
   createSchoolBranch,
   deactivateSchoolBranch,
+  getAvailableSchoolCompanies,
   getSchoolBranches,
   getSchoolCompanies,
+  linkSchoolCompany,
   updateSchoolBranch,
 } from "@/lib/schoolApi";
 import { mapSchoolBranch, mapSchoolCompany } from "@/lib/schoolMappers";
@@ -18,6 +20,7 @@ import { BranchDialog, BranchDialogMode } from "./BranchDialog";
 import { CompanyHeader } from "./company/CompanyHeader";
 import { CompanyTable } from "./company/CompanyTable";
 import { CompanyDetailsDialog } from "./company/CompanyDetailsDialog";
+import { AddCompanyDialog } from "./company/AddCompanyDialog";
 
 export function SchoolView() {
   const router = useRouter();
@@ -27,10 +30,12 @@ export function SchoolView() {
   const [activeTab, setActiveTab] = useState<"branches" | "companies">("branches");
   const [branches, setBranches] = useState<SchoolBranch[]>([]);
   const [companies, setCompanies] = useState<SchoolCompany[]>([]);
+  const [availableCompanies, setAvailableCompanies] = useState<SchoolCompany[]>([]);
   const [dialogMode, setDialogMode] = useState<BranchDialogMode>("create");
   const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
   const [isBranchDialogOpen, setIsBranchDialogOpen] = useState(false);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [isAddCompanyDialogOpen, setIsAddCompanyDialogOpen] = useState(false);
 
   useEffect(() => {
     const userDataStr = localStorage.getItem("userData");
@@ -48,10 +53,19 @@ export function SchoolView() {
 
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAuthorized(true);
-      Promise.all([getSchoolBranches(), getSchoolCompanies()])
-        .then(([branchData, companyData]) => {
+      Promise.all([
+        getSchoolBranches(),
+        getSchoolCompanies(),
+        getAvailableSchoolCompanies(),
+      ])
+        .then(([branchData, companyData, availableCompanyData]) => {
           setBranches(branchData.map(mapSchoolBranch));
-          setCompanies(companyData.map(mapSchoolCompany));
+          setCompanies(companyData.map((company) => mapSchoolCompany(company)));
+          setAvailableCompanies(
+            availableCompanyData.map((company) =>
+              mapSchoolCompany(company, false),
+            ),
+          );
         })
         .catch(() => {
           setLoadError("No se pudo cargar la información de la escuela.");
@@ -130,6 +144,17 @@ export function SchoolView() {
     );
   };
 
+  const handleLinkCompany = async (companyId: number) => {
+    const linkedCompany = await linkSchoolCompany(companyId);
+    setCompanies((previous) => [
+      ...previous,
+      mapSchoolCompany(linkedCompany),
+    ]);
+    setAvailableCompanies((previous) =>
+      previous.filter((company) => company.id !== companyId),
+    );
+  };
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] font-['Plus_Jakarta_Sans',sans-serif]">
@@ -185,7 +210,7 @@ export function SchoolView() {
           </>
         ) : (
           <>
-            <CompanyHeader />
+            <CompanyHeader onAddCompany={() => setIsAddCompanyDialogOpen(true)} />
             <CompanyTable
               companies={companiesWithMeta}
               onRowClick={(company) => setSelectedCompanyId(company.id)}
@@ -204,6 +229,13 @@ export function SchoolView() {
         onCreate={handleCreateBranch}
         onUpdate={handleUpdateBranch}
         onDeactivate={handleDeactivateBranch}
+      />
+
+      <AddCompanyDialog
+        open={isAddCompanyDialogOpen}
+        onOpenChange={setIsAddCompanyDialogOpen}
+        companies={availableCompanies}
+        onLinkCompany={handleLinkCompany}
       />
 
       {selectedCompany && (

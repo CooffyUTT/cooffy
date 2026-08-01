@@ -22,12 +22,15 @@ export function mapSchoolBranch(response: SchoolBranchApi): SchoolBranch {
   };
 }
 
-export function mapSchoolCompany(response: SchoolCompanyApi): SchoolCompany {
+export function mapSchoolCompany(
+  response: SchoolCompanyApi,
+  inSchool = true,
+): SchoolCompany {
   return {
     id: response.id,
     name: response.name,
     ownerName: response.owner_name ?? "Sin gerente asignado",
     contact: "No disponible",
-    inSchool: true,
+    inSchool,
   };
 }
