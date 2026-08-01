@@ -5,14 +5,15 @@ import { Store, UserCircle2, User } from "lucide-react";
 import { HeaderBase } from "../layout/HeaderBase";
 
 interface ManagerHeaderProps {
-  activeTab: "branches" | "users" | "dashboard";
-  setActiveTab: (tab: "branches" | "users" | "dashboard") => void;
+  activeTab: "branches" | "menu" | "users" | "dashboard";
+  setActiveTab: (tab: "branches" | "menu" | "users" | "dashboard") => void;
   userName?: string;
 }
 
 export function ManagerHeader({ activeTab, setActiveTab, userName = "Juan" }: ManagerHeaderProps) {
   const tabs = [
     { id: "branches", label: "Sucursales" },
+    { id: "menu", label: "Menú" },
     { id: "users", label: "Usuarios" },
     { id: "dashboard", label: "Dashboard" },
   ] as const;

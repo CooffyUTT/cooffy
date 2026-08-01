@@ -10,9 +10,10 @@ interface BranchCardProps {
   branch: Branch;
   onDelete: (id: string, name: string) => void;
   onSave: (id: string, data: BranchUpdateData) => Promise<boolean>;
+  onManage?: (id: string) => void;
 }
 
-export function BranchCard({ branch, onDelete, onSave }: BranchCardProps) {
+export function BranchCard({ branch, onDelete, onSave, onManage }: BranchCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -210,7 +211,10 @@ export function BranchCard({ branch, onDelete, onSave }: BranchCardProps) {
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
 
-                <button className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-primary text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                <button
+                  onClick={() => onManage?.(branch.id)}
+                  className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-primary text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer"
+                >
                   Gestionar <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>

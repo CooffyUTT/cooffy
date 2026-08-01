@@ -25,6 +25,8 @@
   sends credentials and attaches the stored access token.
 - Product and category queries use `src/services/productService.ts` and the
   `/api/menu/` endpoints.
+- Manager menu management uses `src/lib/productsApi.ts` against
+  `/api/menu/manage/products/` (create, update, delete and toggle-active).
 - On a 401, the API client clears local storage and redirects to `/`.
 - Kitchen and school views still use mock data; do not assume those screens are
   connected to the backend APIs.

@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { ManagerHeader } from './ManagerHeader';
 import { BranchHeader } from './BranchHeader';
 import { BranchCard } from './BranchCard';
+import { MenuManagerView } from './menu/MenuManagerView';
 
 interface BackendBranch {
   id: number;
@@ -60,7 +61,8 @@ export function ManagerView() {
 
     try {
       const userData = JSON.parse(userDataStr);
-      return Boolean(userData.groups && userData.groups.includes("gerente"));
+      const groups: string[] = userData.groups ?? [];
+      return groups.includes("gerente") || groups.includes("supervisor");
     } catch {
       return false;
     }
@@ -69,7 +71,7 @@ export function ManagerView() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(true);
   const [branchesError, setBranchesError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'branches' | 'users' | 'dashboard'>('branches');
+  const [activeTab, setActiveTab] = useState<'branches' | 'menu' | 'users' | 'dashboard'>('branches');
 
   useEffect(() => {
     if (!isAuthorized) {
@@ -137,6 +139,10 @@ export function ManagerView() {
     alert("Modal de agregar sucursal próximamente...");
   };
 
+  const handleManageBranch = () => {
+    setActiveTab('menu');
+  };
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] font-['Plus_Jakarta_Sans',sans-serif]">
@@ -153,31 +159,38 @@ export function ManagerView() {
       <ManagerHeader activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
-        <BranchHeader onAddBranch={handleAddBranch} />
-
-        {isLoadingBranches ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : branchesError ? (
-          <div className="text-center py-16 text-sm text-on-surface-variant">
-            {branchesError}
-          </div>
-        ) : branches.length === 0 ? (
-          <div className="text-center py-16 text-sm text-on-surface-variant">
-            No tienes sucursales registradas.
-          </div>
+        {activeTab === 'menu' ? (
+          <MenuManagerView />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-            {branches.map((branch) => (
-              <BranchCard
-                key={branch.id}
-                branch={branch}
-                onDelete={handleDeleteBranch}
-                onSave={handleUpdateBranch}
-              />
-            ))}
-          </div>
+          <>
+            <BranchHeader onAddBranch={handleAddBranch} />
+
+            {isLoadingBranches ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : branchesError ? (
+              <div className="text-center py-16 text-sm text-on-surface-variant">
+                {branchesError}
+              </div>
+            ) : branches.length === 0 ? (
+              <div className="text-center py-16 text-sm text-on-surface-variant">
+                No tienes sucursales registradas.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+                {branches.map((branch) => (
+                  <BranchCard
+                    key={branch.id}
+                    branch={branch}
+                    onDelete={handleDeleteBranch}
+                    onSave={handleUpdateBranch}
+                    onManage={handleManageBranch}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
