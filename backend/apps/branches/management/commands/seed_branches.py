@@ -71,7 +71,7 @@ class Command(BaseCommand):
 
         admin_user = User.objects.get(user='admin')
 
-        school_admin = User.objects.filter(user='admin_escolar1').first()
+        school_admin = User.objects.filter(user='school_admin').first()
         school, _ = School.objects.get_or_create(
             id=SEED_SCHOOL_ID,
             defaults={
