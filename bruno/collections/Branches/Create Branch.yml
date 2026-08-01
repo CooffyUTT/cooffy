@@ -1,0 +1,32 @@
+info:
+  name: Create Branch
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://localhost:8000/api/branches/
+  body:
+    type: form-urlencoded
+    data:
+      - name: name
+        value: "Cafetería Nueva"
+        type: text
+      - name: company
+        value: "1"
+        type: text
+      - name: location
+        value: "Edificio C, Planta Baja"
+        type: text
+      - name: schedule
+        value: "08:00 - 16:00"
+        type: text
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

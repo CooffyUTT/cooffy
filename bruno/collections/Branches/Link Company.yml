@@ -1,0 +1,22 @@
+info:
+  name: Link Company
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: http://localhost:8000/api/branches/companies/link/
+  body:
+    type: form-urlencoded
+    data:
+      - name: company
+        value: "{{?company id}}"
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
