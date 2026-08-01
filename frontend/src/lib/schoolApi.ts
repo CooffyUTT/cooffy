@@ -1,41 +1,17 @@
 import { api } from "@/lib/api";
-
-export interface ApiBranch {
-  id: number;
-  name: string;
-  company: number;
-  company_name: string;
-  school_id: number;
-  school_name: string | null;
-  location: string | null;
-  schedule: string | null;
-  image: string | null;
-  active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ApiCompany {
-  id: number;
-  name: string;
-  owner: number;
-  owner_name: string | null;
-  active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { SchoolBranchApi, SchoolCompanyApi } from "@/types/school";
 
 interface Paginated<T> {
   results: T[];
 }
 
-export async function getSchoolBranches(): Promise<ApiBranch[]> {
-  const response = await api.get<ApiBranch[]>('/api/branches/');
+export async function getSchoolBranches(): Promise<SchoolBranchApi[]> {
+  const response = await api.get<SchoolBranchApi[]>('/api/branches/');
   return response.data;
 }
 
-export async function getSchoolCompanies(): Promise<ApiCompany[]> {
-  const response = await api.get<Paginated<ApiCompany>>('/api/branches/companies/');
+export async function getSchoolCompanies(): Promise<SchoolCompanyApi[]> {
+  const response = await api.get<Paginated<SchoolCompanyApi>>('/api/branches/companies/');
   return response.data.results;
 }
 
@@ -43,21 +19,21 @@ export async function createSchoolBranch(input: {
   name: string;
   company: number;
   location?: string;
-}): Promise<ApiBranch> {
-  const response = await api.post<ApiBranch>('/api/branches/', input);
+}): Promise<SchoolBranchApi> {
+  const response = await api.post<SchoolBranchApi>('/api/branches/', input);
   return response.data;
 }
 
 export async function updateSchoolBranch(
   branchId: number,
   input: { name: string; location?: string },
-): Promise<ApiBranch> {
-  const response = await api.patch<ApiBranch>(`/api/branches/${branchId}/`, input);
+): Promise<SchoolBranchApi> {
+  const response = await api.patch<SchoolBranchApi>(`/api/branches/${branchId}/`, input);
   return response.data;
 }
 
-export async function deactivateSchoolBranch(branchId: number): Promise<ApiBranch> {
-  const response = await api.delete<ApiBranch>(
+export async function deactivateSchoolBranch(branchId: number): Promise<SchoolBranchApi> {
+  const response = await api.delete<SchoolBranchApi>(
     `/api/branches/${branchId}/deactivate/`,
   );
   return response.data;

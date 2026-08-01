@@ -4,14 +4,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SchoolBranch, SchoolCompany, SchoolCompanyWithMeta } from "@/types/school";
 import {
-  ApiBranch,
-  ApiCompany,
   createSchoolBranch,
   deactivateSchoolBranch,
   getSchoolBranches,
   getSchoolCompanies,
   updateSchoolBranch,
 } from "@/lib/schoolApi";
+import { mapSchoolBranch, mapSchoolCompany } from "@/lib/schoolMappers";
 import { SchoolHeader } from "./SchoolHeader";
 import { BranchPageHeader } from "./BranchPageHeader";
 import { SchoolBranchTable } from "./SchoolBranchTable";
@@ -19,29 +18,6 @@ import { BranchDialog, BranchDialogMode } from "./BranchDialog";
 import { CompanyHeader } from "./company/CompanyHeader";
 import { CompanyTable } from "./company/CompanyTable";
 import { CompanyDetailsDialog } from "./company/CompanyDetailsDialog";
-
-function mapBranch(branch: ApiBranch): SchoolBranch {
-  return {
-    id: branch.id,
-    name: branch.name,
-    companyId: branch.company,
-    companyName: branch.company_name,
-    location: branch.location,
-    active: branch.active,
-    createdAt: branch.created_at,
-    updatedAt: branch.updated_at,
-  };
-}
-
-function mapCompany(company: ApiCompany): SchoolCompany {
-  return {
-    id: company.id,
-    name: company.name,
-    ownerName: company.owner_name ?? "Sin gerente asignado",
-    contact: "No disponible",
-    inSchool: true,
-  };
-}
 
 export function SchoolView() {
   const router = useRouter();
@@ -74,8 +50,8 @@ export function SchoolView() {
       setIsAuthorized(true);
       Promise.all([getSchoolBranches(), getSchoolCompanies()])
         .then(([branchData, companyData]) => {
-          setBranches(branchData.map(mapBranch));
-          setCompanies(companyData.map(mapCompany));
+          setBranches(branchData.map(mapSchoolBranch));
+          setCompanies(companyData.map(mapSchoolCompany));
         })
         .catch(() => {
           setLoadError("No se pudo cargar la información de la escuela.");
@@ -130,7 +106,7 @@ export function SchoolView() {
       company: branch.companyId,
       location: branch.location ?? undefined,
     });
-    setBranches((previous) => [mapBranch(created), ...previous]);
+    setBranches((previous) => [mapSchoolBranch(created), ...previous]);
   };
 
   const handleUpdateBranch = async (branch: SchoolBranch) => {
@@ -139,7 +115,9 @@ export function SchoolView() {
       location: branch.location ?? undefined,
     });
     setBranches((previous) =>
-      previous.map((item) => (item.id === branch.id ? mapBranch(updated) : item)),
+      previous.map((item) =>
+        item.id === branch.id ? mapSchoolBranch(updated) : item,
+      ),
     );
   };
 
@@ -147,7 +125,7 @@ export function SchoolView() {
     const deactivated = await deactivateSchoolBranch(branchId);
     setBranches((previous) =>
       previous.map((item) =>
-        item.id === branchId ? mapBranch(deactivated) : item,
+        item.id === branchId ? mapSchoolBranch(deactivated) : item,
       ),
     );
   };
