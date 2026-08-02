@@ -1,9 +1,9 @@
-from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Sum, Max
+from django.db.models import Max
 from rest_framework import serializers
 from .models import Order, OrderProduct
+from apps.products.models import Product
 
 
 class OrderProductSerializer(serializers.ModelSerializer):
@@ -11,6 +11,22 @@ class OrderProductSerializer(serializers.ModelSerializer):
         model = OrderProduct
         fields = ['id', 'item_id', 'quantity', 'price', 'excluded_modifiers']
         read_only_fields = ('id',)
+
+
+class OrderProductCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderProduct
+        fields = ['item_id', 'quantity', 'excluded_modifiers']
+
+    def validate_item_id(self, value):
+        if not Product.objects.filter(pk=value).exists():
+            raise serializers.ValidationError("El producto no existe.")
+        return value
+
+    def validate_quantity(self, value):
+        if value < 1:
+            raise serializers.ValidationError("La cantidad debe ser al menos 1.")
+        return value
 
 
 class OrderListSerializer(serializers.ModelSerializer):
@@ -54,7 +70,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    order_products = OrderProductSerializer(many=True)
+    order_products = OrderProductCreateSerializer(many=True)
 
     class Meta:
         model = Order
@@ -69,6 +85,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             'comment',
             'order_products',
         ]
+        read_only_fields = ('total',)
 
     def validate_order_products(self, value):
         if not value:
@@ -79,21 +96,31 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         products_data = validated_data.pop('order_products')
 
+        item_ids = [p['item_id'] for p in products_data]
+        products = Product.objects.in_bulk(item_ids)
+
         max_num = Order.objects.aggregate(max_num=Max('order_number'))['max_num'] or 0
         order_number = max_num + 1
 
-        date = timezone.now().date()
-
         order = Order.objects.create(
             order_number=order_number,
-            date=date,
-            **validated_data
+            date=timezone.now().date(),
+            **validated_data,
         )
 
+        order_products = []
         for p in products_data:
-            OrderProduct.objects.create(order=order, **p)
+            product = products[p['item_id']]
+            order_products.append(
+                OrderProduct(
+                    order=order,
+                    price=product.price * p['quantity'],
+                    **p,
+                )
+            )
+        OrderProduct.objects.bulk_create(order_products)
 
-        order.total = order.order_products.aggregate(total=Sum('price'))['total'] or Decimal('0.00')
+        order.total = sum(op.price for op in order_products)
         order.save(update_fields=['total'])
 
         return order

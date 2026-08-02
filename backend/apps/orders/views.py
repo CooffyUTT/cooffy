@@ -12,6 +12,7 @@ from .serializers import (
     OrderListSerializer,
     OrderDetailSerializer,
     OrderCreateSerializer,
+    OrderProductCreateSerializer,
 )
 from apps.products.models import Product
 
@@ -77,23 +78,17 @@ class OrderViewSet(viewsets.ModelViewSet):
     def add_product(self, request, pk=None):
         order = self.get_object()
 
-        quantity = int(request.data.get("quantity", 1))
-        item_id = request.data.get("item_id")
+        serializer = OrderProductCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
 
-        if request.data.get("price") is not None:
-            unit_price = Decimal(str(request.data.get("price")))
-        else:
-            product = get_object_or_404(Product, pk=item_id)
-            unit_price = product.price
-
-        line_total = unit_price * quantity
+        product = Product.objects.get(pk=data["item_id"])
+        line_total = product.price * data["quantity"]
 
         OrderProduct.objects.create(
             order=order,
-            item_id=item_id,
-            quantity=quantity,
             price=line_total,
-            excluded_modifiers=request.data.get("excluded_modifiers", []),
+            **data,
         )
 
         order.total = order.order_products.aggregate(total=Sum("price"))["total"] or Decimal("0.00")
