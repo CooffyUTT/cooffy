@@ -1,8 +1,10 @@
 from decimal import Decimal
+from datetime import datetime
 from django.db import transaction
 from django.db.models import Sum
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -24,6 +26,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     search_fields = ["order_number", "state", "payment_status"]
     ordering_fields = ["created_at", "date", "order_number"]
     ordering = ["-created_at"]
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -38,9 +41,21 @@ class OrderViewSet(viewsets.ModelViewSet):
         qs = super().get_queryset()
         user = getattr(self.request, "user", None)
         client_id = self.request.query_params.get("client_id")
+        date = self.request.query_params.get("date")
+        state = self.request.query_params.get("state")
 
         if client_id is not None:
             qs = qs.filter(client_id=client_id)
+
+        if date:
+            try:
+                datetime.strptime(date, "%Y-%m-%d")
+            except ValueError:
+                raise ValidationError({"date": "Formato de fecha inválido. Use YYYY-MM-DD."})
+            qs = qs.filter(date=date)
+
+        if state:
+            qs = qs.filter(state=state)
 
         if user and not getattr(user, "is_staff", False):
             qs = qs.filter(client_id=getattr(user, "id", None))
