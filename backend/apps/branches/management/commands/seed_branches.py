@@ -9,7 +9,11 @@ Usage:
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from apps.users.models import User
-from apps.branches.models import Company, Branch
+from apps.branches.models import Company, CompanySchool, Branch
+from apps.schools.models import School
+
+
+SEED_SCHOOL_ID = 10001
 
 SEED_BRANCHES = [
     {
@@ -17,12 +21,10 @@ SEED_BRANCHES = [
         "branches": [
             {
                 "name": "La Cafe",
-                "school_id": 10001,
                 "location": "Entre Docencia 1 y 6",
             },
             {
                 "name": "Tiendita UTT",
-                "school_id": 10001,
                 "location": "A Lado de Vinculación",
             },
         ],
@@ -32,7 +34,6 @@ SEED_BRANCHES = [
         "branches": [
             {
                 "name": "Tiendita Don Andres",
-                "school_id": 10001,
                 "location": "Frente Biblioteca",
             },
         ],
@@ -70,6 +71,24 @@ class Command(BaseCommand):
 
         admin_user = User.objects.get(user='admin')
 
+        school_admin = User.objects.filter(user='school_admin').first()
+        school, _ = School.objects.get_or_create(
+            id=SEED_SCHOOL_ID,
+            defaults={
+                'full_name': 'Universidad Tecnológica de Tijuana',
+                'short_name': 'UTT',
+                'address': 'Tijuana, Baja California',
+                'admin': school_admin,
+            },
+        )
+        if school_admin and school.admin_id != school_admin.id:
+            school.admin = school_admin
+            school.save(update_fields=['admin', 'updated_at'])
+
+        if school_admin and school_admin.school_id != school.id:
+            school_admin.school_id = school.id
+            school_admin.save(update_fields=['school_id', 'updated_at'])
+
         if options['clear']:
             deleted_branches, _ = Branch.objects.all().delete()
             deleted_companies, _ = Company.objects.all().delete()
@@ -96,6 +115,12 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(f'  ~ Empresa "{company_name}" ya existe.')
 
+            CompanySchool.objects.update_or_create(
+                company=company_obj,
+                school=school,
+                defaults={'active': True},
+            )
+
             for branch_data in company_data['branches']:
                 branch_name = branch_data['name']
 
@@ -103,7 +128,7 @@ class Command(BaseCommand):
                     name=branch_name,
                     company=company_obj,
                     defaults={
-                        'school_id': branch_data['school_id'],
+                        'school': school,
                         'location': branch_data['location'],
                     },
                 )
