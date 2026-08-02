@@ -24,7 +24,7 @@ export function KitchenSummary({ orders }: KitchenSummaryProps) {
       </div>
       <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 flex justify-between items-center shadow-xs">
         <span className="text-xs font-bold text-slate-700">Completados hoy</span>
-        <span className="text-2xl font-black text-slate-800">14</span>
+        <span className="text-2xl font-black text-slate-800">{orders.filter(o => o.state === 'picked_up').length}</span>
       </div>
     </section>
   );

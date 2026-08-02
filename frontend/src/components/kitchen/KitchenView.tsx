@@ -48,9 +48,10 @@ export function KitchenView() {
   const { data: pendingOrders = [], isError: pendingError } = useOrders('pending', 5000);
   const { data: preparingOrders = [], isError: preparingError } = useOrders('preparing', 10000);
   const { data: readyOrders = [], isError: readyError } = useOrders('ready', 10000);
+  const { data: pickedUpOrders = [], isError: pickedUpError } = useOrders('picked_up', 30000);
 
-  const allOrders: KitchenOrder[] = [...pendingOrders, ...preparingOrders, ...readyOrders];
-  const hasError = pendingError || preparingError || readyError;
+  const allOrders: KitchenOrder[] = [...pendingOrders, ...preparingOrders, ...readyOrders, ...pickedUpOrders];
+  const hasError = pendingError || preparingError || readyError || pickedUpError;
 
   useEffect(() => {
     if (!isAuthorized) {
