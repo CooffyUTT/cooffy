@@ -1,20 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Clock, ImageIcon, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Order } from '@/types/kitchen';
+import { KitchenOrder } from '@/types/kitchen';
 import { getTimeBadgeColor } from '@/utils/kitchenHelpers';
 
 interface OrderCardProps {
-  order: Order;
+  order: KitchenOrder;
   actionLabel: string;
   actionColor: string;
   onAction: () => void;
   isPulse?: boolean;
-  confirmingId: string | null;
-  setConfirmingId: (id: string | null) => void;
+  confirmingId: number | null;
+  setConfirmingId: (id: number | null) => void;
 }
 
 export function OrderCard({
@@ -30,15 +31,15 @@ export function OrderCard({
 
   useEffect(() => {
     const updateTime = () => {
-      const diffMs = Date.now() - new Date(order.createdAt).getTime();
+      const diffMs = Date.now() - new Date(order.created_at).getTime();
       setElapsedMinutes(Math.floor(diffMs / 60000));
     };
     updateTime();
     const interval = setInterval(updateTime, 10000);
     return () => clearInterval(interval);
-  }, [order.createdAt]);
+  }, [order.created_at]);
 
-  const totalProducts = order.items.reduce((acc, item) => acc + item.quantity, 0);
+  const totalProducts = order.order_products.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
     <motion.div
@@ -55,9 +56,9 @@ export function OrderCard({
         <div className="flex justify-between items-start border-b border-slate-100 pb-2">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-black text-slate-900">{order.orderNumber}</span>
+              <span className="text-2xl font-black text-slate-900">#{order.order_number}</span>
             </div>
-            <p className="text-sm font-bold text-slate-600 mt-0.5">{order.customerName}</p>
+            <p className="text-sm font-bold text-slate-600 mt-0.5">{order.client_name}</p>
           </div>
 
           <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-extrabold text-xs border ${getTimeBadgeColor(elapsedMinutes)}`}>
@@ -71,14 +72,25 @@ export function OrderCard({
         </div>
 
         <div className="space-y-2.5">
-          {order.items.map((item) => (
+          {order.order_products.map((item) => (
             <div key={item.id} className="space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
               <div className="flex items-center justify-between text-base font-bold text-slate-900">
                 <span className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center shrink-0">
-                    <ImageIcon size={16} className="text-slate-400" />
+                  <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                    {item.item_image ? (
+                      <Image
+                        src={item.item_image}
+                        alt={item.item_name ?? 'Producto'}
+                        width={32}
+                        height={32}
+                        unoptimized
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ImageIcon size={16} className="text-slate-400" />
+                    )}
                   </div>
-                  {item.quantity}x {item.name}
+                  {item.quantity}x {item.item_name ?? 'Producto'}
                 </span>
               </div>
 
@@ -92,12 +104,16 @@ export function OrderCard({
           ))}
         </div>
 
-        {order.notes && (
+        {order.comment && (
           <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs font-bold">
             <AlertTriangle size={15} className="shrink-0 text-red-600" />
-            <span>{order.notes}</span>
+            <span>{order.comment}</span>
           </div>
         )}
+      </div>
+
+      <div className="flex justify-end pt-1 border-t border-slate-100">
+        <span className="text-2xl font-black text-slate-900">${Number(order.total).toFixed(2)}</span>
       </div>
 
       <div className="pt-2">

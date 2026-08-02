@@ -58,7 +58,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             qs = qs.filter(state=state)
 
         if user and not getattr(user, "is_staff", False):
-            qs = qs.filter(client_id=getattr(user, "id", None))
+            is_kitchen_staff = user.groups.filter(name__in=["empleado", "gerente"]).exists()
+            if not is_kitchen_staff:
+                qs = qs.filter(client_id=getattr(user, "id", None))
 
         return qs
 

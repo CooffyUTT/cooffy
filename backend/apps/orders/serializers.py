@@ -4,13 +4,37 @@ from django.db.models import Max
 from rest_framework import serializers
 from .models import Order, OrderProduct
 from apps.products.models import Product
+from apps.users.models import User
 
 
 class OrderProductSerializer(serializers.ModelSerializer):
+    item_name = serializers.SerializerMethodField()
+    item_image = serializers.SerializerMethodField()
+
     class Meta:
         model = OrderProduct
-        fields = ['id', 'item_id', 'quantity', 'price', 'excluded_modifiers']
+        fields = ['id', 'item_id', 'quantity', 'price', 'excluded_modifiers', 'item_name', 'item_image']
         read_only_fields = ('id',)
+
+    def _get_product(self, item_id):
+        context = self.context or {}
+        products = context.setdefault('_products', {})
+        if item_id not in products:
+            products[item_id] = Product.objects.filter(pk=item_id).first()
+        return products[item_id]
+
+    def get_item_name(self, obj):
+        product = self._get_product(obj.item_id)
+        return product.name if product else None
+
+    def get_item_image(self, obj):
+        product = self._get_product(obj.item_id)
+        if not product or not product.image:
+            return None
+        request = self.context.get('request') if self.context else None
+        if request is not None:
+            return request.build_absolute_uri(product.image.url)
+        return product.image.url
 
 
 class OrderProductCreateSerializer(serializers.ModelSerializer):
@@ -29,7 +53,26 @@ class OrderProductCreateSerializer(serializers.ModelSerializer):
         return value
 
 
-class OrderListSerializer(serializers.ModelSerializer):
+class OrderClientNameMixin:
+    def _get_client(self, client_id):
+        context = self.context or {}
+        clients = context.setdefault('_clients', {})
+        if client_id not in clients:
+            clients[client_id] = User.objects.filter(pk=client_id).only('name', 'lastname').first()
+        return clients[client_id]
+
+    def get_client_name(self, obj):
+        user = self._get_client(obj.client_id)
+        if not user:
+            return None
+        full_name = f"{user.name} {user.lastname}".strip()
+        return full_name or user.name
+
+
+class OrderListSerializer(OrderClientNameMixin, serializers.ModelSerializer):
+    order_products = OrderProductSerializer(many=True, read_only=True)
+    client_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Order
         fields = [
@@ -38,15 +81,19 @@ class OrderListSerializer(serializers.ModelSerializer):
             'date',
             'branch_id',
             'client_id',
+            'client_name',
             'total',
             'state',
             'payment_status',
             'created_at',
+            'comment',
+            'order_products',
         ]
 
 
-class OrderDetailSerializer(serializers.ModelSerializer):
+class OrderDetailSerializer(OrderClientNameMixin, serializers.ModelSerializer):
     order_products = OrderProductSerializer(many=True, read_only=True)
+    client_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -56,6 +103,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             'date',
             'branch_id',
             'client_id',
+            'client_name',
             'created_at',
             'prepared_at',
             'picked_up_at',

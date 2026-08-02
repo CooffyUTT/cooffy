@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
-import { Order } from '@/types/kitchen';
-import { INITIAL_ORDERS } from '@/data/mockOrders';
+import { KitchenOrder } from '@/types/kitchen';
 
 import { KitchenSidebar } from './KitchenSidebar';
 import { KitchenHeader } from './KitchenHeader';
 import { KitchenSummary } from './KitchenSummary';
 import { KanbanColumn } from './KanbanColumn';
 import { OrderCard } from './OrderCard';
+import { useOrders } from '@/hooks/useOrders';
 
 export function KitchenView() {
   const router = useRouter();
@@ -30,9 +30,15 @@ export function KitchenView() {
     }
   });
 
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
   const [kitchenActive, setKitchenActive] = useState(true);
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+
+  const { data: pendingOrders = [], isError: pendingError } = useOrders('pending', 5000);
+  const { data: preparingOrders = [], isError: preparingError } = useOrders('preparing', 10000);
+  const { data: readyOrders = [], isError: readyError } = useOrders('ready', 10000);
+
+  const allOrders: KitchenOrder[] = [...pendingOrders, ...preparingOrders, ...readyOrders];
+  const hasError = pendingError || preparingError || readyError;
 
   useEffect(() => {
     if (!isAuthorized) {
@@ -40,11 +46,7 @@ export function KitchenView() {
     }
   }, [isAuthorized, router]);
 
-  const moveOrder = (
-    orderId: string,
-    nextStatus: 'pending' | 'preparing' | 'ready' | 'delivered' | 'not_picked_up'
-  ) => {
-    setOrders(prev => prev.filter(o => o.id !== orderId));
+  const moveOrder = () => {
     setConfirmingId(null);
   };
 
@@ -71,7 +73,13 @@ export function KitchenView() {
           onToggleActive={() => setKitchenActive(!kitchenActive)}
         />
 
-        <KitchenSummary orders={orders} />
+        {hasError && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2 text-xs font-bold text-red-800 shrink-0">
+            No se pudieron cargar los pedidos. Reintentando automáticamente...
+          </div>
+        )}
+
+        <KitchenSummary orders={allOrders} />
 
         <section className="flex-1 grid grid-cols-3 gap-4 min-h-0">
           {/* EN ESPERA */}
@@ -79,16 +87,16 @@ export function KitchenView() {
             title="EN ESPERA"
             badgeColor="bg-amber-100 text-amber-900 border-amber-300"
             dotColor="bg-amber-500"
-            count={orders.filter(o => o.status === 'pending').length}
+            count={pendingOrders.length}
           >
             <AnimatePresence>
-              {orders.filter(o => o.status === 'pending').map(order => (
+              {pendingOrders.map(order => (
                 <OrderCard
                   key={order.id}
                   order={order}
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
-                  onAction={() => moveOrder(order.id, 'preparing')}
+                  onAction={moveOrder}
                   actionLabel="INICIAR PREPARACIÓN"
                   actionColor="bg-amber-500 hover:bg-amber-600"
                 />
@@ -101,16 +109,16 @@ export function KitchenView() {
             title="EN PREPARACIÓN"
             badgeColor="bg-blue-100 text-blue-900 border-blue-300"
             dotColor="bg-blue-500"
-            count={orders.filter(o => o.status === 'preparing').length}
+            count={preparingOrders.length}
           >
             <AnimatePresence>
-              {orders.filter(o => o.status === 'preparing').map(order => (
+              {preparingOrders.map(order => (
                 <OrderCard
                   key={order.id}
                   order={order}
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
-                  onAction={() => moveOrder(order.id, 'ready')}
+                  onAction={moveOrder}
                   actionLabel="MARCAR COMO LISTO"
                   actionColor="bg-blue-600 hover:bg-blue-700"
                 />
@@ -123,17 +131,17 @@ export function KitchenView() {
             title="LISTOS PARA ENTREGA"
             badgeColor="bg-emerald-100 text-emerald-900 border-emerald-300"
             dotColor="bg-emerald-500"
-            count={orders.filter(o => o.status === 'ready').length}
+            count={readyOrders.length}
           >
             <AnimatePresence>
-              {orders.filter(o => o.status === 'ready').map(order => (
+              {readyOrders.map(order => (
                 <OrderCard
                   key={order.id}
                   order={order}
                   isPulse={true}
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
-                  onAction={() => moveOrder(order.id, 'delivered')}
+                  onAction={moveOrder}
                   actionLabel="ENTREGADO / RECOGIDO"
                   actionColor="bg-emerald-600 hover:bg-emerald-700"
                 />
