@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Coffee, Utensils, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Clock, ImageIcon, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Order } from '@/types/kitchen';
-import { getTimeBadgeColor, getServiceTypeBadge } from '@/utils/kitchenHelpers';
+import { getTimeBadgeColor } from '@/utils/kitchenHelpers';
 
 interface OrderCardProps {
   order: Order;
@@ -38,7 +38,6 @@ export function OrderCard({
     return () => clearInterval(interval);
   }, [order.createdAt]);
 
-  const service = getServiceTypeBadge(order.serviceType);
   const totalProducts = order.items.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
@@ -57,9 +56,6 @@ export function OrderCard({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-black text-slate-900">{order.orderNumber}</span>
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${service.color}`}>
-                {service.label}
-              </span>
             </div>
             <p className="text-sm font-bold text-slate-600 mt-0.5">{order.customerName}</p>
           </div>
@@ -78,29 +74,18 @@ export function OrderCard({
           {order.items.map((item) => (
             <div key={item.id} className="space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
               <div className="flex items-center justify-between text-base font-bold text-slate-900">
-                <span className="flex items-center gap-1.5">
-                  {item.type === 'beverage' ? <Coffee size={16} className="text-amber-700" /> : <Utensils size={16} className="text-amber-800" />}
+                <span className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center shrink-0">
+                    <ImageIcon size={16} className="text-slate-400" />
+                  </div>
                   {item.quantity}x {item.name}
                 </span>
               </div>
 
-              {item.modifiers && item.modifiers.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {item.modifiers.map((mod, idx) => (
-                    <span 
-                      key={idx}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-black tracking-wide uppercase border shadow-2xs ${
-                        mod.severity === 'danger' ? 'bg-red-500 text-white border-red-600' :
-                        mod.severity === 'warning' ? 'bg-amber-400 text-slate-900 border-amber-500' :
-                        'bg-blue-500 text-white border-blue-600'
-                      }`}
-                    >
-                      {mod.severity === 'danger' && '🔴 '}
-                      {mod.severity === 'warning' && '🟠 '}
-                      {mod.severity === 'info' && '🔵 '}
-                      {mod.text}
-                    </span>
-                  ))}
+              {item.excluded_modifiers && item.excluded_modifiers.length > 0 && (
+                <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-bold">
+                  <AlertTriangle size={15} className="shrink-0 text-amber-600" />
+                  <span>{item.excluded_modifiers.join(', ')}</span>
                 </div>
               )}
             </div>
@@ -118,13 +103,13 @@ export function OrderCard({
       <div className="pt-2">
         {confirmingId === order.id ? (
           <div className="flex gap-2">
-            <Button 
+            <Button
               onClick={onAction}
               className="flex-1 h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm rounded-xl"
             >
               <CheckCircle2 size={18} className="mr-1.5" /> ✔ CONFIRMAR
             </Button>
-            <Button 
+            <Button
               onClick={() => setConfirmingId(null)}
               variant="outline"
               className="h-14 px-4 border-slate-300 text-slate-700 font-bold text-xs rounded-xl"
@@ -133,7 +118,7 @@ export function OrderCard({
             </Button>
           </div>
         ) : (
-          <Button 
+          <Button
             onClick={() => setConfirmingId(order.id)}
             className={`w-full h-14 text-white font-extrabold text-sm rounded-xl shadow-md transition-all ${actionColor}`}
           >
