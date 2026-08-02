@@ -123,7 +123,7 @@ export function OrderCard({
               onClick={onAction}
               className="flex-1 h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm rounded-xl"
             >
-              <CheckCircle2 size={18} className="mr-1.5" /> ✔ CONFIRMAR
+              ✔ CONFIRMAR
             </Button>
             <Button
               onClick={() => setConfirmingId(null)}

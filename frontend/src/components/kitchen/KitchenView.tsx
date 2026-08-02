@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { KitchenOrder } from '@/types/kitchen';
 
 import { KitchenSidebar } from './KitchenSidebar';
@@ -11,6 +12,7 @@ import { KitchenSummary } from './KitchenSummary';
 import { KanbanColumn } from './KanbanColumn';
 import { OrderCard } from './OrderCard';
 import { useOrders } from '@/hooks/useOrders';
+import { updateOrderState } from "@/services/orderService";
 
 export function KitchenView() {
   const router = useRouter();
@@ -33,6 +35,16 @@ export function KitchenView() {
   const [kitchenActive, setKitchenActive] = useState(true);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
 
+  const queryClient = useQueryClient();
+  const stateMutation = useMutation({
+    mutationFn: ({ orderId, state }: { orderId: number; state: string }) =>
+      updateOrderState(orderId, state),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      setConfirmingId(null);
+    },
+  });
+
   const { data: pendingOrders = [], isError: pendingError } = useOrders('pending', 5000);
   const { data: preparingOrders = [], isError: preparingError } = useOrders('preparing', 10000);
   const { data: readyOrders = [], isError: readyError } = useOrders('ready', 10000);
@@ -46,8 +58,8 @@ export function KitchenView() {
     }
   }, [isAuthorized, router]);
 
-  const moveOrder = () => {
-    setConfirmingId(null);
+  const moveOrder = (orderId: number, nextState: string) => {
+    stateMutation.mutate({ orderId, state: nextState });
   };
 
   if (!isAuthorized) {
@@ -96,7 +108,7 @@ export function KitchenView() {
                   order={order}
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
-                  onAction={moveOrder}
+                  onAction={() => moveOrder(order.id, "preparing")}
                   actionLabel="INICIAR PREPARACIÓN"
                   actionColor="bg-amber-500 hover:bg-amber-600"
                 />
@@ -118,7 +130,7 @@ export function KitchenView() {
                   order={order}
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
-                  onAction={moveOrder}
+                  onAction={() => moveOrder(order.id, "ready")}
                   actionLabel="MARCAR COMO LISTO"
                   actionColor="bg-blue-600 hover:bg-blue-700"
                 />
@@ -141,7 +153,7 @@ export function KitchenView() {
                   isPulse={true}
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
-                  onAction={moveOrder}
+                  onAction={() => moveOrder(order.id, "picked_up")}
                   actionLabel="ENTREGADO / RECOGIDO"
                   actionColor="bg-emerald-600 hover:bg-emerald-700"
                 />
