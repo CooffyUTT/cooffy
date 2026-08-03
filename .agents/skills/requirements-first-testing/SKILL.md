@@ -22,6 +22,8 @@ Read the specification first, then inspect code only to locate the observable co
 5. Inspect the database documentation under `docs/database/` when data relationships or constraints matter.
 6. Search for tests, fixtures, helpers, API routes, serializers, models, services, and UI components. Reuse established helpers, but never copy assertions merely because the implementation currently behaves that way.
 
+Use `docs/testing/requirements-coverage.md` for unresolved cross-RF contract decisions. It is a requirements handoff document, not a per-test coverage ledger.
+
 Before writing code, produce a small traceability table:
 
 | RF | RN | Acceptance criterion or flow | Scenario | Test level | Expected observable result |
