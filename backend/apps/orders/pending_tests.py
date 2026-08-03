@@ -109,3 +109,69 @@ class OrderBusinessRuleRegressionTests(APITestCase):
             Order.objects.filter(client_id=self.user.id, branch_id=1).count(),
             1,
         )
+
+    def test_unavailable_product_cannot_be_used_when_creating_an_order(self):
+        """RF-10 / RN-08: creation validates product availability."""
+        response = self.client.post(
+            reverse("orders-list"),
+            {
+                "branch_id": 1,
+                "client_id": self.user.id,
+                "payment_method": 1,
+                "order_products": [
+                    {
+                        "item_id": self.unavailable_product.id,
+                        "quantity": 1,
+                        "price": "10.00",
+                    }
+                ],
+            },
+            format="json",
+        )
+
+        self.assertNotEqual(response.status_code, 201)
+        self.assertFalse(Order.objects.filter(client_id=self.user.id).exists())
+
+    def test_order_creation_cannot_exceed_product_limit(self):
+        """RF-10 / RN-12: creation validates the per-order product limit."""
+        response = self.client.post(
+            reverse("orders-list"),
+            {
+                "branch_id": 1,
+                "client_id": self.user.id,
+                "payment_method": 1,
+                "order_products": [
+                    {
+                        "item_id": self.available_product.id,
+                        "quantity": 3,
+                        "price": "10.00",
+                    }
+                ],
+            },
+            format="json",
+        )
+
+        self.assertNotEqual(response.status_code, 201)
+        self.assertFalse(Order.objects.filter(client_id=self.user.id).exists())
+
+    def test_confirmed_order_cannot_be_modified(self):
+        """RF-10 / RN-05: confirmation makes an order immutable."""
+        order = Order.objects.create(
+            order_number=1,
+            date="2026-01-01",
+            branch_id=1,
+            client_id=self.user.id,
+            payment_method=1,
+            state="confirmed",
+            comment="Original comment",
+        )
+
+        response = self.client.patch(
+            reverse("orders-detail", args=[order.id]),
+            {"comment": "Changed comment"},
+            format="json",
+        )
+
+        self.assertNotEqual(response.status_code, 200)
+        order.refresh_from_db()
+        self.assertEqual(order.comment, "Original comment")
