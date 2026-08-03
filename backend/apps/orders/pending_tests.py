@@ -175,3 +175,45 @@ class OrderBusinessRuleRegressionTests(APITestCase):
         self.assertNotEqual(response.status_code, 200)
         order.refresh_from_db()
         self.assertEqual(order.comment, "Original comment")
+
+    def test_rejected_order_cannot_be_accepted_again(self):
+        """RF-07 / RN-14: rejection is a terminal decision."""
+        order = Order.objects.create(
+            order_number=1,
+            date="2026-01-01",
+            branch_id=1,
+            client_id=self.user.id,
+            payment_method=1,
+            state="rejected",
+        )
+
+        response = self.client.patch(
+            reverse("orders-detail", args=[order.id]),
+            {"state": "accepted"},
+            format="json",
+        )
+
+        self.assertNotEqual(response.status_code, 200)
+        order.refresh_from_db()
+        self.assertEqual(order.state, "rejected")
+
+    def test_delivered_order_cannot_change_state(self):
+        """RF-07 / RN-15: delivered orders are immutable."""
+        order = Order.objects.create(
+            order_number=1,
+            date="2026-01-01",
+            branch_id=1,
+            client_id=self.user.id,
+            payment_method=1,
+            state="delivered",
+        )
+
+        response = self.client.patch(
+            reverse("orders-detail", args=[order.id]),
+            {"state": "preparing"},
+            format="json",
+        )
+
+        self.assertNotEqual(response.status_code, 200)
+        order.refresh_from_db()
+        self.assertEqual(order.state, "delivered")
