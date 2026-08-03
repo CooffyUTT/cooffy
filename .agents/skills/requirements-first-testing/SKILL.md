@@ -59,7 +59,7 @@ The backend uses Django 6 + DRF + PostgreSQL, with dependencies managed by `uv`.
 
 ## Implement in This Repository
 
-- Backend tests live with each app in `backend/apps/<app>/tests.py`; follow that location and existing naming before creating a new test module.
+- Backend tests live with each app in `backend/apps/<app>/tests.py`; follow that location and existing naming before creating a new test module. If a regression intentionally exposes an unimplemented requirement and must not affect the default green suite, place it in an explicitly named module such as `pending_tests.py` and run it by its full Django test label.
 - Run backend commands from the repository root through `pnpm back:*`, for example `pnpm back:manage test apps.orders --noinput` or `pnpm back:test`. Prefer `pnpm back:test` for the complete non-interactive suite.
 - Check database readiness first. Start PostgreSQL with `docker compose up -d` only when the task permits environment changes; do not create a backend `.env` or expose secrets.
 - Use Django's test database isolation and create all data required by each test. Use factories/helpers only if the repository already has them; do not introduce a factory library without approval.
