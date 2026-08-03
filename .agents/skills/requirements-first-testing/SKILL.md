@@ -69,6 +69,20 @@ The backend uses Django 6 + DRF + PostgreSQL, with dependencies managed by `uv`.
 
 Do not modify production code merely to make tests convenient. If the specification requires behavior absent from the implementation, first add the specification-derived test when the contract is testable. A failing test is useful evidence; do not weaken it to match current behavior.
 
+## Current Baseline and Incomplete Features
+
+The current green baseline covers implemented behavior in:
+
+- `backend/apps/users/tests.py`: login, registration, authentication, and role filtering;
+- `backend/apps/products/tests.py`: menu availability, category filtering, product limits, and manager availability toggling;
+- `backend/apps/schools/tests.py`: school scoping and branch management;
+- `frontend/src/context/CartContext.test.tsx`: cart quantities and totals;
+- `frontend/src/utils/*.test.ts`: kitchen badges and currency formatting.
+
+Do not claim that an RF is covered merely because its app has a test file. RF-04, RF-07, RF-10, RF-11, and RF-12 still contain incomplete or disconnected behavior. Before adding tests for them, identify the exact observable contract and dependencies. If the expected behavior is unambiguous but production support is missing, record the scenario as an implementation gap and add the regression test in the implementation-fix session rather than weakening it or replacing it with a test of the current defect. If the requirement is ambiguous, do not add an assertion until the ambiguity is resolved.
+
+Keep the default suite green while building the current-code baseline. Run targeted pending regression tests separately when they intentionally expose an implementation defect, and report their failure classification explicitly.
+
 ## Execute, Diagnose, and Report
 
 After adding tests, run the narrow relevant test target, then the complete applicable suite. Record the exact command and result. For each failure, classify it as:
