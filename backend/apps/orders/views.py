@@ -1,8 +1,10 @@
 from decimal import Decimal
+from datetime import datetime
 from django.db import transaction
 from django.db.models import Sum
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -12,6 +14,7 @@ from .serializers import (
     OrderListSerializer,
     OrderDetailSerializer,
     OrderCreateSerializer,
+    OrderProductCreateSerializer,
 )
 from apps.products.models import Product
 
@@ -23,6 +26,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     search_fields = ["order_number", "state", "payment_status"]
     ordering_fields = ["created_at", "date", "order_number"]
     ordering = ["-created_at"]
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -37,12 +41,26 @@ class OrderViewSet(viewsets.ModelViewSet):
         qs = super().get_queryset()
         user = getattr(self.request, "user", None)
         client_id = self.request.query_params.get("client_id")
+        date = self.request.query_params.get("date")
+        state = self.request.query_params.get("state")
 
         if client_id is not None:
             qs = qs.filter(client_id=client_id)
 
+        if date:
+            try:
+                datetime.strptime(date, "%Y-%m-%d")
+            except ValueError:
+                raise ValidationError({"date": "Formato de fecha inválido. Use YYYY-MM-DD."})
+            qs = qs.filter(date=date)
+
+        if state:
+            qs = qs.filter(state=state)
+
         if user and not getattr(user, "is_staff", False):
-            qs = qs.filter(client_id=getattr(user, "id", None))
+            is_kitchen_staff = user.groups.filter(name__in=["empleado", "gerente"]).exists()
+            if not is_kitchen_staff:
+                qs = qs.filter(client_id=getattr(user, "id", None))
 
         return qs
 
@@ -77,23 +95,17 @@ class OrderViewSet(viewsets.ModelViewSet):
     def add_product(self, request, pk=None):
         order = self.get_object()
 
-        quantity = int(request.data.get("quantity", 1))
-        item_id = request.data.get("item_id")
+        serializer = OrderProductCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
 
-        if request.data.get("price") is not None:
-            unit_price = Decimal(str(request.data.get("price")))
-        else:
-            product = get_object_or_404(Product, pk=item_id)
-            unit_price = product.price
-
-        line_total = unit_price * quantity
+        product = Product.objects.get(pk=data["item_id"])
+        line_total = product.price * data["quantity"]
 
         OrderProduct.objects.create(
             order=order,
-            item_id=item_id,
-            quantity=quantity,
             price=line_total,
-            excluded_modifiers=request.data.get("excluded_modifiers", []),
+            **data,
         )
 
         order.total = order.order_products.aggregate(total=Sum("price"))["total"] or Decimal("0.00")

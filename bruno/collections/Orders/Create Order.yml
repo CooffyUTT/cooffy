@@ -1,7 +1,7 @@
 info:
   name: Create Order
   type: http
-  seq: 4
+  seq: 5
 
 http:
   method: POST
@@ -13,10 +13,9 @@ http:
         "branch_id": 1,
         "client_id": 1,
         "payment_method": 1,
-        "comment": "orden de prueba",
+        "comment": "Orden de prueba",
         "order_products": [
-          {"item_id": 101, "quantity": 1, "price": "10.00"},
-          {"item_id": 102, "quantity": 1, "price": "12.00"}
+          {"item_id": 1, "quantity": 2}
         ]
       }
   auth:

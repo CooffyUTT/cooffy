@@ -1,20 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Clock, Coffee, Utensils, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Clock, ImageIcon, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Order } from '@/types/kitchen';
-import { getTimeBadgeColor, getServiceTypeBadge } from '@/utils/kitchenHelpers';
+import { KitchenOrder } from '@/types/kitchen';
+import { getTimeBadgeColor } from '@/utils/kitchenHelpers';
 
 interface OrderCardProps {
-  order: Order;
+  order: KitchenOrder;
   actionLabel: string;
   actionColor: string;
   onAction: () => void;
   isPulse?: boolean;
-  confirmingId: string | null;
-  setConfirmingId: (id: string | null) => void;
+  confirmingId: number | null;
+  setConfirmingId: (id: number | null) => void;
 }
 
 export function OrderCard({
@@ -30,16 +31,15 @@ export function OrderCard({
 
   useEffect(() => {
     const updateTime = () => {
-      const diffMs = Date.now() - new Date(order.createdAt).getTime();
+      const diffMs = Date.now() - new Date(order.created_at).getTime();
       setElapsedMinutes(Math.floor(diffMs / 60000));
     };
     updateTime();
     const interval = setInterval(updateTime, 10000);
     return () => clearInterval(interval);
-  }, [order.createdAt]);
+  }, [order.created_at]);
 
-  const service = getServiceTypeBadge(order.serviceType);
-  const totalProducts = order.items.reduce((acc, item) => acc + item.quantity, 0);
+  const totalProducts = order.order_products.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
     <motion.div
@@ -56,12 +56,9 @@ export function OrderCard({
         <div className="flex justify-between items-start border-b border-slate-100 pb-2">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-black text-slate-900">{order.orderNumber}</span>
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${service.color}`}>
-                {service.label}
-              </span>
+              <span className="text-2xl font-black text-slate-900">#{order.order_number}</span>
             </div>
-            <p className="text-sm font-bold text-slate-600 mt-0.5">{order.customerName}</p>
+            <p className="text-sm font-bold text-slate-600 mt-0.5">{order.client_name}</p>
           </div>
 
           <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-extrabold text-xs border ${getTimeBadgeColor(elapsedMinutes)}`}>
@@ -75,56 +72,60 @@ export function OrderCard({
         </div>
 
         <div className="space-y-2.5">
-          {order.items.map((item) => (
+          {order.order_products.map((item) => (
             <div key={item.id} className="space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
               <div className="flex items-center justify-between text-base font-bold text-slate-900">
-                <span className="flex items-center gap-1.5">
-                  {item.type === 'beverage' ? <Coffee size={16} className="text-amber-700" /> : <Utensils size={16} className="text-amber-800" />}
-                  {item.quantity}x {item.name}
+                <span className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                    {item.item_image ? (
+                      <Image
+                        src={item.item_image}
+                        alt={item.item_name ?? 'Producto'}
+                        width={32}
+                        height={32}
+                        unoptimized
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ImageIcon size={16} className="text-slate-400" />
+                    )}
+                  </div>
+                  {item.quantity}x {item.item_name ?? 'Producto'}
                 </span>
               </div>
 
-              {item.modifiers && item.modifiers.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {item.modifiers.map((mod, idx) => (
-                    <span 
-                      key={idx}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-black tracking-wide uppercase border shadow-2xs ${
-                        mod.severity === 'danger' ? 'bg-red-500 text-white border-red-600' :
-                        mod.severity === 'warning' ? 'bg-amber-400 text-slate-900 border-amber-500' :
-                        'bg-blue-500 text-white border-blue-600'
-                      }`}
-                    >
-                      {mod.severity === 'danger' && '🔴 '}
-                      {mod.severity === 'warning' && '🟠 '}
-                      {mod.severity === 'info' && '🔵 '}
-                      {mod.text}
-                    </span>
-                  ))}
+              {item.excluded_modifiers && item.excluded_modifiers.length > 0 && (
+                <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-bold">
+                  <AlertTriangle size={15} className="shrink-0 text-amber-600" />
+                  <span>{item.excluded_modifiers.join(', ')}</span>
                 </div>
               )}
             </div>
           ))}
         </div>
 
-        {order.notes && (
+        {order.comment && (
           <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs font-bold">
             <AlertTriangle size={15} className="shrink-0 text-red-600" />
-            <span>{order.notes}</span>
+            <span>{order.comment}</span>
           </div>
         )}
+      </div>
+
+      <div className="flex justify-end pt-1 border-t border-slate-100">
+        <span className="text-2xl font-black text-slate-900">${Number(order.total).toFixed(2)}</span>
       </div>
 
       <div className="pt-2">
         {confirmingId === order.id ? (
           <div className="flex gap-2">
-            <Button 
+            <Button
               onClick={onAction}
               className="flex-1 h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm rounded-xl"
             >
-              <CheckCircle2 size={18} className="mr-1.5" /> ✔ CONFIRMAR
+              ✔ CONFIRMAR
             </Button>
-            <Button 
+            <Button
               onClick={() => setConfirmingId(null)}
               variant="outline"
               className="h-14 px-4 border-slate-300 text-slate-700 font-bold text-xs rounded-xl"
@@ -133,7 +134,7 @@ export function OrderCard({
             </Button>
           </div>
         ) : (
-          <Button 
+          <Button
             onClick={() => setConfirmingId(order.id)}
             className={`w-full h-14 text-white font-extrabold text-sm rounded-xl shadow-md transition-all ${actionColor}`}
           >
