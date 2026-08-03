@@ -1,56 +1,61 @@
-# Requirements Testing Matrix
+# Matriz de Testing de Requerimientos
 
-This matrix contains requirement scenarios that need a contract decision or a
-production seam before an automated test can be finalized. It is deliberately
-requirement-focused: do not update it for every test file or test case. Update
-it only when the specification, MVP scope, or an unresolved contract changes.
+Esta matriz contiene escenarios que necesitan una decisión de contrato o un
+punto de integración en producción antes de finalizar un test automatizado.
+Está enfocada deliberadamente en los requerimientos: no debe actualizarse por
+cada archivo o caso de prueba. Actualízala únicamente cuando cambie la
+especificación, el alcance del MVP o un contrato pendiente de resolver.
 
-The source of truth is `docs/requerimientos.md`, `docs/mvp_1.md`, and the
-detailed RF documents under `docs/requeriments/`.
+La fuente de verdad es `docs/requerimientos.md`, `docs/mvp_1.md` y los
+documentos detallados de RF en `docs/requeriments/`.
 
-## How To Use
+## Cómo Usarla
 
-1. Read the referenced RF/RN and linked requirements.
-2. Resolve the contract questions in the matrix before inventing assertions.
-3. Add the resulting test at the lowest suitable level.
-4. Keep implementation failures traceable to the RF/RN in the test report.
-5. Remove or revise a row only when the specification changes or its decision
-   has been incorporated into the requirements documentation.
+1. Lee el RF/RN referenciado y los requerimientos relacionados.
+2. Resuelve las preguntas de contrato de la matriz antes de inventar
+   assertions.
+3. Agrega el test resultante en el nivel más bajo que sea adecuado.
+4. Mantén los fallos de implementación trazables al RF/RN en el reporte de
+   tests.
+5. Elimina o modifica una fila únicamente cuando cambie la especificación o
+   cuando la decisión se haya incorporado a la documentación de requerimientos.
 
-An unresolved row is not permission to assert the current implementation. It
-is a handoff item for requirements clarification or the implementation phase.
+Una fila sin resolver no autoriza a crear assertions sobre la implementación
+actual. Es un elemento de traspaso para aclarar requerimientos o para la fase
+de implementación.
 
-When an RF document and the global RN table use different identifiers for the
-same rule, preserve both references in the test report until the requirements
-are reconciled. Do not silently renumber the rule.
+Cuando un documento RF y la tabla global de RN utilicen identificadores
+distintos para la misma regla, conserva ambas referencias en el reporte de
+tests hasta reconciliar los requerimientos. No renumeres la regla en silencio.
 
-## Pending Contract Decisions
+## Decisiones de Contrato Pendientes
 
-| ID | Sources | Scenario to protect | Contract or decision needed | Test level and seam |
+| ID | Fuentes | Escenario a proteger | Contrato o decisión necesaria | Nivel y punto de integración |
 |---|---|---|---|---|
-| RF-04-01 | RF-04, RN-23 | Authorized manager/supervisor sees only metrics for permitted branches | Define branch scope for each role and the response when a branch is unauthorized | API integration; dashboard endpoint/service |
-| RF-04-02 | RF-04 | Daily sales, order count, top product, and average operation time are calculated consistently | Define which payment/order states count, the time zone, and the timestamps used for operation time | Unit plus API; KPI query/service |
-| RF-04-03 | RF-04 | Weekly, monthly, four-month, and six-month filters return correct boundaries | Define inclusive dates, calendar versus rolling periods, and empty-period results | Unit plus API; period filter/query |
-| RF-04-04 | RF-04 | Dashboard updates after changing the selected period | Define whether refresh, polling, or another mechanism is required and what freshness means | Frontend behavior plus API contract |
-| RF-06-01 | RF-06, RN-08, MVP | An unavailable product is represented consistently in the customer menu and order flow | Resolve whether it is hidden, shown with an unavailable notice, or only blocked at order creation | API plus frontend behavior |
-| RF-07-01 | RF-07, RN-13 | Orders move through the valid linear state sequence | Define the canonical state values, allowed transitions, and rejection response. The documents use both three-column and four-state descriptions | Unit plus API; transition policy |
-| RF-07-02 | RF-07, RN-16, RN-17 | Staff suspends and resumes order intake for one branch | Define the persisted branch setting, authorized roles, endpoint/action, and response while intake is suspended | API integration; branch/order creation |
-| RF-07-03 | RF-07 | Kitchen order columns update without manual refresh | Define the transport and freshness guarantee: polling, server push, or refresh-triggered queries | Frontend integration or E2E only if lower levels cannot verify it |
-| RF-07-04 | RF-07, RN-22/RN-23/RN-24 | Staff can administer only authorized branch orders and changes are auditable | Reconcile the RN numbering mismatch and define the audit field/event and role-to-branch relationship | API integration; permissions and persistence |
-| RF-10-01 | RF-10, RN-04/RN-10 | A client may have one active order per branch | Define active and terminal states, including whether rejected/cancelled orders count | API integration; order creation constraint |
-| RF-10-02 | RF-10, RN-06/RN-24 | All order products belong to the order branch | Define the product-to-branch relationship and the validation error when it does not match | API integration; order serializer/service |
-| RF-10-03 | RF-10, RN-21 | Order number is unique per branch and operating date | Define generation under concurrency and whether numbering restarts per branch/date | API plus database constraint/service |
-| RF-10-04 | RF-10 | Client receives a confirmation summary/receipt after creation | Define response fields, receipt identifier, initial state, and notification contract | API integration; response/side-effect contract |
-| RF-11-01 | RF-11, RN-18 | A client selects a supported payment method | Define the payment method enum and invalid-method response | Unit plus API; serializer |
-| RF-11-02 | RF-11, RN-19 | Electronic mock payment changes payment status only after confirmation | Define mock success/failure behavior and the operation that confirms payment | API integration; payment service |
-| RF-11-03 | RF-11, RN-19 | Cash payment remains pending until a cashier confirms it | Define cashier role, confirmation endpoint, allowed state transition, and duplicate-confirmation behavior | API integration; permission/state policy |
-| RF-11-04 | RF-11, RN-20 | A paid order generates a receipt automatically | Define receipt format, persistence, uniqueness, and whether generation is synchronous | API integration; payment/order side effect |
-| RF-12-01 | RF-12, RN-13 | Client sees current status and order details for their own orders only | Define the customer-facing endpoint/response and canonical status values | API integration; queryset/serializer |
-| RF-12-02 | RF-12 | Client sees an estimated preparation time | Define the source, unit, calculation, and behavior when no estimate exists | Unit plus API/frontend behavior |
-| RF-12-03 | RF-12 | Customer status stays synchronized with kitchen changes | Define the freshness mechanism and acceptable delay before considering data stale | API contract; E2E only if required |
+| RF-04-01 | RF-04, RN-23 | Un gerente/supervisor autorizado ve únicamente métricas de sucursales permitidas | Definir el alcance por rol y la respuesta cuando una sucursal no está autorizada | Integración API; endpoint/servicio del dashboard |
+| RF-04-02 | RF-04 | Las ventas diarias, cantidad de pedidos, producto más vendido y tiempo promedio se calculan consistentemente | Definir qué estados de pago/pedido cuentan, la zona horaria y los timestamps usados para el tiempo de operación | Unitario más API; consulta/servicio de KPI |
+| RF-04-03 | RF-04 | Los filtros semanal, mensual, cuatrimestral y semestral respetan sus límites | Definir fechas inclusivas, periodos calendario o móviles y resultados de periodos vacíos | Unitario más API; filtro/consulta de periodos |
+| RF-04-04 | RF-04 | El dashboard se actualiza al cambiar el periodo seleccionado | Definir si se requiere refresh, polling u otro mecanismo y qué significa actualización reciente | Comportamiento frontend más contrato API |
+| RF-06-01 | RF-06, RN-08, MVP | Un producto no disponible se representa consistentemente en el menú y en el flujo de pedido | Resolver si se oculta, se muestra con aviso de no disponibilidad o sólo se bloquea al crear el pedido | API más comportamiento frontend |
+| RF-07-01 | RF-07, RN-13 | Los pedidos avanzan por una secuencia lineal válida de estados | Definir valores canónicos, transiciones permitidas y respuesta de rechazo. Los documentos usan descripciones de tres y cuatro estados | Unitario más API; política de transiciones |
+| RF-07-02 | RF-07, RN-16, RN-17 | El personal suspende y reanuda la recepción de pedidos de una sucursal | Definir el ajuste persistido, roles autorizados, endpoint/acción y respuesta durante la suspensión | Integración API; sucursal/creación de pedido |
+| RF-07-03 | RF-07 | Las columnas de pedidos de cocina se actualizan sin refresh manual | Definir el mecanismo y la garantía de actualización: polling, server push o queries activadas por refresh | Integración frontend o E2E sólo si los niveles inferiores no bastan |
+| RF-07-04 | RF-07, RN-22/RN-23/RN-24 | El personal administra sólo pedidos de sucursales autorizadas y los cambios son auditables | Reconciliar la numeración de RN y definir el campo/evento de auditoría y la relación rol-sucursal | Integración API; permisos y persistencia |
+| RF-10-01 | RF-10, RN-04/RN-10 | Un cliente puede tener un pedido activo por sucursal | Definir estados activos y terminales, incluyendo si pedidos rechazados/cancelados cuentan | Integración API; restricción de creación |
+| RF-10-02 | RF-10, RN-06/RN-24 | Todos los productos del pedido pertenecen a la sucursal del pedido | Definir la relación producto-sucursal y el error cuando no coinciden | Integración API; serializer/servicio de pedidos |
+| RF-10-03 | RF-10, RN-21 | El número de pedido es único por sucursal y fecha de operación | Definir generación concurrente y si la numeración se reinicia por sucursal/fecha | API más constraint/servicio de base de datos |
+| RF-10-04 | RF-10 | El cliente recibe un resumen/comprobante después de crear el pedido | Definir campos de respuesta, identificador del comprobante, estado inicial y contrato de notificación | Integración API; respuesta/efectos secundarios |
+| RF-11-01 | RF-11, RN-18 | El cliente selecciona un método de pago permitido | Definir enum de métodos y respuesta para un método inválido | Unitario más API; serializer |
+| RF-11-02 | RF-11, RN-19 | El pago electrónico simulado cambia el estado sólo después de confirmarse | Definir éxito/fallo del mock y la operación que confirma el pago | Integración API; servicio de pagos |
+| RF-11-03 | RF-11, RN-19 | El pago en efectivo permanece pendiente hasta que lo confirma caja | Definir rol de cajero, endpoint de confirmación, transición permitida y comportamiento al confirmar dos veces | Integración API; política de permisos/estado |
+| RF-11-04 | RF-11, RN-20 | Un pedido pagado genera automáticamente un comprobante | Definir formato, persistencia, unicidad y si la generación es síncrona | Integración API; efecto secundario de pago/pedido |
+| RF-12-01 | RF-12, RN-13 | El cliente ve el estado y detalles sólo de sus propios pedidos | Definir endpoint/respuesta para el cliente y valores canónicos de estado | Integración API; queryset/serializer |
+| RF-12-02 | RF-12 | El cliente ve un tiempo estimado de preparación | Definir origen, unidad, cálculo y comportamiento cuando no existe estimación | Unitario más API/comportamiento frontend |
+| RF-12-03 | RF-12 | El estado del cliente permanece sincronizado con los cambios de cocina | Definir mecanismo de actualización y retraso máximo aceptable antes de considerar los datos obsoletos | Contrato API; E2E sólo si es necesario |
 
-## MVP Boundary
+## Límite del MVP
 
-The MVP explicitly excludes quantity-based production capacity. Do not create
-tests for RN-10/RN-11 as MVP failures unless the MVP scope is changed. Product
-availability and the per-order quantity limit remain distinct concerns.
+El MVP excluye explícitamente el control de capacidad de producción por
+cantidad. No crees tests para RN-10/RN-11 como fallos del MVP, salvo que cambie
+el alcance del MVP. La disponibilidad del producto y el límite de unidades por
+pedido son reglas distintas.
