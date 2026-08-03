@@ -57,6 +57,31 @@ class ProductAvailabilityTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("max_per_order", response.data)
 
+    def test_menu_can_filter_products_by_category(self):
+        other_category = Category.objects.create(name="Food")
+        Product.objects.create(
+            name="Sandwich",
+            price=Decimal("70.00"),
+            category=other_category,
+            active=True,
+        )
+
+        response = self.client.get(
+            reverse("product-menu-list"),
+            {"category": other_category.id},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["name"], "Sandwich")
+
+    def test_menu_requires_authentication(self):
+        self.client.force_authenticate(user=None)
+
+        response = self.client.get(reverse("product-menu-list"))
+
+        self.assertEqual(response.status_code, 401)
+
     def test_manager_can_toggle_product_availability(self):
         self.client.force_authenticate(user=self.manager)
 
