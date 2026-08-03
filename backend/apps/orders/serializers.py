@@ -11,13 +11,24 @@ from .models import Order, OrderProduct
 
 
 class OrderProductSerializer(serializers.ModelSerializer):
+    product_name = serializers.SerializerMethodField()
+
     class Meta:
         model = OrderProduct
-        fields = ["id", "item_id", "quantity", "price", "excluded_modifiers"]
+        fields = ["id", "item_id", "quantity", "price", "excluded_modifiers", "product_name"]
         read_only_fields = ("id", "price")
+
+    def get_product_name(self, obj):
+        try:
+            product = Product.objects.get(pk=obj.item_id)
+            return product.name
+        except Product.DoesNotExist:
+            return f"Producto #{obj.item_id}"
 
 
 class OrderListSerializer(serializers.ModelSerializer):
+    order_products = OrderProductSerializer(many=True, read_only=True)
+
     class Meta:
         model = Order
         fields = [
@@ -30,6 +41,7 @@ class OrderListSerializer(serializers.ModelSerializer):
             "state",
             "payment_status",
             "created_at",
+            "order_products",
         ]
 
 

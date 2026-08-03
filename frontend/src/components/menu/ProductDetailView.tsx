@@ -27,7 +27,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
   const { data: productsData } = useProducts();
   const allProducts = productsData?.results ?? [];
 
-  const isAvailable = product?.isAvailable ?? true;
+  const isAvailable = true;
 
   const handleDecreaseQuantity = () => {
     if (quantity > 1) {

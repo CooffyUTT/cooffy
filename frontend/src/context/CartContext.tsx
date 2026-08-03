@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 
 export interface CartProduct {
   id: number;
@@ -20,10 +20,14 @@ interface CartContextType {
   addToCart: (product: CartProduct) => void;
   updateQuantity: (id: number, delta: number) => void;
   removeFromCart: (id: number) => void;
+  clearCart: () => void;
   totalItems: number;
   subtotal: number;
   tax: number;
   total: number;
+  cartTotal: number;
+  branchId: number | null;
+  setBranchId: (id: number | null) => void;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
 }
@@ -32,9 +36,10 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [branchId, setBranchId] = useState<number | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const addToCart = (product: CartProduct) => {
+  const addToCart = useCallback((product: CartProduct) => {
     setCart((prev) => {
       const exists = prev.find((item) => item.id === product.id);
       if (exists) {
@@ -44,9 +49,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { ...product, quantity: 1 }];
     });
-  };
+  }, []);
 
-  const updateQuantity = (id: number, delta: number) => {
+  const updateQuantity = useCallback((id: number, delta: number) => {
     setCart((prev) =>
       prev
         .map((item) => {
@@ -58,16 +63,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
         })
         .filter(Boolean) as CartItem[]
     );
-  };
+  }, []);
 
-  const removeFromCart = (id: number) => {
+  const removeFromCart = useCallback((id: number) => {
     setCart((prev) => prev.filter((item) => item.id !== id));
-  };
+  }, []);
+
+  const clearCart = useCallback(() => {
+    setCart([]);
+  }, []);
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const tax = subtotal * 0.08;
   const total = subtotal + tax;
+  const cartTotal = total;
 
   return (
     <CartContext.Provider
@@ -76,10 +86,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
         addToCart,
         updateQuantity,
         removeFromCart,
+        clearCart,
         totalItems,
         subtotal,
         tax,
         total,
+        cartTotal,
+        branchId,
+        setBranchId,
         isCartOpen,
         setIsCartOpen,
       }}

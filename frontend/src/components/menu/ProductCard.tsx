@@ -33,7 +33,7 @@ export default function ProductCard({ product }: ProductProps) {
     <Link href={`/menu/${product.id}`} className="block">
       <BaseCard className="cursor-pointer h-full">
         <CardMedia
-          src={product.image}
+          src={product.image ?? undefined}
           alt={product.name}
           fallbackText="Foto próximamente"
         />

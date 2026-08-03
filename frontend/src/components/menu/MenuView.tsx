@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShoppingCart, AlertCircle, ArrowDownWideNarrow, ChevronLeft, ChevronRight } from "lucide-react";
+import { ShoppingCart, AlertCircle, ArrowDownWideNarrow, ChevronLeft, ChevronRight, Store } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useProducts } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useBranches } from "@/hooks/useBranches";
 
 import Header from "@/components/menu/Header";
 import ProductCard from "@/components/menu/ProductCard";
+import { BranchSelector } from "@/components/menu/BranchSelector";
 
 const PAGE_SIZE = 20;
 
@@ -24,7 +26,8 @@ export function MenuView() {
   const [ordering, setOrdering] = useState<string>("name");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [page, setPage] = useState(1);
-  const { setIsCartOpen, totalItems } = useCart();
+  const { setIsCartOpen, totalItems, branchId, setBranchId } = useCart();
+  const { data: branches, isLoading: branchesLoading } = useBranches();
 
   const debouncedSearch = useDebounce(searchTerm, 300);
   const { data: categories } = useCategories();
@@ -61,7 +64,6 @@ export function MenuView() {
     month: "long",
   }).format(new Date());
 
-  // Calcular rango de páginas visibles
   const getVisiblePages = (): (number | "...")[] => {
     if (totalPages <= 7) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -80,6 +82,17 @@ export function MenuView() {
     return pages;
   };
 
+  if (!branchId) {
+    return (
+      <>
+        <Header searchValue={searchTerm} onSearchChange={setSearchTerm} />
+        <main className="pt-20 md:pt-28 pb-24 md:pb-12 px-4 md:px-10 max-w-[1100px] mx-auto">
+          <BranchSelector branches={branches ?? []} isLoading={branchesLoading} />
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <Header searchValue={searchTerm} onSearchChange={setSearchTerm} />
@@ -87,7 +100,16 @@ export function MenuView() {
       <main className="pt-20 md:pt-28 pb-24 md:pb-12 px-4 md:px-10 max-w-[1100px] mx-auto">
         <section className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-on-surface">Menú de hoy</h1>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-on-surface">Menú de hoy</h1>
+              <button
+                onClick={() => setBranchId(null)}
+                className="flex items-center gap-1 text-xs bg-surface-container-highest text-on-surface-variant px-2 py-1 rounded-full hover:bg-surface-container-high transition-colors"
+              >
+                <Store className="h-3 w-3" />
+                Cambiar
+              </button>
+            </div>
             <p className="text-sm text-on-surface-variant capitalize mt-1">{today}</p>
             {totalCount > 0 && (
               <p className="text-xs text-on-surface-variant/70 mt-0.5">
@@ -112,7 +134,6 @@ export function MenuView() {
           </div>
         </section>
 
-        {/* Tabs de categoría */}
         {categories && categories.length > 0 && (
           <section className="mb-6 border-b border-outline-variant/40">
             <div className="flex overflow-x-auto gap-6 hide-scrollbar">
@@ -178,7 +199,6 @@ export function MenuView() {
               ))}
             </div>
 
-            {/* Paginación */}
             {totalPages > 1 && (
               <nav className="flex items-center justify-center gap-1 mt-8" aria-label="Paginación">
                 <button
@@ -223,7 +243,6 @@ export function MenuView() {
           </>
         )}
 
-        {/* Botón flotante del carrito (móvil) */}
         <button
           onClick={() => setIsCartOpen(true)}
           className="lg:hidden fixed bottom-6 right-6 w-16 h-16 bg-primary text-white rounded-full shadow-xl flex items-center justify-center z-40 active:scale-90 transition-transform"

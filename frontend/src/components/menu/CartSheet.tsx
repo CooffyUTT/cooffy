@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { ShoppingBag, ShoppingCart, Minus, Plus, Trash2, ArrowRight } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
@@ -13,16 +14,23 @@ import {
 } from "@/components/ui/sheet";
 
 export default function CartSheet() {
-  const { 
-    cart, 
-    updateQuantity, 
-    removeFromCart, 
-    subtotal, 
-    tax, 
-    total, 
-    isCartOpen, 
-    setIsCartOpen 
+  const router = useRouter();
+  const {
+    cart,
+    updateQuantity,
+    removeFromCart,
+    subtotal,
+    tax,
+    total,
+    branchId,
+    isCartOpen,
+    setIsCartOpen,
   } = useCart();
+
+  const handleCheckout = () => {
+    setIsCartOpen(false);
+    router.push("/menu/checkout");
+  };
 
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
@@ -32,6 +40,11 @@ export default function CartSheet() {
             <SheetTitle className="font-headline-md text-2xl font-bold text-on-surface flex items-center gap-2">
               <ShoppingBag className="text-primary h-6 w-6" /> Tu carrito
             </SheetTitle>
+            {branchId && (
+              <p className="text-xs text-on-surface-variant">
+                Sucursal #{branchId}
+              </p>
+            )}
           </SheetHeader>
 
           {cart.length === 0 ? (
@@ -89,7 +102,11 @@ export default function CartSheet() {
               </div>
             </div>
             <SheetFooter>
-              <Button className="w-full bg-primary text-white py-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:bg-on-primary-fixed-variant">
+              <Button
+                className="w-full bg-primary text-white py-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:bg-on-primary-fixed-variant"
+                disabled={!branchId}
+                onClick={handleCheckout}
+              >
                 Continuar al pago <ArrowRight className="h-4 w-4" />
               </Button>
             </SheetFooter>

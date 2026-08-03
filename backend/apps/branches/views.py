@@ -167,6 +167,14 @@ class BranchViewSet(viewsets.ModelViewSet):
         )
 
 
+class BranchPublicViewSet(viewsets.ReadOnlyModelViewSet):
+    """Sucursales activas para clientes autenticados."""
+
+    serializer_class = BranchSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Branch.objects.filter(active=True).select_related("company", "school")
+
+
 class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
     """Compañías vinculadas a la escuela del administrador escolar."""
 
