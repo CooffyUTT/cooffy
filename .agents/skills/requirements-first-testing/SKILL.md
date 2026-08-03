@@ -53,13 +53,13 @@ Choose the lowest level that verifies the requirement without losing the contrac
 - **Integration/API:** Django/DRF endpoints, authentication and permissions, serializers, PostgreSQL persistence, branch scoping, and cross-component side effects. Prefer `APITestCase`/`APIClient` or the existing Django test style when available.
 - **E2E:** only critical complete journeys whose cross-layer behavior cannot be protected at lower levels, such as the MVP purchase journey or a critical role flow. Do not add an E2E framework just for this task.
 
-The frontend is Next.js 16/React 19/TypeScript and now uses Vitest with `jsdom` and React Testing Library. The runner is configured in `frontend/vitest.config.mts` with shared setup in `frontend/src/test/setup.ts`. Use the configured `pnpm front:test` and `pnpm front:test:watch` scripts. Keep frontend tests focused on business logic, hooks, and observable behavior; place them beside the behavior they protect using `.test.ts` or `.test.tsx`. Do not add tests for styling or every component. Do not add Jest, Cypress, or Playwright without explicit approval. Kitchen and school screens currently use mock data, so do not claim backend integration coverage from those screens.
+The frontend is Next.js 16/React 19/TypeScript and uses Vitest with `jsdom` and React Testing Library. The runner is configured in `frontend/vitest.config.mts` with shared setup in `frontend/src/test/setup.ts`. Use the configured `pnpm front:test` and `pnpm front:test:watch` scripts. Keep frontend tests focused on business logic, hooks, and observable behavior; place them beside the behavior they protect using `.test.ts` or `.test.tsx`. Do not add tests for styling or every component. Do not add Jest, Cypress, or Playwright without explicit approval. When a screen uses mock data instead of an API contract, test its isolated logic only and do not claim backend integration coverage.
 
 The backend uses Django 6 + DRF + PostgreSQL, with dependencies managed by `uv`. There is no configured pytest, coverage, or backend lint/formatter setup. Use Django's built-in runner and existing `TestCase` files. PostgreSQL is required; do not switch tests to SQLite because the project uses PostgreSQL-specific fields such as `ArrayField`.
 
 ## Implement in This Repository
 
-- Backend tests live with each app, currently in `backend/apps/<app>/tests.py`; follow that location and existing naming before creating a new test module.
+- Backend tests live with each app in `backend/apps/<app>/tests.py`; follow that location and existing naming before creating a new test module.
 - Run backend commands from the repository root through `pnpm back:*`, for example `pnpm back:manage test apps.orders --noinput` or `pnpm back:test`. Prefer `pnpm back:test` for the complete non-interactive suite.
 - Check database readiness first. Start PostgreSQL with `docker compose up -d` only when the task permits environment changes; do not create a backend `.env` or expose secrets.
 - Use Django's test database isolation and create all data required by each test. Use factories/helpers only if the repository already has them; do not introduce a factory library without approval.
@@ -69,19 +69,17 @@ The backend uses Django 6 + DRF + PostgreSQL, with dependencies managed by `uv`.
 
 Do not modify production code merely to make tests convenient. If the specification requires behavior absent from the implementation, first add the specification-derived test when the contract is testable. A failing test is useful evidence; do not weaken it to match current behavior.
 
-## Current Baseline and Incomplete Features
+## Handling Partial Implementation
 
-The current green baseline covers implemented behavior in:
+Do not maintain a hard-coded list of implemented or incomplete RFs in this skill. Determine the status from the repository and specification during each task:
 
-- `backend/apps/users/tests.py`: login, registration, authentication, and role filtering;
-- `backend/apps/products/tests.py`: menu availability, category filtering, product limits, and manager availability toggling;
-- `backend/apps/schools/tests.py`: school scoping and branch management;
-- `frontend/src/context/CartContext.test.tsx`: cart quantities and totals;
-- `frontend/src/utils/*.test.ts`: kitchen badges and currency formatting.
+- **Supported:** the observable contract can be exercised with the configured stack and the test should pass;
+- **Partial:** some specified scenarios are testable, while others require missing behavior or dependencies;
+- **Unimplemented:** the requirement is clear but no testable production seam exists yet;
+- **Ambiguous:** the specification does not define a unique expected result;
+- **Out of scope:** the MVP or task explicitly defers the behavior.
 
-Do not claim that an RF is covered merely because its app has a test file. RF-04, RF-07, RF-10, RF-11, and RF-12 still contain incomplete or disconnected behavior. Before adding tests for them, identify the exact observable contract and dependencies. If the expected behavior is unambiguous but production support is missing, record the scenario as an implementation gap and add the regression test in the implementation-fix session rather than weakening it or replacing it with a test of the current defect. If the requirement is ambiguous, do not add an assertion until the ambiguity is resolved.
-
-Keep the default suite green while building the current-code baseline. Run targeted pending regression tests separately when they intentionally expose an implementation defect, and report their failure classification explicitly.
+Record this classification in the task's traceability matrix or final report, not in this skill. Do not infer coverage from the existence of a test file. When implementation is incomplete, keep passing regression tests separate from tests that intentionally expose a defect, and never weaken a requirements-derived assertion to match the current code.
 
 ## Execute, Diagnose, and Report
 
@@ -131,7 +129,7 @@ The specification-derived matrix should include at least:
 | RN-22/23/24 | authorized staff versus another branch | API | authorized scope succeeds; unauthorized branch data/action is denied or hidden as specified |
 | RN-22 (global table) / RN-23 (RF-07 page) | order modification records last-modified date/time | API/integration | timestamp is updated and persisted |
 
-Use the exact state vocabulary and rejection response only after checking the RF-07 acceptance criteria and linked order documentation. The current `Order` model/API has a free-form `state`, permits unrestricted updates, has no visible branch intake flag, and does not enforce these transitions. Therefore a requirements-first test should expose those gaps rather than assert that arbitrary updates are valid. Do not add production fixes as part of this validation.
+Use the exact state vocabulary and rejection response only after checking the RF-07 acceptance criteria and linked order documentation. If the inspected implementation cannot enforce a specified invariant, classify that scenario according to the workflow above and preserve the specification-derived expected result rather than asserting the current behavior. Do not add production fixes as part of test design unless the task explicitly includes implementation work.
 
 For example, a traceable test name may be `test_rejected_order_cannot_be_accepted`, with a short comment or docstring such as `RF-07 / RN-14`. Keep traceability lightweight and compatible with the existing Django test style; do not add custom markers or a reporting system.
 
