@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from django.db import transaction
 from django.db.models import Sum
 from rest_framework import viewsets, filters, status
@@ -50,26 +51,33 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
-        return Response(OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED)
+        return Response(
+            OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED
+        )
 
     @transaction.atomic
     def update(self, request, *args, **kwargs):
         order = self.get_object()
 
-        if "state" in request.data:
-            order.state = request.data.get("state", order.state)
-        if "payment_status" in request.data:
-            order.payment_status = request.data.get("payment_status", order.payment_status)
-        if "payment_method" in request.data:
-            order.payment_method = request.data.get("payment_method", order.payment_method)
-        if "comment" in request.data:
-            order.comment = request.data.get("comment", order.comment)
-        if "total" in request.data:
-            order.total = Decimal(str(request.data.get("total")))
-        else:
-            order.total = order.order_products.aggregate(total=Sum("price"))["total"] or Decimal("0.00")
+        if order.state != Order.State.PENDING:
+            return Response(
+                {"detail": "No se puede modificar un pedido que ya no está en espera."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        allowed_fields = {"payment_method", "comment"}
+        for field in allowed_fields:
+            if field in request.data:
+                setattr(order, field, request.data[field])
 
         order.save()
+
+        order.total = (
+            order.order_products.aggregate(total=Sum("price"))["total"]
+            or Decimal("0.00")
+        )
+        order.save(update_fields=["total"])
+
         return Response(OrderDetailSerializer(order).data)
 
     @action(detail=True, methods=["post"], url_path="add-product")
@@ -77,27 +85,50 @@ class OrderViewSet(viewsets.ModelViewSet):
     def add_product(self, request, pk=None):
         order = self.get_object()
 
+        if order.state != Order.State.PENDING:
+            return Response(
+                {"detail": "No se pueden agregar productos a un pedido que ya no está en espera."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         quantity = int(request.data.get("quantity", 1))
         item_id = request.data.get("item_id")
 
-        if request.data.get("price") is not None:
-            unit_price = Decimal(str(request.data.get("price")))
+        product = get_object_or_404(Product, pk=item_id, active=True)
+
+        if product.max_per_order and quantity > product.max_per_order:
+            return Response(
+                {
+                    "detail": (
+                        f"'{product.name}' tiene un límite de "
+                        f"{product.max_per_order} unidades por pedido."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        existing = order.order_products.filter(item_id=item_id).first()
+        if existing:
+            existing.quantity += quantity
+            existing.price = product.price * existing.quantity
+            existing.save(update_fields=["quantity", "price"])
         else:
-            product = get_object_or_404(Product, pk=item_id)
-            unit_price = product.price
+            line_total = product.price * quantity
+            OrderProduct.objects.create(
+                order=order,
+                item_id=item_id,
+                quantity=quantity,
+                price=line_total,
+                excluded_modifiers=request.data.get("excluded_modifiers", []),
+            )
 
-        line_total = unit_price * quantity
-
-        OrderProduct.objects.create(
-            order=order,
-            item_id=item_id,
-            quantity=quantity,
-            price=line_total,
-            excluded_modifiers=request.data.get("excluded_modifiers", []),
+        order.total = (
+            order.order_products.aggregate(total=Sum("price"))["total"]
+            or Decimal("0.00")
         )
-
-        order.total = order.order_products.aggregate(total=Sum("price"))["total"] or Decimal("0.00")
         order.save(update_fields=["total"])
 
         order.refresh_from_db()
-        return Response(OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED)
+        return Response(
+            OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED
+        )
