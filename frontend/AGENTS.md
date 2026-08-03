@@ -33,10 +33,16 @@
 
 ## Verification
 
-- `pnpm front:lint` runs the frontend ESLint check and then
-  `pnpm front:typecheck`.
+- `pnpm front:lint` runs only the frontend ESLint check.
 - `pnpm front:typecheck` runs `tsc --noEmit`.
-- There are no frontend test scripts.
+- `pnpm front:test` runs the Vitest suite once.
+- `pnpm front:test:watch` runs Vitest in watch mode.
+- Frontend tests live beside the behavior they protect, using `.test.ts` or
+  `.test.tsx`; test business logic, hooks and observable component behavior,
+  not styling or implementation details.
+- Use React Testing Library queries and user interactions for component tests.
+  Do not add tests only to increase coverage, and do not create E2E tests for
+  isolated frontend behavior.
 - `next.config.ts` allows only configured remote image hosts. Add new hosts to
   `images.remotePatterns` before using them with `next/image`.
 - Do not blanket-approve native build scripts; workspace allowlists are

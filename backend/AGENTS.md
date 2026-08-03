@@ -50,5 +50,5 @@
 ## Constraints
 
 - `.env` is at the repository root; never create `backend/.env`.
-- No backend lint, formatter or meaningful test suite is configured. Do not
-  invent pytest or ruff configuration.
+- No backend lint or formatter is configured. Tests use Django's native runner
+  through `pnpm back:test`; do not invent pytest or ruff configuration.
