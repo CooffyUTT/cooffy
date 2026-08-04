@@ -32,7 +32,9 @@ export function PeriodSelector({ value, onChange, disabled }: PeriodSelectorProp
       </span>
       <Select
         value={value}
-        onValueChange={(next: string) => onChange(next as AnalyticsPeriod)}
+        onValueChange={(next) => {
+          if (next) onChange(next as AnalyticsPeriod);
+        }}
         disabled={disabled}
       >
         <SelectTrigger className="w-44" data-testid="period-trigger">

@@ -90,8 +90,8 @@ export function OrdersByHourChart({
                   <ChartTooltipContent
                     labelFormatter={(label, payload) => {
                       const hour = payload?.[0]?.payload?.hour;
-                      if (hour === undefined) return String(label);
-                      return formatHour(hour);
+                      if (typeof hour === "number") return formatHour(hour);
+                      return String(label);
                     }}
                     formatter={(value) => formatInteger(value as number)}
                   />

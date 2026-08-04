@@ -32,6 +32,7 @@ const TIME_FORMATTER = new Intl.DateTimeFormat("es-MX", {
 
 const HOUR_FORMATTER = new Intl.DateTimeFormat("es-MX", {
   hour: "2-digit",
+  minute: "2-digit",
   hour12: false,
 });
 
