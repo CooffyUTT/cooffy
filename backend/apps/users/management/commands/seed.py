@@ -12,7 +12,7 @@ from django.conf import settings
 
 
 class Command(BaseCommand):
-    help = 'Ejecuta todos los comandos seed (seed_users, seed_products, seed_branches y seed_orders).'
+    help = 'Ejecuta todos los comandos seed (seed_users, seed_branches, seed_products, seed_orders y seed_analytics).'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -47,5 +47,8 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.MIGRATE_HEADING("\n=== Ejecutando seed_orders ==="))
         call_command('seed_orders')
+
+        self.stdout.write(self.style.MIGRATE_HEADING("\n=== Ejecutando seed_analytics ==="))
+        call_command('seed_analytics')
 
         self.stdout.write(self.style.MIGRATE_LABEL("\n¡Todos los seeds completados con éxito"))
