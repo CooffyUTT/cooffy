@@ -9,6 +9,7 @@ import { ManagerHeader } from './ManagerHeader';
 import { BranchHeader } from './BranchHeader';
 import { BranchCard } from './BranchCard';
 import { MenuManagerView } from './menu/MenuManagerView';
+import { DashboardView } from './dashboard/DashboardView';
 
 interface BackendBranch {
   id: number;
@@ -159,7 +160,9 @@ export function ManagerView() {
       <ManagerHeader activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
-        {activeTab === 'menu' ? (
+        {activeTab === 'dashboard' ? (
+          <DashboardView />
+        ) : activeTab === 'menu' ? (
           <MenuManagerView />
         ) : (
           <>
