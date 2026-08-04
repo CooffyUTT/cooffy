@@ -1,13 +1,22 @@
 """
 Management command to seed analytics demo orders for development.
 
-Generates ~120 realistic orders spread over the last 30 days so every
-dashboard endpoint returns meaningful data (daily summary, top products,
-orders by hour, sales series and operation times).
+Generates realistic orders spread over the last period so every dashboard
+endpoint returns meaningful data (daily summary, top products, orders by
+hour, sales series and operation times).
+
+The range is driven by the `--period` flag, mirroring the analytics API:
+
+    daily        -> today
+    weekly       -> last 7 days
+    monthly      -> last 30 days      (default)
+    four_monthly -> last 120 days
+    semesterly   -> last 180 days
 
 Usage:
-    python manage.py seed_analytics         # creates analytics orders if none exist
-    python manage.py seed_analytics --clear # deletes all orders and re-creates them
+    python manage.py seed_analytics              # monthly (30 days)
+    python manage.py seed_analytics --period semesterly
+    python manage.py seed_analytics --clear --period four_monthly
 """
 
 import random
@@ -18,16 +27,21 @@ from django.core.management.base import BaseCommand
 from django.db.models import Max
 from django.utils import timezone
 
+from apps.analytics.views import PERIOD_DAYS
 from apps.branches.models import Branch
 from apps.orders.models import Order, OrderProduct
 from apps.products.models import Product
 from apps.users.models import User
 
-DAYS_BACK = 30
-MIN_ORDERS_IN_WINDOW = 50
 ORDERS_PER_DAY_RANGE = (3, 5)
 ITEMS_PER_ORDER_RANGE = (1, 3)
 MAX_QUANTITY_PER_ITEM = 2
+
+# Umbral de idempotencia: se omite si ya hay al menos el 40% de las
+# órdenes esperadas en la ventana (promedio de 4 órdenes/día), evitando
+# duplicar el seed sin necesidad de --clear.
+IDEMPOTENCY_FRACTION = 0.4
+EXPECTED_ORDERS_PER_DAY = sum(ORDERS_PER_DAY_RANGE) / len(ORDERS_PER_DAY_RANGE)
 
 # Pesos para dar popularidad a algunos productos (afecta el top de productos).
 # Se aplican por nombre para no depender de IDs fijos en la base de datos.
@@ -63,9 +77,15 @@ def _weighted_choice(weights):
 
 
 class Command(BaseCommand):
-    help = 'Siembra órdenes analíticas de los últimos 30 días para desarrollo.'
+    help = 'Siembra órdenes analíticas para desarrollo según un período (daily, weekly, monthly, four_monthly, semesterly).'
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            '--period',
+            default='monthly',
+            choices=list(PERIOD_DAYS.keys()),
+            help='Rango de tiempo a sembrar. Default: monthly (30 días).',
+        )
         parser.add_argument(
             '--clear',
             action='store_true',
@@ -115,8 +135,13 @@ class Command(BaseCommand):
             return
 
         today = timezone.now().date()
-        window_start = today - timedelta(days=DAYS_BACK)
+        period = options['period']
+        days_back = PERIOD_DAYS[period]
+        window_start = today - timedelta(days=days_back)
         existing_in_window = Order.objects.filter(date__gte=window_start).count()
+
+        expected_orders = int(EXPECTED_ORDERS_PER_DAY * days_back)
+        min_orders_in_window = max(1, int(expected_orders * IDEMPOTENCY_FRACTION))
 
         if options['clear']:
             deleted_products, _ = OrderProduct.objects.all().delete()
@@ -124,11 +149,11 @@ class Command(BaseCommand):
             self.stdout.write(
                 f'{deleted_orders} orden(es) y {deleted_products} producto(s) de orden eliminados.\n'
             )
-        elif existing_in_window >= MIN_ORDERS_IN_WINDOW:
+        elif existing_in_window >= min_orders_in_window:
             self.stdout.write(
                 self.style.WARNING(
-                    f'ℹ Ya existen {existing_in_window} órdenes en los últimos {DAYS_BACK} días (omitido). '
-                    'Usa --clear para re-crearlas.'
+                    f'ℹ Ya existen {existing_in_window} órdenes en los últimos {days_back} días '
+                    f'({period}, omitido). Usa --clear para re-crearlas.'
                 )
             )
             return
@@ -137,7 +162,7 @@ class Command(BaseCommand):
         max_num = Order.objects.aggregate(max_num=Max('order_number'))['max_num'] or 0
         created = 0
 
-        for day_offset in range(DAYS_BACK, -1, -1):
+        for day_offset in range(days_back, -1, -1):
             order_date = today - timedelta(days=day_offset)
             orders_today = random.randint(*ORDERS_PER_DAY_RANGE)
 
@@ -217,6 +242,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'\n{created} órden(es) analítica(s) creada(s) en los últimos {DAYS_BACK} días.'
+                f'\n{created} órden(es) analítica(s) creada(s) en los últimos {days_back} días '
+                f'({period}).'
             )
         )
