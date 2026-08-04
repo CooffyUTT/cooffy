@@ -40,6 +40,10 @@ class OrderApiTests(APITestCase):
         self.assertIn("order_products", response.data)
 
     def test_client_can_create_order_and_total_is_persisted(self):
+        from apps.products.models import Product
+        Product.objects.create(id=10, name="P10", price=Decimal("10.00"))
+        Product.objects.create(id=11, name="P11", price=Decimal("20.00"))
+
         response = self.client.post(
             reverse("orders-list"),
             {
@@ -61,6 +65,9 @@ class OrderApiTests(APITestCase):
         self.assertEqual(order.order_products.count(), 2)
 
     def test_client_can_add_product_and_total_is_updated(self):
+        from apps.products.models import Product
+        Product.objects.create(id=10, name="P10", price=Decimal("12.50"))
+
         order = Order.objects.create(
             order_number=1,
             date="2026-01-01",
@@ -102,7 +109,7 @@ class OrderApiTests(APITestCase):
         response = self.client.get(reverse("orders-list"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual([item["id"] for item in response.data["results"]], [own_order.id])
+        self.assertEqual([item["id"] for item in response.data], [own_order.id])
 
     def test_client_cannot_retrieve_another_clients_order(self):
         other_order = Order.objects.create(
