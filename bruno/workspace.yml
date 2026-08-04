@@ -20,6 +20,8 @@ collections:
     path: "collections/User"
   - name: "School"
     path: "collections/School"
+  - name: "Analytics"
+    path: "collections/Analytics"
 
 specs:
 
