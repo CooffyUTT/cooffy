@@ -18,7 +18,7 @@
         "init:all": "cross-env-shell \"pnpm install:all && docker compose up -d && pnpm back:manage migrate && pnpm back:manage seed && pnpm dev\""
     },
     "devDependencies": {
-        "@usebruno/cli": "^3.5.2",
+        "@usebruno/cli": "^4.0.0",
         "concurrently": "^10.0.3",
         "cross-env": "^7.0.3"
     },
