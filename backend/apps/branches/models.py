@@ -93,6 +93,7 @@ class Branch(models.Model):
     schedule = models.CharField(max_length=100, blank=True, null=True)
     image = models.ImageField(upload_to='branches/', max_length=2048, null=True, blank=True)
     active = models.BooleanField(default=True)
+    accepting_orders = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

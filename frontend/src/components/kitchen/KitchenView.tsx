@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
-import { useKitchenOrders, useUpdateOrderState } from "@/hooks/useKitchenOrders";
+import { useKitchenOrders, useUpdateOrderState } from "@/hooks/useOrders";
+import { useBranches } from "@/hooks/useBranches";
 import type { Order as ApiOrder, OrderState } from "@/types/order";
 
 import { KitchenSidebar } from "./KitchenSidebar";
@@ -70,14 +71,32 @@ export function KitchenView() {
     }
   });
 
+  const userBranchId = useMemo(() => {
+    if (typeof window === "undefined") return undefined;
+    const userDataStr = localStorage.getItem("userData");
+    if (!userDataStr) return undefined;
+    try {
+      const userData = JSON.parse(userDataStr);
+      return userData.branch_id ?? undefined;
+    } catch {
+      return undefined;
+    }
+  }, []);
+
   const [kitchenActive, setKitchenActive] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isConnected] = useState(true);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
-  const { data: pendingOrders } = useKitchenOrders("pending");
-  const { data: preparingOrders } = useKitchenOrders("preparing");
-  const { data: readyOrders } = useKitchenOrders("ready");
+  const { data: pendingOrders } = useKitchenOrders("pending", userBranchId);
+  const { data: preparingOrders } = useKitchenOrders("preparing", userBranchId);
+  const { data: readyOrders } = useKitchenOrders("ready", userBranchId);
+  const { data: branches } = useBranches();
+
+  const branchName = useMemo(() => {
+    if (!userBranchId || !branches) return undefined;
+    return branches.find((b) => b.id === userBranchId)?.name;
+  }, [userBranchId, branches]);
 
   useEffect(() => {
     if (!isAuthorized) {
@@ -130,6 +149,7 @@ export function KitchenView() {
           isConnected={isConnected}
           kitchenActive={kitchenActive}
           isFullscreen={isFullscreen}
+          branchName={branchName}
           onToggleActive={() => setKitchenActive(!kitchenActive)}
           onToggleFullscreen={toggleFullscreen}
         />

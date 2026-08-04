@@ -40,6 +40,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         user = getattr(self.request, "user", None)
         client_id = self.request.query_params.get("client_id")
         state = self.request.query_params.get("state")
+        branch_id = self.request.query_params.get("branch_id")
 
         if client_id is not None:
             qs = qs.filter(client_id=client_id)
@@ -51,7 +52,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             name__in=["empleado", "gerente"]
         ).exists()
 
-        if user and not getattr(user, "is_staff", False) and not is_kitchen_staff:
+        if is_kitchen_staff and getattr(user, "branch_id", None):
+            qs = qs.filter(branch_id=user.branch_id)
+        elif user and not getattr(user, "is_staff", False) and not is_kitchen_staff:
             qs = qs.filter(client_id=getattr(user, "id", None))
 
         return qs
@@ -64,6 +67,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED
         )
 
+    def _is_kitchen_staff(self, user):
+        return user.groups.filter(name__in=["empleado", "gerente"]).exists()
+
     @transaction.atomic
     def update(self, request, *args, **kwargs):
         order = self.get_object()
@@ -71,6 +77,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         new_state = request.data.get("state")
 
         if new_state and new_state != order.state:
+            if not self._is_kitchen_staff(request.user):
+                return Response(
+                    {"detail": "Solo el personal de cocina puede cambiar el estado de un pedido."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
             valid_transitions = {
                 Order.State.PENDING: [Order.State.PREPARING, Order.State.REJECTED],
                 Order.State.PREPARING: [Order.State.READY, Order.State.REJECTED],
@@ -102,6 +114,12 @@ class OrderViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def add_product(self, request, pk=None):
         order = self.get_object()
+
+        if str(order.client_id) != str(request.user.id):
+            return Response(
+                {"detail": "No tienes permiso para modificar este pedido."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         if order.state != Order.State.PENDING:
             return Response(
@@ -140,10 +158,11 @@ class OrderViewSet(viewsets.ModelViewSet):
                 excluded_modifiers=request.data.get("excluded_modifiers", []),
             )
 
-        order.total = (
+        subtotal = (
             order.order_products.aggregate(total=Sum("price"))["total"]
             or Decimal("0.00")
         )
+        order.total = subtotal * Decimal("1.08")
         order.save(update_fields=["total"])
 
         order.refresh_from_db()

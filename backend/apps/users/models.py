@@ -41,6 +41,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=100)
     lastname = models.CharField(max_length=100, blank=True, null=True)
     school_id = models.BigIntegerField(blank=True, null=True)
+    branch_id = models.BigIntegerField(blank=True, null=True)
     active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     # is_superuser, groups, user_permissions los aporta PermissionsMixin

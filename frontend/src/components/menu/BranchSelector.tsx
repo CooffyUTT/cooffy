@@ -4,14 +4,7 @@ import React from "react";
 import { MapPin, Clock, Store } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
-
-interface Branch {
-  id: number;
-  name: string;
-  location: string | null;
-  schedule: string | null;
-  company_name: string;
-}
+import type { Branch } from "@/hooks/useBranches";
 
 interface BranchSelectorProps {
   branches: Branch[];
@@ -65,11 +58,14 @@ export function BranchSelector({ branches, isLoading }: BranchSelectorProps) {
         {branches.map((branch) => (
           <button
             key={branch.id}
-            onClick={() => setBranchId(branch.id)}
+            onClick={() => branch.accepting_orders && setBranchId(branch.id)}
+            disabled={!branch.accepting_orders}
             className={`text-left rounded-2xl border-2 p-5 transition-all ${
-              branchId === branch.id
-                ? "border-primary bg-primary/5 shadow-md"
-                : "border-outline-variant/20 bg-surface-container-low hover:border-outline-variant/50 hover:shadow-sm"
+              !branch.accepting_orders
+                ? "border-outline-variant/10 bg-surface-container-low/50 opacity-60 cursor-not-allowed"
+                : branchId === branch.id
+                  ? "border-primary bg-primary/5 shadow-md"
+                  : "border-outline-variant/20 bg-surface-container-low hover:border-outline-variant/50 hover:shadow-sm"
             }`}
           >
             <div className="flex items-start justify-between mb-2">
@@ -84,6 +80,12 @@ export function BranchSelector({ branches, isLoading }: BranchSelectorProps) {
             <p className="text-xs text-primary font-medium mb-2">
               {branch.company_name}
             </p>
+
+            {!branch.accepting_orders && (
+              <span className="inline-block text-xs font-medium text-error bg-error/10 rounded-full px-2 py-0.5 mb-2">
+                No aceptando pedidos
+              </span>
+            )}
 
             {branch.location && (
               <div className="flex items-center gap-1.5 text-sm text-on-surface-variant mb-1">

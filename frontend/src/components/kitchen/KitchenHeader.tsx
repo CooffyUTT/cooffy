@@ -8,6 +8,7 @@ interface KitchenHeaderProps {
   isConnected: boolean;
   kitchenActive: boolean;
   isFullscreen: boolean;
+  branchName?: string;
   onToggleActive: () => void;
   onToggleFullscreen: () => void;
 }
@@ -16,13 +17,14 @@ export function KitchenHeader({
   isConnected,
   kitchenActive,
   isFullscreen,
+  branchName,
   onToggleActive,
   onToggleFullscreen
 }: KitchenHeaderProps) {
   return (
     <header className="flex items-center justify-between bg-white px-5 py-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0">
       <div className="flex items-center gap-4">
-        <h2 className="text-lg font-extrabold text-[#5C3D2E]">Cocina Central</h2>
+        <h2 className="text-lg font-extrabold text-[#5C3D2E]">{branchName || "Cocina"}</h2>
         
         <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
           isConnected ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'

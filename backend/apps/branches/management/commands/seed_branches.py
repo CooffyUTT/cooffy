@@ -121,6 +121,7 @@ class Command(BaseCommand):
                 defaults={'active': True},
             )
 
+            first_branch = None
             for branch_data in company_data['branches']:
                 branch_name = branch_data['name']
 
@@ -133,6 +134,9 @@ class Command(BaseCommand):
                     },
                 )
 
+                if first_branch is None:
+                    first_branch = branch_obj
+
                 if was_created:
                     created_branches += 1
                     self.stdout.write(
@@ -140,6 +144,15 @@ class Command(BaseCommand):
                     )
                 else:
                     self.stdout.write(f'    ~ Sucursal "{branch_name}" ya existe.')
+
+            if first_branch:
+                cocina = User.objects.filter(user='cocina1').first()
+                if cocina and cocina.branch_id != first_branch.id:
+                    cocina.branch_id = first_branch.id
+                    cocina.save(update_fields=['branch_id', 'updated_at'])
+                    self.stdout.write(
+                        f'    ✔ usuario "cocina1" asignado a sucursal "{first_branch.name}"'
+                    )
 
         self.stdout.write(
             self.style.SUCCESS(

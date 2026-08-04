@@ -212,7 +212,6 @@ export function CheckoutView() {
                   (sum, item) => sum + Number(item.price),
                   0,
                 );
-                const orderTax = orderSubtotal * 0.08;
                 return (
                   <>
                     <div className="flex justify-between text-sm text-on-surface-variant">
@@ -221,7 +220,7 @@ export function CheckoutView() {
                     </div>
                     <div className="flex justify-between text-sm text-on-surface-variant">
                       <span>IVA (8%)</span>
-                      <span>${orderTax.toFixed(2)}</span>
+                      <span>${Number(createdOrder.iva).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-dashed border-outline-variant/20">
                       <span className="text-lg font-bold text-on-surface">Total</span>

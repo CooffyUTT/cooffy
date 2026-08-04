@@ -36,6 +36,7 @@ class Order(models.Model):
         max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING
     )
     comment = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "orders"
@@ -54,7 +55,7 @@ class Order(models.Model):
 class OrderProduct(models.Model):
     order = models.ForeignKey(Order, related_name="order_products", on_delete=models.CASCADE)
     item_id = models.BigIntegerField()
-    quantity = models.IntegerField(default=1)
+    quantity = models.PositiveIntegerField(default=1)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     excluded_modifiers = models.JSONField(default=list, blank=True, null=True)
 

@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
-interface Branch {
+export interface Branch {
   id: number;
   name: string;
   location: string | null;
   schedule: string | null;
   company_name: string;
+  accepting_orders: boolean;
 }
 
 interface PaginatedBranches {

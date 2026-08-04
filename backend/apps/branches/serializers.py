@@ -61,6 +61,7 @@ class BranchSerializer(serializers.ModelSerializer):
             'schedule',
             'image',
             'active',
+            'accepting_orders',
             'created_at',
             'updated_at',
         ]

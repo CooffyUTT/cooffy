@@ -100,6 +100,7 @@ class UserSerializer(serializers.ModelSerializer):
             'name',
             'lastname',
             'school_id',
+            'branch_id',
             'active',
             'groups',
         ]

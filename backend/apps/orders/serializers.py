@@ -19,11 +19,11 @@ class OrderProductSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "price")
 
     def get_product_name(self, obj):
-        try:
-            product = Product.objects.get(pk=obj.item_id)
+        products_map = self.context.get("products_map", {})
+        product = products_map.get(obj.item_id)
+        if product:
             return product.name
-        except Product.DoesNotExist:
-            return f"Producto #{obj.item_id}"
+        return f"Producto #{obj.item_id}"
 
 
 class OrderListSerializer(serializers.ModelSerializer):
@@ -44,9 +44,23 @@ class OrderListSerializer(serializers.ModelSerializer):
             "order_products",
         ]
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        item_ids = {op["item_id"] for op in data.get("order_products", [])}
+        if item_ids:
+            products = Product.objects.filter(pk__in=item_ids)
+            products_map = {p.pk: p for p in products}
+        else:
+            products_map = {}
+        for op in data.get("order_products", []):
+            product = products_map.get(op["item_id"])
+            op["product_name"] = product.name if product else f"Producto #{op['item_id']}"
+        return data
+
 
 class OrderDetailSerializer(serializers.ModelSerializer):
     order_products = OrderProductSerializer(many=True, read_only=True)
+    iva = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -61,12 +75,34 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "picked_up_at",
             "scheduled_pickup_at",
             "total",
+            "iva",
             "state",
             "payment_method",
             "payment_status",
             "comment",
+            "updated_at",
             "order_products",
         ]
+
+    def get_iva(self, obj):
+        from decimal import Decimal
+        subtotal = sum(
+            op.price for op in obj.order_products.all()
+        )
+        return str(subtotal * Decimal("0.08"))
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        item_ids = {op["item_id"] for op in data.get("order_products", [])}
+        if item_ids:
+            products = Product.objects.filter(pk__in=item_ids)
+            products_map = {p.pk: p for p in products}
+        else:
+            products_map = {}
+        for op in data.get("order_products", []):
+            product = products_map.get(op["item_id"])
+            op["product_name"] = product.name if product else f"Producto #{op['item_id']}"
+        return data
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
@@ -85,8 +121,11 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     def validate_branch_id(self, value):
         from apps.branches.models import Branch
 
-        if not Branch.objects.filter(pk=value, active=True).exists():
+        branch = Branch.objects.filter(pk=value, active=True).first()
+        if not branch:
             raise serializers.ValidationError("La sucursal no existe o está inactiva.")
+        if not branch.accepting_orders:
+            raise serializers.ValidationError("Esta sucursal no está aceptando pedidos en este momento.")
         return value
 
     def validate_order_products(self, value):
@@ -171,7 +210,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             )
             total += line_total
 
-        order.total = total
+        order.total = total * Decimal("1.08")
         order.save(update_fields=["total"])
 
         return order

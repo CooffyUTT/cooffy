@@ -24,23 +24,13 @@ export interface Order {
   picked_up_at: string | null;
   scheduled_pickup_at: string | null;
   total: string;
+  iva: string;
   state: OrderState;
   payment_method: PaymentMethod;
   payment_status: PaymentStatus;
   comment: string | null;
+  updated_at: string;
   order_products: OrderProduct[];
-}
-
-export interface OrderListItem {
-  id: number;
-  order_number: number;
-  date: string;
-  branch_id: number;
-  client_id: number;
-  total: string;
-  state: OrderState;
-  payment_status: PaymentStatus;
-  created_at: string;
 }
 
 export interface OrderProductInput {
