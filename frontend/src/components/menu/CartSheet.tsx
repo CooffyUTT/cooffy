@@ -104,7 +104,6 @@ export default function CartSheet() {
             <SheetFooter>
               <Button
                 className="w-full bg-primary text-white py-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:bg-on-primary-fixed-variant"
-                disabled={!branchId}
                 onClick={handleCheckout}
               >
                 Continuar al pago <ArrowRight className="h-4 w-4" />
