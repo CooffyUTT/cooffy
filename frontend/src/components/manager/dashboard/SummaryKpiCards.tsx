@@ -69,7 +69,7 @@ export function SummaryKpiCards({
       key: "avg-time",
       title: "Tiempo de operación",
       value: formatMinutes(summary?.avg_operation_minutes ?? null),
-      hint: "Promedio created → picked_up",
+      hint: "Promedio desde la creación hasta la recolección",
       icon: Timer,
     },
   ];

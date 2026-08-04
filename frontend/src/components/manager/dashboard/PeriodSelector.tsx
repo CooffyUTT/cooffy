@@ -38,7 +38,11 @@ export function PeriodSelector({ value, onChange, disabled }: PeriodSelectorProp
         disabled={disabled}
       >
         <SelectTrigger className="w-44" data-testid="period-trigger">
-          <SelectValue />
+          <SelectValue>
+            {(selected: string | null) =>
+              selected ? (PERIOD_LABELS[selected as AnalyticsPeriod] ?? selected) : null
+            }
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {PERIOD_VALUES.map((period) => (
