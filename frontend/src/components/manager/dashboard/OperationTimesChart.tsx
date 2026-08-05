@@ -18,46 +18,67 @@ import {
   formatMinutes,
   formatShortDate,
 } from "@/utils/analyticsFormatters";
-import type { OperationTimePoint } from "@/types/analytics";
+import {
+  bucketOperationTimes,
+  getOperationTimeBucket,
+} from "@/utils/analyticsBuckets";
+import type { AnalyticsPeriod, OperationTimePoint } from "@/types/analytics";
 
 const chartConfig: ChartConfig = {
   avg_minutes: {
     label: "Promedio",
     color: "var(--color-chart-4)",
   },
-  min_minutes: {
-    label: "Mínimo",
-    color: "var(--color-chart-2)",
-  },
-  max_minutes: {
-    label: "Máximo",
-    color: "var(--color-chart-5)",
-  },
 };
 
 interface OperationTimesChartProps {
   data: OperationTimePoint[];
   overallAvg: number | null;
+  period: AnalyticsPeriod;
   isLoading: boolean;
   isError: boolean;
+}
+
+const MONTHS_ES = [
+  "Ene",
+  "Feb",
+  "Mar",
+  "Abr",
+  "May",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dic",
+];
+
+function formatBucketLabel(value: string, bucket: ReturnType<typeof getOperationTimeBucket>) {
+  if (bucket === "month") {
+    const [year, month] = value.split("-");
+    const monthIndex = Number(month) - 1;
+    if (monthIndex >= 0 && monthIndex < 12) {
+      return `${MONTHS_ES[monthIndex]} ${year}`;
+    }
+  }
+  return formatShortDate(value);
 }
 
 export function OperationTimesChart({
   data,
   overallAvg,
+  period,
   isLoading,
   isError,
 }: OperationTimesChartProps) {
-  const series = data
-    .filter(
-      (d) => d.avg_minutes !== null || d.min_minutes !== null || d.max_minutes !== null,
-    )
-    .map((d) => ({
-      date: d.date,
-      avg_minutes: d.avg_minutes ?? 0,
-      min_minutes: d.min_minutes ?? 0,
-      max_minutes: d.max_minutes ?? 0,
-    }));
+  const bucket = getOperationTimeBucket(period);
+  const series = bucketOperationTimes(data, bucket).map((point) => ({
+    date: point.date,
+    avg_minutes: point.avg_minutes ?? 0,
+    min_minutes: point.min_minutes,
+    max_minutes: point.max_minutes,
+  }));
 
   return (
     <Card data-testid="operation-times-card">
@@ -76,7 +97,7 @@ export function OperationTimesChart({
           </p>
         ) : isLoading ? (
           <div
-            className="bg-muted/40 h-72 w-full animate-pulse rounded-md"
+            className="bg-muted/40 h-80 w-full animate-pulse rounded-md"
             aria-label="Cargando gráfica"
           />
         ) : series.length === 0 ? (
@@ -84,7 +105,7 @@ export function OperationTimesChart({
             Aún no hay pedidos completados en el periodo.
           </p>
         ) : (
-          <ChartContainer config={chartConfig} className="h-72 w-full">
+          <ChartContainer config={chartConfig} className="h-80 w-full">
             <BarChart
               data={series}
               margin={{ left: 4, right: 8, top: 8, bottom: 8 }}
@@ -92,10 +113,10 @@ export function OperationTimesChart({
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
-                tickFormatter={(value) => formatShortDate(String(value))}
+                tickFormatter={(value) => formatBucketLabel(String(value), bucket)}
                 tickLine={false}
                 axisLine={false}
-                minTickGap={24}
+                minTickGap={bucket === "month" ? 0 : 16}
                 tick={{ fontSize: 11 }}
               />
               <YAxis
@@ -109,25 +130,38 @@ export function OperationTimesChart({
                 cursor={{ fill: "var(--color-muted)" }}
                 content={
                   <ChartTooltipContent
-                    labelFormatter={(label) => formatShortDate(String(label))}
-                    formatter={(value) => formatMinutes(value as number)}
+                    labelFormatter={(label) =>
+                      formatBucketLabel(String(label), bucket)
+                    }
+                    formatter={(value, _name, item) => {
+                      const payload = (item as { payload?: typeof series[number] })
+                        .payload;
+                      return (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-foreground font-mono font-medium tabular-nums">
+                            {formatMinutes(value as number)}
+                          </span>
+                          {payload && (
+                            <span className="text-muted-foreground text-xs">
+                              {payload.min_minutes !== null &&
+                                `Min ${formatMinutes(payload.min_minutes)}`}
+                              {payload.min_minutes !== null &&
+                                payload.max_minutes !== null &&
+                                " · "}
+                              {payload.max_minutes !== null &&
+                                `Max ${formatMinutes(payload.max_minutes)}`}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    }}
                   />
                 }
               />
               <Bar
-                dataKey="min_minutes"
-                fill="var(--color-chart-2)"
-                radius={[2, 2, 0, 0]}
-              />
-              <Bar
                 dataKey="avg_minutes"
                 fill="var(--color-chart-4)"
-                radius={[2, 2, 0, 0]}
-              />
-              <Bar
-                dataKey="max_minutes"
-                fill="var(--color-chart-5)"
-                radius={[2, 2, 0, 0]}
+                radius={[4, 4, 0, 0]}
               />
             </BarChart>
           </ChartContainer>

@@ -102,6 +102,7 @@ export function DashboardView() {
         <OperationTimesChart
           data={operationTimes.data?.data ?? []}
           overallAvg={operationTimes.data?.avg_minutes ?? null}
+          period={period}
           isLoading={operationTimes.isLoading}
           isError={operationTimes.isError}
         />
