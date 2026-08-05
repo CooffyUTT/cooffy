@@ -163,7 +163,12 @@ class AnalyticsViewSet(viewsets.ViewSet):
 
         hourly_data = (
             base_qs
-            .annotate(hour=ExtractHour('created_at'))
+            .annotate(
+                hour=ExtractHour(
+                    'created_at',
+                    tzinfo=timezone.get_current_timezone(),
+                )
+            )
             .values('hour')
             .annotate(count=Count('id'))
             .order_by('hour')

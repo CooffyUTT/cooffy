@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import time, timedelta
 
 from django.contrib.auth.models import Group
 from django.urls import reverse
@@ -79,7 +79,9 @@ class AnalyticsApiTests(APITestCase):
         )
 
         today = timezone.now().date()
-        now = timezone.now()
+        local_time = lambda h, m=0: timezone.make_aware(  # noqa: E731
+            timezone.datetime.combine(today, time(hour=h, minute=m))
+        )
 
         cls.order1 = Order.objects.create(
             order_number=1,
@@ -90,7 +92,7 @@ class AnalyticsApiTests(APITestCase):
             state="ready",
             total="60.00",
         )
-        cls.order1.created_at = now.replace(hour=8, minute=0)
+        cls.order1.created_at = local_time(8)
         cls.order1.save(update_fields=["created_at"])
         OrderProduct.objects.create(
             order=cls.order1, item_id=cls.product_a.id, quantity=1, price="25.00"
@@ -105,7 +107,7 @@ class AnalyticsApiTests(APITestCase):
             state="ready",
             total="35.00",
         )
-        cls.order2.created_at = now.replace(hour=10, minute=0)
+        cls.order2.created_at = local_time(10)
         cls.order2.save(update_fields=["created_at"])
         OrderProduct.objects.create(
             order=cls.order2, item_id=cls.product_b.id, quantity=1, price="35.00"
@@ -120,7 +122,7 @@ class AnalyticsApiTests(APITestCase):
             state="ready",
             total="85.00",
         )
-        cls.order3.created_at = now.replace(hour=10, minute=30)
+        cls.order3.created_at = local_time(10, 30)
         cls.order3.save(update_fields=["created_at"])
         OrderProduct.objects.create(
             order=cls.order3, item_id=cls.product_a.id, quantity=2, price="50.00"
@@ -178,7 +180,6 @@ class AnalyticsApiTests(APITestCase):
         self.assertIsNone(response.data["avg_operation_minutes"])
 
     def test_daily_summary_avg_operation_with_completed_orders(self):
-        now = timezone.now()
         self.order1.picked_up_at = self.order1.created_at + timedelta(minutes=5)
         self.order1.save(update_fields=["picked_up_at"])
         self.order2.picked_up_at = self.order2.created_at + timedelta(minutes=15)
@@ -251,7 +252,6 @@ class AnalyticsApiTests(APITestCase):
     # operation-times
 
     def test_operation_times_only_counts_completed(self):
-        now = timezone.now()
         self.order1.picked_up_at = self.order1.created_at + timedelta(minutes=8)
         self.order1.save(update_fields=["picked_up_at"])
         self.order2.picked_up_at = self.order2.created_at + timedelta(minutes=12)
