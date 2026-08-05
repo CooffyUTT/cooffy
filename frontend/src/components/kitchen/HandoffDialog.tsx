@@ -72,7 +72,8 @@ export function HandoffDialog({ order, onConfirm, onCancel, isPending }: Handoff
               {order.items.map((item) => (
                 <div key={item.id} className="flex justify-between text-xs font-bold text-slate-700">
                   <span>{item.quantity}x {item.name}</span>
-                  <span>${(item.unitPrice * item.quantity).toFixed(2)}</span>
+                  {/* Cambiado item.unitPrice por item.price */}
+                  <span>${(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>

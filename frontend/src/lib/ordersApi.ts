@@ -1,11 +1,10 @@
 import { api } from "@/lib/api";
 import type { Order, OrderCreatePayload, OrderState } from "@/types/order";
 
-interface Paginated<T> {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: T[];
+export interface GetOrdersParams {
+  date?: string;
+  state?: OrderState | string;
+  branch_id?: number;
 }
 
 export async function createOrder(payload: OrderCreatePayload): Promise<Order> {
@@ -13,9 +12,13 @@ export async function createOrder(payload: OrderCreatePayload): Promise<Order> {
   return response.data;
 }
 
-export async function getOrders(): Promise<Order[]> {
-  const response = await api.get<Paginated<Order>>("/api/orders/");
-  return response.data.results;
+export async function getOrders(params?: GetOrdersParams): Promise<Order[]> {
+  const response = await api.get<Order[] | { results: Order[] }>("/api/orders/", { params });
+  
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  return response.data?.results ?? [];
 }
 
 export async function getOrder(id: number): Promise<Order> {
@@ -31,8 +34,13 @@ export async function getOrdersByState(
   if (branchId) {
     params.branch_id = branchId;
   }
-  const response = await api.get<Paginated<Order>>("/api/orders/", { params });
-  return response.data.results;
+  
+  const response = await api.get<Order[] | { results: Order[] }>("/api/orders/", { params });
+  
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  return response.data?.results ?? [];
 }
 
 export async function updateOrderState(
