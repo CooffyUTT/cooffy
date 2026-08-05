@@ -1,33 +1,100 @@
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import Max, Q
+from django.db.models import Max
 from django.utils import timezone
 from rest_framework import serializers
 
 from apps.products.models import Product
-
+from apps.users.models import User
 from .models import Order, OrderProduct
 
 
 class OrderProductSerializer(serializers.ModelSerializer):
+    """
+    Serializer unificado para OrderProduct que incluye soporte para
+    los nombres de productos e imágenes en la respuesta JSON.
+    """
     product_name = serializers.SerializerMethodField()
+    item_name = serializers.SerializerMethodField()
+    item_image = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderProduct
-        fields = ["id", "item_id", "quantity", "price", "excluded_modifiers", "product_name"]
+        fields = [
+            "id",
+            "item_id",
+            "quantity",
+            "price",
+            "excluded_modifiers",
+            "product_name",
+            "item_name",
+            "item_image",
+        ]
         read_only_fields = ("id", "price")
+
+    def _get_product(self, item_id):
+        context = self.context or {}
+        products = context.setdefault("_products", {})
+        if item_id not in products:
+            products[item_id] = Product.objects.filter(pk=item_id).first()
+        return products[item_id]
 
     def get_product_name(self, obj):
         products_map = self.context.get("products_map", {})
-        product = products_map.get(obj.item_id)
-        if product:
-            return product.name
-        return f"Producto #{obj.item_id}"
+        if obj.item_id in products_map:
+            return products_map[obj.item_id].name
+        product = self._get_product(obj.item_id)
+        return product.name if product else f"Producto #{obj.item_id}"
+
+    def get_item_name(self, obj):
+        return self.get_product_name(obj)
+
+    def get_item_image(self, obj):
+        product = self._get_product(obj.item_id)
+        if not product or not product.image:
+            return None
+        request = self.context.get("request") if self.context else None
+        if request is not None:
+            return request.build_absolute_uri(product.image.url)
+        return product.image.url
 
 
-class OrderListSerializer(serializers.ModelSerializer):
+class OrderProductCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderProduct
+        fields = ["item_id", "quantity", "excluded_modifiers"]
+
+    def validate_item_id(self, value):
+        if not Product.objects.filter(pk=value).exists():
+            raise serializers.ValidationError("El producto no existe.")
+        return value
+
+    def validate_quantity(self, value):
+        if value < 1:
+            raise serializers.ValidationError("La cantidad debe ser al menos 1.")
+        return value
+
+
+class OrderClientNameMixin:
+    def _get_client(self, client_id):
+        context = self.context or {}
+        clients = context.setdefault("_clients", {})
+        if client_id not in clients:
+            clients[client_id] = User.objects.filter(pk=client_id).only("name", "lastname").first()
+        return clients[client_id]
+
+    def get_client_name(self, obj):
+        user = self._get_client(obj.client_id)
+        if not user:
+            return None
+        full_name = f"{user.name} {user.lastname}".strip()
+        return full_name or user.name
+
+
+class OrderListSerializer(OrderClientNameMixin, serializers.ModelSerializer):
     order_products = OrderProductSerializer(many=True, read_only=True)
+    client_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -37,29 +104,19 @@ class OrderListSerializer(serializers.ModelSerializer):
             "date",
             "branch_id",
             "client_id",
+            "client_name",
             "total",
             "state",
             "payment_status",
             "created_at",
+            "comment",
             "order_products",
         ]
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        item_ids = {op["item_id"] for op in data.get("order_products", [])}
-        if item_ids:
-            products = Product.objects.filter(pk__in=item_ids)
-            products_map = {p.pk: p for p in products}
-        else:
-            products_map = {}
-        for op in data.get("order_products", []):
-            product = products_map.get(op["item_id"])
-            op["product_name"] = product.name if product else f"Producto #{op['item_id']}"
-        return data
 
-
-class OrderDetailSerializer(serializers.ModelSerializer):
+class OrderDetailSerializer(OrderClientNameMixin, serializers.ModelSerializer):
     order_products = OrderProductSerializer(many=True, read_only=True)
+    client_name = serializers.SerializerMethodField()
     iva = serializers.SerializerMethodField()
 
     class Meta:
@@ -70,6 +127,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "date",
             "branch_id",
             "client_id",
+            "client_name",
             "created_at",
             "prepared_at",
             "picked_up_at",
@@ -85,10 +143,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_iva(self, obj):
-        from decimal import Decimal
-        subtotal = sum(
-            op.price for op in obj.order_products.all()
-        )
+        subtotal = sum(op.price for op in obj.order_products.all())
         return str(subtotal * Decimal("0.08"))
 
     def to_representation(self, instance):
@@ -106,7 +161,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    order_products = OrderProductSerializer(many=True)
+    order_products = OrderProductCreateSerializer(many=True)
 
     class Meta:
         model = Order
@@ -117,6 +172,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             "comment",
             "order_products",
         ]
+        read_only_fields = ("total",)
 
     def validate_branch_id(self, value):
         from apps.branches.models import Branch

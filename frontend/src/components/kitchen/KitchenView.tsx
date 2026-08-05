@@ -1,65 +1,18 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { AnimatePresence } from "framer-motion";
-import { useKitchenOrders, useUpdateOrderState } from "@/hooks/useOrders";
-import { useBranches } from "@/hooks/useBranches";
-import type { Order as ApiOrder, OrderState } from "@/types/order";
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { AnimatePresence } from 'framer-motion';
+import { KitchenOrder } from '@/types/kitchen';
+import type { OrderState } from '@/types/order';
 
-import { KitchenSidebar } from "./KitchenSidebar";
-import { KitchenHeader } from "./KitchenHeader";
-import { KitchenSummary } from "./KitchenSummary";
-import { KanbanColumn } from "./KanbanColumn";
-import { OrderCard } from "./OrderCard";
-import { HandoffDialog } from "./HandoffDialog";
+import { KitchenSidebar } from './KitchenSidebar';
+import { KitchenHeader } from './KitchenHeader';
+import { KitchenSummary } from './KitchenSummary';
+import { KanbanColumn } from './KanbanColumn';
+import { OrderCard } from './OrderCard';
+import { useOrders, useUpdateOrderState } from '@/hooks/useOrders';
 
-interface KitchenOrder {
-  id: string;
-  orderNumber: string;
-  customerName: string;
-  serviceType: "takeaway" | "dine_in" | "preorder";
-  createdAt: Date;
-  status: "pending" | "preparing" | "ready" | "picked_up" | "rejected";
-  total: number;
-  paymentMethod: "cash" | "card";
-  items: { id: string; name: string; type: "beverage" | "food"; quantity: number; unitPrice: number }[];
-  notes?: string;
-}
-
-function mapApiOrderToKitchenOrder(order: ApiOrder): KitchenOrder {
-  return {
-    id: String(order.id),
-    orderNumber: String(order.order_number),
-    customerName: `Cliente #${order.client_id}`,
-    serviceType: "preorder",
-    createdAt: new Date(order.created_at),
-    status: order.state as KitchenOrder["status"],
-    total: Number(order.total),
-    paymentMethod: order.payment_method,
-    items: (order.order_products ?? []).map((p) => ({
-      id: String(p.item_id),
-      name: p.product_name,
-      type: "food" as const,
-      quantity: p.quantity,
-      unitPrice: Number(p.price) / p.quantity,
-    })),
-    notes: order.comment || undefined,
-  };
-}
-
-function mapKitchenStatusToApiState(
-  status: KitchenOrder["status"],
-): OrderState {
-  const map: Record<KitchenOrder["status"], OrderState> = {
-    pending: "pending",
-    preparing: "preparing",
-    ready: "ready",
-    picked_up: "picked_up",
-    rejected: "rejected",
-  };
-  return map[status];
-}
 
 export function KitchenView() {
   const router = useRouter();
@@ -78,48 +31,35 @@ export function KitchenView() {
     }
   });
 
-  const userBranchId = useMemo(() => {
-    if (typeof window === "undefined") return undefined;
-    const userDataStr = localStorage.getItem("userData");
-    if (!userDataStr) return undefined;
-    try {
-      const userData = JSON.parse(userDataStr);
-      return userData.branch_id ?? undefined;
-    } catch {
-      return undefined;
+  const [kitchenActive, setKitchenActive] = useState(true);
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+
+  const { data: pendingOrders = [], isError: pendingError } = useOrders('pending', 5000);
+  const { data: preparingOrders = [], isError: preparingError } = useOrders('preparing', 10000);
+  const { data: readyOrders = [], isError: readyError } = useOrders('ready', 10000);
+  const { data: pickedUpOrders = [], isError: pickedUpError } = useOrders('picked_up', 30000);
+
+  const allOrders: KitchenOrder[] = [
+    ...(pendingOrders as unknown as KitchenOrder[]),
+    ...(preparingOrders as unknown as KitchenOrder[]),
+    ...(readyOrders as unknown as KitchenOrder[]),
+    ...(pickedUpOrders as unknown as KitchenOrder[]),
+  ];
+  const hasError = pendingError || preparingError || readyError || pickedUpError;
+
+  useEffect(() => {
+    if (!isAuthorized) {
+      router.push("/");
     }
-  }, []);
+  }, [isAuthorized, router]);
 
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isConnected] = useState(true);
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const [handoffOrder, setHandoffOrder] = useState<KitchenOrder | null>(null);
-
-  const { data: pendingOrders } = useKitchenOrders("pending", userBranchId);
-  const { data: preparingOrders } = useKitchenOrders("preparing", userBranchId);
-  const { data: readyOrders } = useKitchenOrders("ready", userBranchId);
-  const { data: branches } = useBranches();
-
-  const branchName = useMemo(() => {
-    if (!userBranchId || !branches) return undefined;
-    return branches.find((b) => b.id === userBranchId)?.name;
-  }, [userBranchId, branches]);
-
-  const mappedPending = (pendingOrders ?? []).map(mapApiOrderToKitchenOrder);
-  const mappedPreparing = (preparingOrders ?? []).map(mapApiOrderToKitchenOrder);
-  const mappedReady = (readyOrders ?? []).map(mapApiOrderToKitchenOrder);
-  const allOrders = [...mappedPending, ...mappedPreparing, ...mappedReady];
-
-  const moveOrder = async (orderId: string, nextStatus: KitchenOrder["status"]) => {
-    const apiState = mapKitchenStatusToApiState(nextStatus);
-    await updateState.mutateAsync({ orderId: Number(orderId), state: apiState });
-    setConfirmingId(null);
-  };
-
-  const handleHandoffConfirm = async () => {
-    if (!handoffOrder) return;
-    await moveOrder(handoffOrder.id, "picked_up");
-    setHandoffOrder(null);
+  const moveOrder = (orderId: number, nextState: OrderState) => {
+    updateState.mutate(
+      { orderId, state: nextState },
+      {
+        onSuccess: () => setConfirmingId(null),
+      }
+    );
   };
 
   if (!isAuthorized) {
@@ -141,52 +81,50 @@ export function KitchenView() {
 
       <main className="flex-1 flex flex-col p-4 gap-3 overflow-hidden">
         <KitchenHeader
-          isConnected={isConnected}
-          isFullscreen={isFullscreen}
-          branchName={branchName}
-          onToggleFullscreen={() => {
-            if (!document.fullscreenElement) {
-              document.documentElement.requestFullscreen().catch(() => {});
-              setIsFullscreen(true);
-            } else {
-              document.exitFullscreen?.().catch(() => {});
-              setIsFullscreen(false);
-            }
-          }}
+          kitchenActive={kitchenActive}
+          onToggleActive={() => setKitchenActive(!kitchenActive)}
         />
+
+        {hasError && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2 text-xs font-bold text-red-800 shrink-0">
+            No se pudieron cargar los pedidos. Reintentando automáticamente...
+          </div>
+        )}
 
         <KitchenSummary orders={allOrders} />
 
         <section className="flex-1 grid grid-cols-3 gap-4 min-h-0">
+          {/* EN ESPERA */}
           <KanbanColumn
             title="EN ESPERA"
             badgeColor="bg-amber-100 text-amber-900 border-amber-300"
             dotColor="bg-amber-500"
-            count={mappedPending.length}
+            count={pendingOrders.length}
           >
             <AnimatePresence>
-              {mappedPending.map((order) => (
+              {(pendingOrders as unknown as KitchenOrder[]).map(order => (
                 <OrderCard
                   key={order.id}
                   order={order}
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
                   onAction={() => moveOrder(order.id, "preparing")}
-                  actionLabel="INICIAR PREPARACION"
+                  actionLabel="INICIAR PREPARACIÓN"
                   actionColor="bg-amber-500 hover:bg-amber-600"
                 />
               ))}
             </AnimatePresence>
           </KanbanColumn>
 
+          {/* EN PREPARACIÓN */}
           <KanbanColumn
-            title="EN PREPARACION"
+            title="EN PREPARACIÓN"
             badgeColor="bg-blue-100 text-blue-900 border-blue-300"
             dotColor="bg-blue-500"
-            count={mappedPreparing.length}
+            count={preparingOrders.length}
           >
             <AnimatePresence>
-              {mappedPreparing.map((order) => (
+              {(preparingOrders as unknown as KitchenOrder[]).map(order => (
                 <OrderCard
                   key={order.id}
                   order={order}
@@ -200,22 +138,23 @@ export function KitchenView() {
             </AnimatePresence>
           </KanbanColumn>
 
+          {/* LISTOS PARA ENTREGA */}
           <KanbanColumn
             title="LISTOS PARA ENTREGA"
             badgeColor="bg-emerald-100 text-emerald-900 border-emerald-300"
             dotColor="bg-emerald-500"
-            count={mappedReady.length}
+            count={readyOrders.length}
           >
             <AnimatePresence>
-              {mappedReady.map((order) => (
+              {(readyOrders as unknown as KitchenOrder[]).map(order => (
                 <OrderCard
                   key={order.id}
                   order={order}
                   isPulse={true}
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
-                  onAction={() => setHandoffOrder(order)}
-                  actionLabel="ENTREGAR AL CLIENTE"
+                  onAction={() => moveOrder(order.id, "picked_up")}
+                  actionLabel="ENTREGADO / RECOGIDO"
                   actionColor="bg-emerald-600 hover:bg-emerald-700"
                   secondaryActionLabel="NO RECOGIDO"
                   secondaryActionColor="bg-red-500 hover:bg-red-600"
@@ -226,13 +165,6 @@ export function KitchenView() {
           </KanbanColumn>
         </section>
       </main>
-
-      <HandoffDialog
-        order={handoffOrder}
-        onConfirm={handleHandoffConfirm}
-        onCancel={() => setHandoffOrder(null)}
-        isPending={updateState.isPending}
-      />
     </div>
   );
 }

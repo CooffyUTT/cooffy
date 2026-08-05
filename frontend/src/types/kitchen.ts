@@ -1,15 +1,27 @@
 export interface OrderItemModifier {
-  text: string;
-  severity: 'danger' | 'warning' | 'info';
+  id: number;
+  name: string;
+  price?: number;
 }
 
 export interface OrderItem {
-  id: string;
+  id: number;
   name: string;
-  type: 'beverage' | 'food';
+  quantity: number;
+  price: number;
+  unitPrice?: number;
+  modifiers?: OrderItemModifier[];
+}
+
+export interface KitchenOrderProduct {
+  id: number;
+  item_id: number;
+  item_name: string | null;
+  item_image: string | null;
   quantity: number;
   unitPrice: number;
   modifiers?: OrderItemModifier[];
+  excluded_modifiers?: string[] | null;
 }
 
 export interface Order {
@@ -23,4 +35,21 @@ export interface Order {
   paymentMethod: 'cash' | 'card';
   items: OrderItem[];
   notes?: string;
+  price: string;
+  excluded_modifiers: string[] | null;
+}
+
+export interface KitchenOrder {
+  id: number;
+  order_number: number;
+  date: string;
+  branch_id: number;
+  client_id: number;
+  client_name: string | null;
+  total: string;
+  state: string;
+  payment_status: string;
+  created_at: string;
+  comment: string | null;
+  order_products: KitchenOrderProduct[];
 }

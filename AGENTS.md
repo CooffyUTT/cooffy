@@ -25,7 +25,10 @@ virtualenv.
   the backend only.
 - `pnpm back:manage <command>` proxies to `manage.py`; common commands are
   `migrate`, `makemigrations`, `seed` and `test`.
-- `pnpm front:lint` runs ESLint followed by the TypeScript check;
+- `pnpm back:test` runs the complete Django test suite non-interactively.
+- `pnpm front:test` runs the configured Vitest suite; `pnpm front:test:watch`
+  runs it in watch mode.
+- `pnpm front:lint` runs only the frontend ESLint check;
   `pnpm front:typecheck` runs only `tsc --noEmit`.
 - `pnpm --dir frontend build` creates a production frontend build.
 - `pnpm bru:auth` runs the Bruno Auth collection.

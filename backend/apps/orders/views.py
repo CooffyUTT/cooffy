@@ -1,10 +1,11 @@
 from decimal import Decimal
-
+from datetime import datetime
 from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -14,6 +15,7 @@ from .serializers import (
     OrderListSerializer,
     OrderDetailSerializer,
     OrderCreateSerializer,
+    OrderProductCreateSerializer,
 )
 from apps.products.models import Product
 
@@ -25,6 +27,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     search_fields = ["order_number", "state", "payment_status"]
     ordering_fields = ["created_at", "date", "order_number"]
     ordering = ["-created_at"]
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -41,6 +44,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         client_id = self.request.query_params.get("client_id")
         state = self.request.query_params.get("state")
         branch_id = self.request.query_params.get("branch_id")
+        date = self.request.query_params.get("date")  # FIX: Captura de la variable 'date'
 
         if client_id is not None:
             qs = qs.filter(client_id=client_id)
@@ -56,6 +60,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             qs = qs.filter(branch_id=user.branch_id)
         elif user and not getattr(user, "is_staff", False) and not is_kitchen_staff:
             qs = qs.filter(client_id=getattr(user, "id", None))
+
+        if date:
+            try:
+                datetime.strptime(date, "%Y-%m-%d")
+            except ValueError:
+                raise ValidationError({"date": "Formato de fecha inválido. Use YYYY-MM-DD."})
+            qs = qs.filter(date=date)
 
         return qs
 
@@ -143,6 +154,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # 1. Crear o actualizar el producto dentro del pedido
         existing = order.order_products.filter(item_id=item_id).first()
         if existing:
             existing.quantity += quantity
@@ -158,10 +170,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                 excluded_modifiers=request.data.get("excluded_modifiers", []),
             )
 
+        # 2. Recalcular el subtotal y total de la orden
         subtotal = (
             order.order_products.aggregate(total=Sum("price"))["total"]
             or Decimal("0.00")
         )
+        
         order.total = subtotal * Decimal("1.08")
         order.save(update_fields=["total"])
 

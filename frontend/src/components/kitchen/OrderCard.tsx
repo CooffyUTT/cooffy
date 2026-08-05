@@ -1,22 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Clock, Coffee, Utensils, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { Clock, ImageIcon, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Order } from '@/types/kitchen';
-import { getTimeBadgeColor, getServiceTypeBadge } from '@/utils/kitchenHelpers';
+import { KitchenOrder } from '@/types/kitchen';
+import { getTimeBadgeColor } from '@/utils/kitchenHelpers';
 
 interface OrderCardProps {
-  order: Order;
+  order: KitchenOrder;
   actionLabel: string;
   actionColor: string;
   onAction: () => void;
@@ -24,8 +17,8 @@ interface OrderCardProps {
   secondaryActionColor?: string;
   onSecondaryAction?: () => void;
   isPulse?: boolean;
-  confirmingId: string | null;
-  setConfirmingId: (id: string | null) => void;
+  confirmingId: number | null;
+  setConfirmingId: (id: number | null) => void;
 }
 
 export function OrderCard({
@@ -41,190 +34,146 @@ export function OrderCard({
   setConfirmingId
 }: OrderCardProps) {
   const [elapsedMinutes, setElapsedMinutes] = useState(0);
-  const [showRejectDialog, setShowRejectDialog] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
-      const diffMs = Date.now() - new Date(order.createdAt).getTime();
+      const diffMs = Date.now() - new Date(order.created_at).getTime();
       setElapsedMinutes(Math.floor(diffMs / 60000));
     };
     updateTime();
     const interval = setInterval(updateTime, 10000);
     return () => clearInterval(interval);
-  }, [order.createdAt]);
+  }, [order.created_at]);
 
-  const service = getServiceTypeBadge(order.serviceType);
-  const totalProducts = order.items.reduce((acc, item) => acc + item.quantity, 0);
-
-  const handleRejectConfirm = () => {
-    setShowRejectDialog(false);
-    setConfirmingId(null);
-    onSecondaryAction?.();
-  };
+  const totalProducts = (order.order_products || []).reduce(
+    (acc, item) => acc + item.quantity, 
+    0
+  );
 
   return (
-    <>
-      <motion.div
-        layout
-        initial={{ opacity: 0, y: 10, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.25 }}
-        className={`rounded-2xl border p-4 space-y-3 bg-white shadow-xs flex flex-col justify-between ${
-          isPulse ? 'ring-2 ring-emerald-400 ring-offset-2 animate-pulse' : 'border-slate-200'
-        }`}
-      >
-        <div className="space-y-2.5">
-          <div className="flex justify-between items-start border-b border-slate-100 pb-2">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-black text-slate-900">#{order.orderNumber}</span>
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${service.color}`}>
-                  {service.label}
-                </span>
-              </div>
-              <p className="text-sm font-bold text-slate-600 mt-0.5">{order.customerName}</p>
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.25 }}
+      className={`rounded-2xl border p-4 space-y-3 bg-white shadow-xs flex flex-col justify-between ${
+        isPulse ? 'ring-2 ring-emerald-400 ring-offset-2 animate-pulse' : 'border-slate-200'
+      }`}
+    >
+      <div className="space-y-2.5">
+        {/* Encabezado: Número de Orden y Tiempo Transcurrido */}
+        <div className="flex justify-between items-start border-b border-slate-100 pb-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-black text-slate-900">#{order.order_number}</span>
             </div>
-
-            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-extrabold text-xs border ${getTimeBadgeColor(elapsedMinutes)}`}>
-              <Clock size={13} />
-              <span>{elapsedMinutes} min</span>
-            </div>
+            <p className="text-sm font-bold text-slate-600 mt-0.5">
+              {order.client_name ?? 'Cliente'}
+            </p>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
-              {totalProducts} {totalProducts === 1 ? 'PRODUCTO' : 'PRODUCTOS'}
-            </div>
-            <div className="text-sm font-black text-slate-800">
-              ${order.total.toFixed(2)}
-            </div>
+          <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-extrabold text-xs border ${getTimeBadgeColor(elapsedMinutes)}`}>
+            <Clock size={13} />
+            <span>{elapsedMinutes} min</span>
           </div>
-
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500">
-            <span className={`inline-block w-2 h-2 rounded-full ${order.paymentMethod === 'cash' ? 'bg-green-500' : 'bg-blue-500'}`} />
-            {order.paymentMethod === 'cash' ? 'Efectivo' : 'Tarjeta'}
-          </div>
-
-          <div className="space-y-2.5">
-            {order.items.map((item) => (
-              <div key={item.id} className="space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                <div className="flex items-center justify-between text-base font-bold text-slate-900">
-                  <span className="flex items-center gap-1.5">
-                    {item.type === 'beverage' ? <Coffee size={16} className="text-amber-700" /> : <Utensils size={16} className="text-amber-800" />}
-                    {item.quantity}x {item.name}
-                  </span>
-                  <span className="text-xs font-bold text-slate-500">
-                    ${(item.unitPrice * item.quantity).toFixed(2)}
-                  </span>
-                </div>
-
-                {item.modifiers && item.modifiers.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {item.modifiers.map((mod, idx) => (
-                      <span 
-                        key={idx}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-black tracking-wide uppercase border shadow-2xs ${
-                          mod.severity === 'danger' ? 'bg-red-500 text-white border-red-600' :
-                          mod.severity === 'warning' ? 'bg-amber-400 text-slate-900 border-amber-500' :
-                          'bg-blue-500 text-white border-blue-600'
-                        }`}
-                      >
-                        {mod.severity === 'danger' && '!! '}
-                        {mod.severity === 'warning' && '! '}
-                        {mod.text}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {order.notes && (
-            <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs font-bold">
-              <AlertTriangle size={15} className="shrink-0 text-red-600" />
-              <span>{order.notes}</span>
-            </div>
-          )}
         </div>
 
-        <div className="pt-2">
-          {confirmingId === order.id ? (
-            <div className="space-y-3">
-              <div className="flex gap-3">
-                <Button 
-                  onClick={onAction}
-                  className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl"
-                >
-                  <CheckCircle2 size={16} className="mr-1.5" /> CONFIRMAR
-                </Button>
-                <Button 
-                  onClick={() => setConfirmingId(null)}
-                  variant="outline"
-                  className="h-12 px-4 border-slate-300 text-slate-700 font-bold text-xs rounded-xl"
-                >
-                  CANCELAR
-                </Button>
+        {/* Contador de Productos */}
+        <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+          {totalProducts} {totalProducts === 1 ? 'PRODUCTO' : 'PRODUCTOS'}
+        </div>
+
+        {/* Lista de Productos de la Orden */}
+        <div className="space-y-2.5">
+          {(order.order_products || []).map((item) => (
+            <div key={item.id} className="space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+              <div className="flex items-center justify-between text-base font-bold text-slate-900">
+                <span className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                    {item.item_image ? (
+                      <Image
+                        src={item.item_image}
+                        alt={item.item_name ?? 'Producto'}
+                        width={32}
+                        height={32}
+                        unoptimized
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ImageIcon size={16} className="text-slate-400" />
+                    )}
+                  </div>
+                  {item.quantity}x {item.item_name ?? 'Producto'}
+                </span>
               </div>
-              {secondaryActionLabel && onSecondaryAction && (
-                <Button 
-                  onClick={() => setShowRejectDialog(true)}
-                  className={`w-full h-11 text-white font-extrabold text-xs rounded-xl ${secondaryActionColor || 'bg-red-500 hover:bg-red-600'}`}
-                >
-                  <XCircle size={14} className="mr-1.5" />
-                  {secondaryActionLabel}
-                </Button>
+
+              {/* Modificadores o Modificaciones Excluidas */}
+              {item.excluded_modifiers && item.excluded_modifiers.length > 0 && (
+                <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-bold mt-1">
+                  <AlertTriangle size={15} className="shrink-0 text-amber-600" />
+                  <span>Sin: {item.excluded_modifiers.join(', ')}</span>
+                </div>
               )}
             </div>
-          ) : (
-            <Button 
+          ))}
+        </div>
+
+        {/* Comentario global de la orden */}
+        {order.comment && (
+          <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs font-bold">
+            <AlertTriangle size={15} className="shrink-0 text-red-600" />
+            <span>{order.comment}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Precio Total */}
+      <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+        <span className="text-xs font-bold text-slate-400">Total:</span>
+        <span className="text-xl font-black text-slate-900">
+          ${Number(order.total || 0).toFixed(2)}
+        </span>
+      </div>
+
+      {/* Botones de Acción */}
+      <div className="pt-2">
+        {confirmingId === order.id ? (
+          <div className="flex gap-2">
+            <Button
+              onClick={onAction}
+              className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm rounded-xl"
+            >
+              ✔ CONFIRMAR
+            </Button>
+            <Button
+              onClick={() => setConfirmingId(null)}
+              variant="outline"
+              className="h-12 px-4 border-slate-300 text-slate-700 font-bold text-xs rounded-xl"
+            >
+              CANCELAR
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Button
               onClick={() => setConfirmingId(order.id)}
-              className={`w-full h-14 text-white font-extrabold text-sm rounded-xl shadow-md transition-all ${actionColor}`}
+              className={`w-full h-12 text-white font-extrabold text-sm rounded-xl shadow-xs transition-all ${actionColor}`}
             >
               {actionLabel}
             </Button>
-          )}
-        </div>
-      </motion.div>
-
-      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-black text-slate-900">
-              Rechazar pedido #{order.orderNumber}
-            </DialogTitle>
-            <DialogDescription>
-              El pedido permanecera en esta columna como rechazado.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-2">
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
-              <p className="text-sm font-bold text-red-800">
-                El cliente <span className="font-black">{order.customerName}</span> no recogio su pedido.
-              </p>
-            </div>
+            {secondaryActionLabel && onSecondaryAction && (
+              <Button
+                onClick={onSecondaryAction}
+                variant="outline"
+                className={`w-full h-10 font-bold text-xs rounded-xl ${secondaryActionColor}`}
+              >
+                {secondaryActionLabel}
+              </Button>
+            )}
           </div>
-
-          <DialogFooter className="flex flex-col sm:flex-col gap-2 shrink-0 pt-2">
-            <Button
-              onClick={handleRejectConfirm}
-              className="w-full bg-red-500 hover:bg-red-600 text-white h-11"
-            >
-              <XCircle size={16} className="mr-1.5" />
-              Confirmar rechazo
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowRejectDialog(false)}
-              className="w-full border-slate-300 h-11"
-            >
-              Cancelar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        )}
+      </div>
+    </motion.div>
   );
 }
