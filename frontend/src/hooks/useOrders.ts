@@ -51,6 +51,7 @@ export function useUpdateOrderState() {
       updateOrderState(orderId, state),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["orders", "kitchen"] });
     },
   });
 }

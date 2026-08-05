@@ -86,7 +86,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             valid_transitions = {
                 Order.State.PENDING: [Order.State.PREPARING, Order.State.REJECTED],
                 Order.State.PREPARING: [Order.State.READY, Order.State.REJECTED],
-                Order.State.READY: [Order.State.PICKED_UP],
+                Order.State.READY: [Order.State.PICKED_UP, Order.State.REJECTED],
             }
             allowed_next = valid_transitions.get(order.state, [])
             if new_state not in allowed_next:

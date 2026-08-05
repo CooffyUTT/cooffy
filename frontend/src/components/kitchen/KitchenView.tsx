@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { useKitchenOrders, useUpdateOrderState } from "@/hooks/useOrders";
@@ -12,6 +12,7 @@ import { KitchenHeader } from "./KitchenHeader";
 import { KitchenSummary } from "./KitchenSummary";
 import { KanbanColumn } from "./KanbanColumn";
 import { OrderCard } from "./OrderCard";
+import { HandoffDialog } from "./HandoffDialog";
 
 interface KitchenOrder {
   id: string;
@@ -19,8 +20,10 @@ interface KitchenOrder {
   customerName: string;
   serviceType: "takeaway" | "dine_in" | "preorder";
   createdAt: Date;
-  status: "pending" | "preparing" | "ready" | "delivered";
-  items: { id: string; name: string; type: "beverage" | "food"; quantity: number }[];
+  status: "pending" | "preparing" | "ready" | "picked_up" | "rejected";
+  total: number;
+  paymentMethod: "cash" | "card";
+  items: { id: string; name: string; type: "beverage" | "food"; quantity: number; unitPrice: number }[];
   notes?: string;
 }
 
@@ -32,11 +35,14 @@ function mapApiOrderToKitchenOrder(order: ApiOrder): KitchenOrder {
     serviceType: "preorder",
     createdAt: new Date(order.created_at),
     status: order.state as KitchenOrder["status"],
+    total: Number(order.total),
+    paymentMethod: order.payment_method,
     items: (order.order_products ?? []).map((p) => ({
       id: String(p.item_id),
       name: p.product_name,
       type: "food" as const,
       quantity: p.quantity,
+      unitPrice: Number(p.price) / p.quantity,
     })),
     notes: order.comment || undefined,
   };
@@ -49,7 +55,8 @@ function mapKitchenStatusToApiState(
     pending: "pending",
     preparing: "preparing",
     ready: "ready",
-    delivered: "picked_up",
+    picked_up: "picked_up",
+    rejected: "rejected",
   };
   return map[status];
 }
@@ -83,10 +90,10 @@ export function KitchenView() {
     }
   }, []);
 
-  const [kitchenActive, setKitchenActive] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isConnected] = useState(true);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [handoffOrder, setHandoffOrder] = useState<KitchenOrder | null>(null);
 
   const { data: pendingOrders } = useKitchenOrders("pending", userBranchId);
   const { data: preparingOrders } = useKitchenOrders("preparing", userBranchId);
@@ -98,28 +105,21 @@ export function KitchenView() {
     return branches.find((b) => b.id === userBranchId)?.name;
   }, [userBranchId, branches]);
 
-  useEffect(() => {
-    if (!isAuthorized) {
-      router.push("/");
-    }
-  }, [isAuthorized, router]);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-      setIsFullscreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
-        setIsFullscreen(false);
-      }
-    }
-  };
+  const mappedPending = (pendingOrders ?? []).map(mapApiOrderToKitchenOrder);
+  const mappedPreparing = (preparingOrders ?? []).map(mapApiOrderToKitchenOrder);
+  const mappedReady = (readyOrders ?? []).map(mapApiOrderToKitchenOrder);
+  const allOrders = [...mappedPending, ...mappedPreparing, ...mappedReady];
 
   const moveOrder = async (orderId: string, nextStatus: KitchenOrder["status"]) => {
     const apiState = mapKitchenStatusToApiState(nextStatus);
     await updateState.mutateAsync({ orderId: Number(orderId), state: apiState });
     setConfirmingId(null);
+  };
+
+  const handleHandoffConfirm = async () => {
+    if (!handoffOrder) return;
+    await moveOrder(handoffOrder.id, "picked_up");
+    setHandoffOrder(null);
   };
 
   if (!isAuthorized) {
@@ -135,11 +135,6 @@ export function KitchenView() {
     );
   }
 
-  const mappedPending = (pendingOrders ?? []).map(mapApiOrderToKitchenOrder);
-  const mappedPreparing = (preparingOrders ?? []).map(mapApiOrderToKitchenOrder);
-  const mappedReady = (readyOrders ?? []).map(mapApiOrderToKitchenOrder);
-  const allOrders = [...mappedPending, ...mappedPreparing, ...mappedReady];
-
   return (
     <div className="flex h-screen bg-[#F4F5F7] font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden">
       <KitchenSidebar />
@@ -147,11 +142,17 @@ export function KitchenView() {
       <main className="flex-1 flex flex-col p-4 gap-3 overflow-hidden">
         <KitchenHeader
           isConnected={isConnected}
-          kitchenActive={kitchenActive}
           isFullscreen={isFullscreen}
           branchName={branchName}
-          onToggleActive={() => setKitchenActive(!kitchenActive)}
-          onToggleFullscreen={toggleFullscreen}
+          onToggleFullscreen={() => {
+            if (!document.fullscreenElement) {
+              document.documentElement.requestFullscreen().catch(() => {});
+              setIsFullscreen(true);
+            } else {
+              document.exitFullscreen?.().catch(() => {});
+              setIsFullscreen(false);
+            }
+          }}
         />
 
         <KitchenSummary orders={allOrders} />
@@ -171,7 +172,7 @@ export function KitchenView() {
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
                   onAction={() => moveOrder(order.id, "preparing")}
-                  actionLabel="INICIAR PREPARACIÓN"
+                  actionLabel="INICIAR PREPARACION"
                   actionColor="bg-amber-500 hover:bg-amber-600"
                 />
               ))}
@@ -179,7 +180,7 @@ export function KitchenView() {
           </KanbanColumn>
 
           <KanbanColumn
-            title="EN PREPARACIÓN"
+            title="EN PREPARACION"
             badgeColor="bg-blue-100 text-blue-900 border-blue-300"
             dotColor="bg-blue-500"
             count={mappedPreparing.length}
@@ -213,15 +214,25 @@ export function KitchenView() {
                   isPulse={true}
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
-                  onAction={() => moveOrder(order.id, "delivered")}
-                  actionLabel="ENTREGADO / RECOGIDO"
+                  onAction={() => setHandoffOrder(order)}
+                  actionLabel="ENTREGAR AL CLIENTE"
                   actionColor="bg-emerald-600 hover:bg-emerald-700"
+                  secondaryActionLabel="NO RECOGIDO"
+                  secondaryActionColor="bg-red-500 hover:bg-red-600"
+                  onSecondaryAction={() => moveOrder(order.id, "rejected")}
                 />
               ))}
             </AnimatePresence>
           </KanbanColumn>
         </section>
       </main>
+
+      <HandoffDialog
+        order={handoffOrder}
+        onConfirm={handleHandoffConfirm}
+        onCancel={() => setHandoffOrder(null)}
+        isPending={updateState.isPending}
+      />
     </div>
   );
 }

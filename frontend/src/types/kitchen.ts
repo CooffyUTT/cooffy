@@ -8,6 +8,7 @@ export interface OrderItem {
   name: string;
   type: 'beverage' | 'food';
   quantity: number;
+  unitPrice: number;
   modifiers?: OrderItemModifier[];
 }
 
@@ -17,7 +18,9 @@ export interface Order {
   customerName: string;
   serviceType: 'takeaway' | 'dine_in' | 'preorder';
   createdAt: Date;
-  status: 'pending' | 'preparing' | 'ready' | 'delivered';
+  status: 'pending' | 'preparing' | 'ready' | 'picked_up' | 'rejected';
+  total: number;
+  paymentMethod: 'cash' | 'card';
   items: OrderItem[];
   notes?: string;
 }
