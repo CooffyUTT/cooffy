@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Branch, BranchUpdateData } from '@/types/manager';
@@ -9,7 +10,43 @@ import { ManagerHeader } from './ManagerHeader';
 import { BranchHeader } from './BranchHeader';
 import { BranchCard } from './BranchCard';
 import { MenuManagerView } from './menu/MenuManagerView';
-import { DashboardView } from './dashboard/DashboardView';
+
+const DashboardView = dynamic(
+  () => import('./dashboard/DashboardView').then((m) => m.DashboardView),
+  {
+    ssr: false,
+    loading: () => <DashboardSkeleton />,
+  },
+);
+
+function DashboardSkeleton() {
+  return (
+    <div
+      className="space-y-6"
+      aria-busy="true"
+      aria-label="Cargando dashboard"
+    >
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <div className="bg-muted/40 h-7 w-40 rounded" />
+          <div className="bg-muted/40 h-4 w-72 rounded" />
+        </div>
+        <div className="bg-muted/40 h-8 w-44 rounded-lg" />
+      </header>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-muted/40 h-32 rounded-xl" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="bg-muted/40 h-72 rounded-xl" />
+        <div className="bg-muted/40 h-72 rounded-xl" />
+      </div>
+      <div className="bg-muted/40 h-72 rounded-xl" />
+      <div className="bg-muted/40 h-80 rounded-xl" />
+    </div>
+  );
+}
 
 interface BackendBranch {
   id: number;
