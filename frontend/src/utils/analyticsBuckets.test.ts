@@ -114,13 +114,4 @@ describe("bucketOperationTimes", () => {
       "2026-08",
     ]);
   });
-
-  it("includes the bucket_label metadata for the chart", () => {
-    const data: OperationTimePoint[] = [
-      { date: "2026-08-15", avg_minutes: 8, min_minutes: 5, max_minutes: 12 },
-    ];
-    const result = bucketOperationTimes(data, "month");
-
-    expect(result[0].bucket_label).toBe("2026-08");
-  });
 });

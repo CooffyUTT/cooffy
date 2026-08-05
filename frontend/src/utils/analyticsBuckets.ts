@@ -17,17 +17,14 @@ export function getOperationTimeBucket(
   }
 }
 
-function bucketKey(
-  dateStr: string,
-  bucket: OperationTimeBucket,
-): { key: string; label: string } {
+function bucketKey(dateStr: string, bucket: OperationTimeBucket): string {
   const date = new Date(`${dateStr}T00:00:00`);
   if (Number.isNaN(date.getTime())) {
-    return { key: dateStr, label: dateStr };
+    return dateStr;
   }
 
   if (bucket === "day") {
-    return { key: dateStr, label: dateStr };
+    return dateStr;
   }
 
   if (bucket === "week") {
@@ -35,17 +32,10 @@ function bucketKey(
     const day = start.getUTCDay();
     const diff = (day + 6) % 7;
     start.setUTCDate(start.getUTCDate() - diff);
-    const end = new Date(start);
-    end.setUTCDate(end.getUTCDate() + 6);
-    const startKey = start.toISOString().slice(0, 10);
-    const endKey = end.toISOString().slice(0, 10);
-    return { key: startKey, label: `${startKey}__${endKey}` };
+    return start.toISOString().slice(0, 10);
   }
 
-  const monthKey = `${date.getUTCFullYear()}-${String(
-    date.getUTCMonth() + 1,
-  ).padStart(2, "0")}`;
-  return { key: monthKey, label: monthKey };
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 function avgOf(values: Array<number | null>): number | null {
@@ -74,35 +64,30 @@ function maxOf(values: Array<number | null>): number | null {
 
 export interface BucketedOperationTime extends OperationTimePoint {
   bucket: OperationTimeBucket;
-  bucket_label: string;
 }
 
 export function bucketOperationTimes(
   data: OperationTimePoint[],
   bucket: OperationTimeBucket,
 ): BucketedOperationTime[] {
-  const groups = new Map<
-    string,
-    { label: string; points: OperationTimePoint[] }
-  >();
+  const groups = new Map<string, OperationTimePoint[]>();
 
   for (const point of data) {
-    const { key, label } = bucketKey(point.date, bucket);
+    const key = bucketKey(point.date, bucket);
     const existing = groups.get(key);
     if (existing) {
-      existing.points.push(point);
+      existing.push(point);
     } else {
-      groups.set(key, { label, points: [point] });
+      groups.set(key, [point]);
     }
   }
 
   const entries = Array.from(groups.entries());
   entries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
 
-  return entries.map(([key, { label, points }]) => ({
+  return entries.map(([key, points]) => ({
     date: key,
     bucket,
-    bucket_label: label,
     avg_minutes: roundMinutes(avgOf(points.map((p) => p.avg_minutes))),
     min_minutes: roundMinutes(minOf(points.map((p) => p.min_minutes))),
     max_minutes: roundMinutes(maxOf(points.map((p) => p.max_minutes))),
