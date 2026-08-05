@@ -95,6 +95,7 @@ export function TopProductsChart({
                 dataKey="quantity_sold"
                 fill="var(--color-chart-1)"
                 radius={[0, 4, 4, 0]}
+                isAnimationActive={false}
               />
             </BarChart>
           </ChartContainer>

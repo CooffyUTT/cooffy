@@ -128,6 +128,7 @@ export function SalesChart({ data, isLoading, isError }: SalesChartProps) {
                 stroke="var(--color-chart-3)"
                 fill="url(#salesGradient)"
                 strokeWidth={2}
+                isAnimationActive={false}
               />
             </AreaChart>
           </ChartContainer>

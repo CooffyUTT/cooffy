@@ -162,6 +162,7 @@ export function OperationTimesChart({
                 dataKey="avg_minutes"
                 fill="var(--color-chart-4)"
                 radius={[4, 4, 0, 0]}
+                isAnimationActive={false}
               />
             </BarChart>
           </ChartContainer>

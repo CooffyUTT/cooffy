@@ -101,6 +101,7 @@ export function OrdersByHourChart({
                 dataKey="count"
                 fill="var(--color-chart-2)"
                 radius={[4, 4, 0, 0]}
+                isAnimationActive={false}
               />
             </BarChart>
           </ChartContainer>
