@@ -9,6 +9,7 @@ export interface CartProduct {
   description?: string;
   tag?: string;
   image?: string | null;
+  branchId?: number;
 }
 
 export interface CartItem extends CartProduct {
@@ -27,15 +28,18 @@ interface CartContextType {
   total: number;
   cartTotal: number;
   branchId: number | null;
-  setBranchId: (id: number | null) => void;
+  branchName: string | null;
+  setBranchId: (id: number | null, name?: string | null) => void;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
+  canAddToCart: (productBranchId?: number) => boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = "cooffy_cart";
 const BRANCH_STORAGE_KEY = "cooffy_branch_id";
+const BRANCH_NAME_STORAGE_KEY = "cooffy_branch_name";
 
 function loadCart(): CartItem[] {
   if (typeof window === "undefined") return [];
@@ -57,9 +61,19 @@ function loadBranchId(): number | null {
   }
 }
 
+function loadBranchName(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(BRANCH_NAME_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>(loadCart);
-  const [branchId, setBranchId] = useState<number | null>(loadBranchId);
+  const [branchId, setBranchIdState] = useState<number | null>(loadBranchId);
+  const [branchName, setBranchName] = useState<string | null>(loadBranchName);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
@@ -73,6 +87,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(BRANCH_STORAGE_KEY);
     }
   }, [branchId]);
+
+  useEffect(() => {
+    if (branchName !== null) {
+      localStorage.setItem(BRANCH_NAME_STORAGE_KEY, branchName);
+    } else {
+      localStorage.removeItem(BRANCH_NAME_STORAGE_KEY);
+    }
+  }, [branchName]);
+
+  const setBranchId = useCallback((id: number | null, name?: string | null) => {
+    setBranchIdState(id);
+    setBranchName(name ?? null);
+  }, []);
+
+  const canAddToCart = useCallback(
+    (productBranchId?: number) => {
+      if (cart.length === 0) return true;
+      if (productBranchId === undefined || branchId === null) return true;
+      return productBranchId === branchId;
+    },
+    [cart.length, branchId]
+  );
 
   const addToCart = useCallback((product: CartProduct) => {
     setCart((prev) => {
@@ -128,9 +164,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         total,
         cartTotal,
         branchId,
+        branchName,
         setBranchId,
         isCartOpen,
         setIsCartOpen,
+        canAddToCart,
       }}
     >
       {children}

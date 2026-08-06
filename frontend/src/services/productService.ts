@@ -13,6 +13,7 @@ interface GetProductsParams {
   ordering?: string;
   category?: number;
   page?: number;
+  branch?: number;
 }
 
 export interface PaginatedProducts {

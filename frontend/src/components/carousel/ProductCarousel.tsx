@@ -9,7 +9,7 @@ import ProductCard from "../menu/ProductCard";
 interface ProductCarouselProps {
   title: string;
   subtitle?: string;
-  products: any[];
+  products: React.ComponentProps<typeof ProductCard>["product"][];
 }
 
 export function ProductCarousel({ title, subtitle, products }: ProductCarouselProps) {

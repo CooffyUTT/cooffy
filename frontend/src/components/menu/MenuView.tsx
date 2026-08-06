@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShoppingCart, AlertCircle, ArrowDownWideNarrow, ChevronLeft, ChevronRight, Store } from "lucide-react";
+import { ShoppingCart, AlertCircle, ArrowDownWideNarrow, ChevronLeft, ChevronRight, Store, ChevronDown } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useProducts } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
@@ -10,7 +10,6 @@ import { useBranches } from "@/hooks/useBranches";
 
 import Header from "@/components/menu/Header";
 import ProductCard from "@/components/menu/ProductCard";
-import { BranchSelector } from "@/components/menu/BranchSelector";
 
 const PAGE_SIZE = 20;
 
@@ -26,7 +25,11 @@ export function MenuView() {
   const [ordering, setOrdering] = useState<string>("name");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [page, setPage] = useState(1);
-  const { setIsCartOpen, totalItems, branchId, setBranchId } = useCart();
+  const [showBranchDropdown, setShowBranchDropdown] = useState(false);
+  
+  const [isCategoryLoading, setIsCategoryLoading] = useState(false);
+
+  const { setIsCartOpen, totalItems, branchId, branchName, setBranchId } = useCart();
   const { data: branches, isLoading: branchesLoading } = useBranches();
 
   const debouncedSearch = useDebounce(searchTerm, 300);
@@ -36,7 +39,8 @@ export function MenuView() {
     debouncedSearch || undefined,
     ordering,
     selectedCategory ?? undefined,
-    page
+    page,
+    branchId ?? undefined
   );
 
   const products = data?.results ?? [];
@@ -49,13 +53,26 @@ export function MenuView() {
   };
 
   const handleCategoryChange = (categoryId: number | null) => {
+    if (selectedCategory === categoryId || isCategoryLoading) return;
+
     setSelectedCategory(categoryId);
     setPage(1);
+    
+    setIsCategoryLoading(true);
+    setTimeout(() => {
+      setIsCategoryLoading(false);
+    }, 350);
   };
 
   const handleOrderingChange = (newOrdering: string) => {
     setOrdering(newOrdering);
     setPage(1);
+  };
+
+  const handleBranchSelect = (id: number | null, name: string | null) => {
+    setBranchId(id, name);
+    setPage(1);
+    setShowBranchDropdown(false);
   };
 
   const today = new Intl.DateTimeFormat("es-MX", {
@@ -82,16 +99,9 @@ export function MenuView() {
     return pages;
   };
 
-  if (!branchId) {
-    return (
-      <>
-        <Header searchValue={searchTerm} onSearchChange={setSearchTerm} />
-        <main className="pt-20 md:pt-28 pb-24 md:pb-12 px-4 md:px-10 max-w-[1100px] mx-auto">
-          <BranchSelector branches={branches ?? []} isLoading={branchesLoading} />
-        </main>
-      </>
-    );
-  }
+  const showSkeleton = isLoading || isCategoryLoading;
+
+  const selectedBranchLabel = branchName ?? (branchId ? `Sucursal #${branchId}` : null);
 
   return (
     <>
@@ -102,13 +112,6 @@ export function MenuView() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-2xl md:text-3xl font-bold text-on-surface">Menú de hoy</h1>
-              <button
-                onClick={() => setBranchId(null)}
-                className="flex items-center gap-1 text-xs bg-surface-container-highest text-on-surface-variant px-2 py-1 rounded-full hover:bg-surface-container-high transition-colors"
-              >
-                <Store className="h-3 w-3" />
-                Cambiar
-              </button>
             </div>
             <p className="text-sm text-on-surface-variant capitalize mt-1">{today}</p>
             {totalCount > 0 && (
@@ -118,19 +121,85 @@ export function MenuView() {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <ArrowDownWideNarrow className="h-4 w-4 text-on-surface-variant" />
-            <select
-              value={ordering}
-              onChange={(e) => handleOrderingChange(e.target.value)}
-              className="text-sm bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-            >
-              {ORDER_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Selector de sucursal */}
+            <div className="relative">
+              <button
+                onClick={() => setShowBranchDropdown(!showBranchDropdown)}
+                disabled={branchesLoading}
+                className="flex items-center gap-1.5 text-sm bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-on-surface hover:bg-surface-container-low transition-colors"
+              >
+                <Store className="h-4 w-4 text-primary shrink-0" />
+                <span className="truncate max-w-[120px]">
+                  {branchesLoading
+                    ? "Cargando..."
+                    : selectedBranchLabel ?? "Todas"}
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 text-on-surface-variant shrink-0" />
+              </button>
+
+              {showBranchDropdown && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowBranchDropdown(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-1 z-50 w-64 bg-surface border border-outline-variant rounded-xl shadow-lg overflow-hidden">
+                    <button
+                      onClick={() => handleBranchSelect(null, null)}
+                      className={`w-full text-left px-4 py-3 text-sm hover:bg-surface-container-low transition-colors ${
+                        branchId === null
+                          ? "bg-primary/5 text-primary font-semibold"
+                          : "text-on-surface"
+                      }`}
+                    >
+                      Todas las sucursales
+                    </button>
+                    <div className="border-t border-outline-variant/30" />
+                    {branches?.map((branch) => (
+                      <button
+                        key={branch.id}
+                        onClick={() =>
+                          branch.accepting_orders &&
+                          handleBranchSelect(branch.id, branch.name)
+                        }
+                        disabled={!branch.accepting_orders}
+                        className={`w-full text-left px-4 py-3 text-sm transition-colors ${
+                          !branch.accepting_orders
+                            ? "opacity-50 cursor-not-allowed text-on-surface-variant"
+                            : branchId === branch.id
+                              ? "bg-primary/5 text-primary font-semibold"
+                              : "text-on-surface hover:bg-surface-container-low"
+                        }`}
+                      >
+                        <div className="font-medium">{branch.name}</div>
+                        {branch.location && (
+                          <div className="text-xs text-on-surface-variant mt-0.5 truncate">
+                            {branch.location}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Selector de orden */}
+            <div className="flex items-center gap-2">
+              <ArrowDownWideNarrow className="h-4 w-4 text-on-surface-variant" />
+              <select
+                value={ordering}
+                onChange={(e) => handleOrderingChange(e.target.value)}
+                className="text-sm bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              >
+                {ORDER_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </section>
 
@@ -138,8 +207,9 @@ export function MenuView() {
           <section className="mb-6 border-b border-outline-variant/40">
             <div className="flex overflow-x-auto gap-6 hide-scrollbar">
               <button
+                disabled={isCategoryLoading}
                 onClick={() => handleCategoryChange(null)}
-                className={`shrink-0 pb-3 text-sm font-semibold border-b-2 transition-colors ${
+                className={`shrink-0 pb-3 text-sm font-semibold border-b-2 transition-all ${
                   selectedCategory === null
                     ? "text-primary border-primary"
                     : "text-on-surface-variant border-transparent hover:text-on-surface"
@@ -150,8 +220,9 @@ export function MenuView() {
               {categories.map((cat) => (
                 <button
                   key={cat.id}
+                  disabled={isCategoryLoading}
                   onClick={() => handleCategoryChange(cat.id)}
-                  className={`shrink-0 pb-3 text-sm font-semibold border-b-2 transition-colors ${
+                  className={`shrink-0 pb-3 text-sm font-semibold border-b-2 transition-all ${
                     selectedCategory === cat.id
                       ? "text-primary border-primary"
                       : "text-on-surface-variant border-transparent hover:text-on-surface"
@@ -164,7 +235,7 @@ export function MenuView() {
           </section>
         )}
 
-        {isLoading ? (
+        {showSkeleton ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="animate-pulse rounded-2xl border border-outline-variant/20 bg-surface-container-low overflow-hidden">
@@ -193,7 +264,7 @@ export function MenuView() {
           </p>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 animate-in fade-in duration-200">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

@@ -16,18 +16,17 @@ interface ProductDetailViewProps {
 }
 
 export function ProductDetailView({ productId }: ProductDetailViewProps) {
-  const { addToCart, cartTotal } = useCart();
+  const { addToCart, cartTotal, canAddToCart } = useCart();
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [showSummaryNotice, setShowSummaryNotice] = useState(false);
 
   const { data: product, isLoading, error } = useProduct(productId);
   
-  // Obtenemos todos los productos para filtrar similares y venta cruzada
   const { data: productsData } = useProducts();
   const allProducts = productsData?.results ?? [];
 
-  const isAvailable = true;
+  const isAvailable = product ? canAddToCart(product.branchId) : false;
 
   const handleDecreaseQuantity = () => {
     if (quantity > 1) {
@@ -170,7 +169,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
                       </span>
                     ) : (
                       <span className="flex items-center gap-1.5 text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
-                        🔴 Agotado
+                        🔴 No disponible en esta sucursal
                       </span>
                     )}
                   </div>

@@ -23,6 +23,7 @@ export default function CartSheet() {
     tax,
     total,
     branchId,
+    branchName,
     isCartOpen,
     setIsCartOpen,
   } = useCart();
@@ -42,7 +43,7 @@ export default function CartSheet() {
             </SheetTitle>
             {branchId && (
               <p className="text-xs text-on-surface-variant">
-                Sucursal #{branchId}
+                {branchName ?? `Sucursal #${branchId}`}
               </p>
             )}
           </SheetHeader>
