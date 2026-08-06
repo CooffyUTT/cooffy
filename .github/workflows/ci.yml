@@ -75,11 +75,6 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.18.0
-
       - name: Install dependencies
         run: pnpm front:install
 
