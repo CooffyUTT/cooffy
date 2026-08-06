@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [devolp]
+  push:
+    branches: [devolp]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (Django)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: cooffy
+          POSTGRES_USER: cooffy-postgres
+          POSTGRES_PASSWORD: cooffy-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cooffy-postgres -d cooffy"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DJANGO_ENV: development
+      POSTGRES_DB: cooffy
+      POSTGRES_USER: cooffy-postgres
+      POSTGRES_PASSWORD: cooffy-password
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v9.0.0
+        with:
+          python-version: '3.14'
+          enable-cache: true
+
+      - name: Sync backend dependencies
+        run: pnpm back:install
+
+      - name: Django system checks
+        run: pnpm back:manage check
+
+      - name: Verify no pending migrations
+        run: pnpm back:manage makemigrations --check --dry-run
+
+      - name: Run backend tests
+        run: pnpm back:test
+
+  frontend:
+    name: Frontend (Next.js)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm front:install
+
+      - name: Lint
+        run: pnpm front:lint
+
+      - name: Typecheck
+        run: pnpm front:typecheck
+
+      - name: Tests
+        run: pnpm front:test
+
+      - name: Build
+        run: pnpm --dir frontend build
+        env:
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
