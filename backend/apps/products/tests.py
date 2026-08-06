@@ -3,8 +3,11 @@ from decimal import Decimal
 from django.contrib.auth.models import Group
 from django.urls import reverse
 from rest_framework.test import APITestCase
+from django.core.exceptions import ValidationError
 
-from apps.products.models import Category, Product
+from apps.branches.models import Branch, Company
+from apps.products.models import Category, Product, ProductStock
+from apps.schools.models import School
 from apps.users.models import User
 
 
@@ -93,3 +96,47 @@ class ProductAvailabilityTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.active_product.refresh_from_db()
         self.assertFalse(self.active_product.active)
+
+
+class ProductStockTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        owner = User.objects.create_user(
+            user='stock-owner@example.com',
+            name='Stock Owner',
+            password='password',
+        )
+        school = School.objects.create(
+            full_name='Stock School',
+            short_name='STOCK',
+            admin=owner,
+        )
+        company = Company.objects.create(name='Stock Company', owner=owner)
+        cls.branch = Branch.objects.create(
+            name='Stock Branch',
+            company=company,
+            school=school,
+        )
+        cls.product = Product.objects.create(name='Stock Product', price=Decimal('10.00'))
+
+    def test_product_stock_supports_the_three_mvp_states(self):
+        for stock_state in (-1, 0, 1):
+            stock = ProductStock.objects.create(
+                branch=self.branch,
+                product=Product.objects.create(
+                    name=f'Product {stock_state}',
+                    price=Decimal('10.00'),
+                ),
+                stock=stock_state,
+            )
+            self.assertEqual(stock.stock, stock_state)
+
+    def test_product_stock_rejects_values_outside_mvp_states(self):
+        stock = ProductStock(
+            branch=self.branch,
+            product=self.product,
+            stock=2,
+        )
+
+        with self.assertRaises(ValidationError):
+            stock.full_clean()

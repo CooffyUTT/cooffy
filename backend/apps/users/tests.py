@@ -2,6 +2,7 @@ from django.contrib.auth.models import Group
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
+from apps.schools.models import School
 from apps.users.models import User
 
 
@@ -52,13 +53,17 @@ class AuthenticationTests(APITestCase):
 
 class ClientRegistrationTests(APITestCase):
     def test_client_can_register_with_institutional_email(self):
+        school = School.objects.create(
+            full_name='Registration School',
+            short_name='REG',
+        )
         response = self.client.post(
             reverse("create-client"),
             {
                 "user": "new-client@school.edu.mx",
                 "name": "New Client",
                 "password": "strong-password",
-                "school_id": 1,
+                "school_id": school.id,
             },
             format="json",
         )
