@@ -172,7 +172,16 @@ class BranchPublicViewSet(viewsets.ReadOnlyModelViewSet):
 
     serializer_class = BranchSerializer
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Branch.objects.filter(active=True).select_related("company", "school")
+
+    def get_queryset(self):
+        school_id = self.request.user.school_id
+        if school_id is None:
+            return Branch.objects.none()
+
+        return Branch.objects.filter(
+            school_id=school_id,
+            active=True,
+        ).select_related('company', 'school')
 
 
 class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
