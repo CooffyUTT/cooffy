@@ -19,8 +19,7 @@ SEED_SCHOOLS = [
         "full_name": "Universidad Tecnológica de Tijuana",
         "address": "Tijuana, Baja California",
         "admin": "admin_escolar1",
-        "users": ["admin", "cocina1", "cliente1", "admin_escolar1"],
-        "manager": "admin",
+        "users": ["gerente1", "cocina1", "cliente1", "admin_escolar1"],
         "kitchen": "cocina1",
         "companies": [
             {
@@ -44,7 +43,6 @@ SEED_SCHOOLS = [
         "address": "Tijuana, Baja California",
         "admin": "admin_escolar2",
         "users": ["admin2", "cocina2", "cliente2", "admin_escolar2"],
-        "manager": "admin2",
         "kitchen": "cocina2",
         "companies": [
             {
@@ -86,6 +84,8 @@ class Command(BaseCommand):
             )
             return
 
+        service_owner = User.objects.get(user='admin')
+
         if options['clear']:
             deleted_branches, _ = Branch.objects.all().delete()
             deleted_companies, _ = Company.objects.all().delete()
@@ -118,15 +118,14 @@ class Command(BaseCommand):
             users = User.objects.filter(user__in=school_data['users'])
             users.update(school=school)
 
-            manager = User.objects.get(user=school_data['manager'])
             first_branch = None
             for company_data in school_data['companies']:
                 company_obj, was_created = Company.objects.get_or_create(
                     name=company_data['name'],
-                    defaults={'owner': manager},
+                    defaults={'owner': service_owner},
                 )
-                if company_obj.owner_id != manager.id:
-                    company_obj.owner = manager
+                if company_obj.owner_id != service_owner.id:
+                    company_obj.owner = service_owner
                     company_obj.save(update_fields=['owner', 'updated_at'])
 
                 if was_created:

@@ -11,7 +11,10 @@ class IsManagerPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated
-            and request.user.groups.filter(name='gerente').exists()
+            and (
+                request.user.is_superuser
+                or request.user.groups.filter(name='gerente').exists()
+            )
         )
 
 
@@ -23,7 +26,10 @@ class IsSchoolAdminPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated
-            and request.user.groups.filter(name='admin_escolar').exists()
+            and (
+                request.user.is_superuser
+                or request.user.groups.filter(name='admin_escolar').exists()
+            )
         )
 
 
