@@ -35,6 +35,11 @@ class BranchViewSet(viewsets.ModelViewSet):
         IsManagerPermission | IsSchoolAdminPermission,
     ]
 
+    def check_permissions(self, request):
+        if request.user.is_superuser:
+            return
+        super().check_permissions(request)
+
     def get_school(self):
         school = getattr(self, '_school', None)
         if school is None:
@@ -43,6 +48,9 @@ class BranchViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+
+        if user.is_superuser:
+            return Branch.objects.select_related('company', 'school').all()
 
         if user.groups.filter(name='admin_escolar').exists():
             school = self.get_school()
@@ -87,6 +95,8 @@ class BranchViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_404_NOT_FOUND,
                 )
             queryset = self.get_queryset().filter(company_id=company_id)
+        elif request.user.is_superuser:
+            queryset = self.get_queryset().filter(company_id=company_id)
         else:
             if company.owner_id != request.user.id:
                 return Response(
@@ -99,16 +109,17 @@ class BranchViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
-        if not request.user.groups.filter(name='admin_escolar').exists():
+        if not request.user.groups.filter(name='admin_escolar').exists() and not request.user.is_superuser:
             return Response(
                 {'detail': 'Solo los administradores escolares pueden crear sucursales.'},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        school = self.get_school()
+        school = self.get_school() if not request.user.is_superuser else None
+        serializer_context = {'request': request, 'school': school}
         serializer = BranchCreateSerializer(
             data=request.data,
-            context={'request': request, 'school': school},
+            context=serializer_context,
         )
         serializer.is_valid(raise_exception=True)
         branch = serializer.save(school=school)
@@ -172,7 +183,19 @@ class BranchPublicViewSet(viewsets.ReadOnlyModelViewSet):
 
     serializer_class = BranchSerializer
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Branch.objects.filter(active=True).select_related("company", "school")
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return Branch.objects.filter(active=True).select_related('company', 'school')
+
+        school_id = self.request.user.school_id
+        if school_id is None:
+            return Branch.objects.none()
+
+        return Branch.objects.filter(
+            school_id=school_id,
+            active=True,
+        ).select_related('company', 'school')
 
 
 class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -185,6 +208,12 @@ class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
     ]
 
     def get_queryset(self):
+        if self.request.user.is_superuser:
+            queryset = Company.objects.filter(active=True).select_related('owner')
+            if self.action == 'available':
+                return queryset.all()
+            return queryset.all()
+
         school = get_admin_school(self.request.user)
         if school is None:
             return Company.objects.none()
@@ -212,11 +241,12 @@ class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
         )
         serializer.is_valid(raise_exception=True)
         company = serializer.validated_data['company']
+        target_school = serializer.validated_data.get('school', school)
 
         with transaction.atomic():
             _, created = CompanySchool.objects.update_or_create(
                 company=company,
-                school=school,
+                school=target_school,
                 defaults={'active': True},
             )
 

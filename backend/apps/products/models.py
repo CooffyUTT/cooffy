@@ -80,3 +80,39 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ProductStock(models.Model):
+    class StockState(models.IntegerChoices):
+        NOT_TRACKED = -1, 'Sin stock activado'
+        OUT_OF_STOCK = 0, 'Sin stock'
+        IN_STOCK = 1, 'Con stock'
+
+    branch = models.ForeignKey(
+        'branches.Branch',
+        on_delete=models.CASCADE,
+        related_name='product_stocks',
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='branch_stocks',
+    )
+    stock = models.IntegerField(
+        choices=StockState.choices,
+        default=StockState.NOT_TRACKED,
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+    pk = models.CompositePrimaryKey('branch_id', 'product_id')
+
+    class Meta:
+        db_table = 'product_stocks'
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(stock__in=[-1, 0, 1]),
+                name='product_stock_valid_state',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.product} - {self.branch}'
