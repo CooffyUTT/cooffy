@@ -16,13 +16,14 @@ export const INITIAL_ORDERS: Order[] = [
         name: 'Capuchino Vainilla',
         type: 'beverage',
         quantity: 1,
+        price: 65.00,
         unitPrice: 65.00,
         modifiers: [
           { text: 'SIN AZUCAR', severity: 'danger' },
           { text: 'LECHE DE ALMENDRA', severity: 'info' }
         ]
       },
-      { id: 'i2', name: 'Panini de Pavo', type: 'food', quantity: 1, unitPrice: 30.00 }
+      { id: 'i2', name: 'Panini de Pavo', type: 'food', quantity: 1, price: 30.00, unitPrice: 30.00 }
     ],
     notes: 'Alergia severa a las nueces'
   },
@@ -41,6 +42,7 @@ export const INITIAL_ORDERS: Order[] = [
         name: 'Americano Frio', 
         type: 'beverage', 
         quantity: 2, 
+        price: 35.00,
         unitPrice: 35.00,
         modifiers: [{ text: 'EXTRA CALIENTE', severity: 'warning' }] 
       }
@@ -56,8 +58,8 @@ export const INITIAL_ORDERS: Order[] = [
     total: 110.00,
     paymentMethod: 'cash',
     items: [
-      { id: 'i4', name: 'Bagel de Lomo', type: 'food', quantity: 1, unitPrice: 75.00 },
-      { id: 'i5', name: 'Frappe Mocha', type: 'beverage', quantity: 1, unitPrice: 35.00 }
+      { id: 'i4', name: 'Bagel de Lomo', type: 'food', quantity: 1, price: 75.00, unitPrice: 75.00 },
+      { id: 'i5', name: 'Frappe Mocha', type: 'beverage', quantity: 1, price: 35.00, unitPrice: 35.00 }
     ]
   },
   {
@@ -70,7 +72,7 @@ export const INITIAL_ORDERS: Order[] = [
     total: 45.00,
     paymentMethod: 'card',
     items: [
-      { id: 'i6', name: 'Espresso Doble', type: 'beverage', quantity: 1, unitPrice: 45.00 }
+      { id: 'i6', name: 'Espresso Doble', type: 'beverage', quantity: 1, price: 45.00, unitPrice: 45.00 }
     ]
   }
 ];
