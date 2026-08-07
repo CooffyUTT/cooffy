@@ -144,7 +144,9 @@ class OrderDetailSerializer(OrderClientNameMixin, serializers.ModelSerializer):
 
     def get_iva(self, obj):
         subtotal = sum(op.price for op in obj.order_products.all())
-        return str(subtotal * Decimal("0.08"))
+        # Prices already include IVA; expose only the tax portion of the total.
+        iva = subtotal - (subtotal / Decimal("1.08"))
+        return str(iva.quantize(Decimal("0.01")))
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -266,7 +268,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             )
             total += line_total
 
-        order.total = total * Decimal("1.08")
+        order.total = total
         order.save(update_fields=["total"])
 
         return order

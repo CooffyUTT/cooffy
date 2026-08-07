@@ -1,6 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { CartProvider, useCart, type CartProduct } from "@/context/CartContext";
 
@@ -15,6 +15,10 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 describe("CartContext", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it("adds the same product by increasing its quantity", () => {
     const { result } = renderHook(() => useCart(), { wrapper });
 
@@ -39,7 +43,7 @@ describe("CartContext", () => {
     expect(result.current.totalItems).toBe(0);
   });
 
-  it("calculates the configured eight percent tax and total", () => {
+  it("extracts included tax without changing the total", () => {
     const { result } = renderHook(() => useCart(), { wrapper });
 
     act(() => {
@@ -47,7 +51,7 @@ describe("CartContext", () => {
     });
 
     expect(result.current.subtotal).toBe(50);
-    expect(result.current.tax).toBe(4);
-    expect(result.current.total).toBe(54);
+    expect(result.current.tax).toBeCloseTo(3.7037, 4);
+    expect(result.current.total).toBe(50);
   });
 });

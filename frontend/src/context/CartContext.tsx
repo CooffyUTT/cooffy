@@ -146,8 +146,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const tax = subtotal * 0.08;
-  const total = subtotal + tax;
+  // Product prices already include IVA; this extracts its portion for display.
+  const tax = subtotal - subtotal / 1.08;
+  const total = subtotal;
   const cartTotal = total;
 
   return (
