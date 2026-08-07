@@ -56,6 +56,7 @@ class ClientRegistrationTests(APITestCase):
         school = School.objects.create(
             full_name='Registration School',
             short_name='REG',
+            domain_address='school.edu.mx',
         )
         response = self.client.post(
             reverse("user-register"),
@@ -86,6 +87,69 @@ class ClientRegistrationTests(APITestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("non_field_errors", response.data)
+
+
+class ClientDomainRegistrationTests(APITestCase):
+    """RF-02: el correo debe pertenecer al dominio institucional de la escuela."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.school = School.objects.create(
+            full_name="Domain School",
+            short_name="DOM",
+            domain_address="utt.edu.mx",
+        )
+
+    def _register(self, email, school_id):
+        return self.client.post(
+            reverse("user-register"),
+            {
+                "user": email,
+                "name": "Student",
+                "password": "strong-password",
+                "school_id": school_id,
+            },
+            format="json",
+        )
+
+    def test_client_registration_accepts_email_matching_school_domain(self):
+        response = self._register("student@utt.edu.mx", self.school.id)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(
+            User.objects.filter(user="student@utt.edu.mx", school=self.school).exists()
+        )
+
+    def test_client_registration_accepts_email_domain_case_insensitive(self):
+        response = self._register("Student@UTT.EDU.MX", self.school.id)
+
+        self.assertEqual(response.status_code, 201)
+
+    def test_client_registration_rejects_email_domain_not_matching_school(self):
+        response = self._register("student@other.edu.mx", self.school.id)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("non_field_errors", response.data)
+        self.assertFalse(
+            User.objects.filter(user="student@other.edu.mx").exists()
+        )
+
+    def test_client_registration_rejects_school_without_domain(self):
+        school_no_domain = School.objects.create(
+            full_name="No Domain School",
+            short_name="NODOM",
+        )
+
+        response = self._register("student@nodom.edu.mx", school_no_domain.id)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("non_field_errors", response.data)
+
+    def test_client_registration_rejects_unknown_school(self):
+        response = self._register("student@utt.edu.mx", 999999)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("school_id", response.data)
 
 
 class UserAccessTests(APITestCase):

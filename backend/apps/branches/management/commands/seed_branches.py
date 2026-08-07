@@ -18,6 +18,7 @@ SEED_SCHOOLS = [
         "short_name": "UTT",
         "full_name": "Universidad Tecnológica de Tijuana",
         "address": "Tijuana, Baja California",
+        "domain_address": "utt.edu.mx",
         "admin": "admin_escolar1",
         "users": ["gerente1", "cocina1", "cliente1", "admin_escolar1"],
         "kitchen": "cocina1",
@@ -41,6 +42,7 @@ SEED_SCHOOLS = [
         "short_name": "UABC",
         "full_name": "Universidad Autónoma de Baja California",
         "address": "Tijuana, Baja California",
+        "domain_address": "uabc.edu.mx",
         "admin": "admin_escolar2",
         "users": ["admin2", "cocina2", "cliente2", "admin_escolar2"],
         "kitchen": "cocina2",
@@ -104,11 +106,20 @@ class Command(BaseCommand):
                     'full_name': school_data['full_name'],
                     'address': school_data['address'],
                     'admin': school_admin,
+                    'domain_address': school_data['domain_address'],
                 },
             )
             if school_created:
                 self.stdout.write(
                     self.style.SUCCESS(f'✔ Escuela "{school.full_name}" creada.')
+                )
+            elif school.domain_address != school_data['domain_address']:
+                school.domain_address = school_data['domain_address']
+                school.save(update_fields=['domain_address', 'updated_at'])
+                self.stdout.write(
+                    self.style.WARNING(
+                        f'~ Escuela "{school.full_name}" actualizada a dominio "{school.domain_address}".'
+                    )
                 )
 
             if school_admin and school.admin_id != school_admin.id:
