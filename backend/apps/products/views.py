@@ -2,6 +2,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets, filters, status, generics
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Product, Category
@@ -35,6 +36,11 @@ class ProductMenuView(viewsets.ReadOnlyModelViewSet):
         category = self.request.query_params.get('category')
         if category:
             qs = qs.filter(category_id=category)
+        branch = self.request.query_params.get('branch')
+        if branch is not None:
+            if not branch.isdigit():
+                raise ValidationError({'branch': 'El parámetro "branch" debe ser un número entero.'})
+            qs = qs.filter(branch_stocks__branch_id=int(branch))
         return qs
 
     def get_serializer_class(self):
