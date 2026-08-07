@@ -3,7 +3,9 @@ from decimal import Decimal
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
+from apps.branches.models import Branch, Company
 from apps.orders.models import Order, OrderProduct
+from apps.schools.models import School
 from apps.users.models import User
 
 
@@ -20,6 +22,22 @@ class OrderApiTests(APITestCase):
             name="Client Two",
             password="password",
         )
+        school = School.objects.create(
+            full_name="Test School",
+            short_name="TEST",
+        )
+        company = Company.objects.create(
+            name="Test Company",
+            owner=cls.client_user,
+        )
+        Branch.objects.create(
+            id=1,
+            name="Test Branch",
+            company=company,
+            school=school,
+            active=True,
+            accepting_orders=True,
+        )
 
     def setUp(self):
         self.client.force_authenticate(user=self.client_user)
@@ -30,7 +48,7 @@ class OrderApiTests(APITestCase):
             {
                 "branch_id": 1,
                 "client_id": self.client_user.id,
-                "payment_method": 1,
+                "payment_method": "cash",
                 "order_products": [],
             },
             format="json",
@@ -49,7 +67,7 @@ class OrderApiTests(APITestCase):
             {
                 "branch_id": 1,
                 "client_id": self.client_user.id,
-                "payment_method": 1,
+                "payment_method": "cash",
                 "order_products": [
                     {"item_id": 10, "quantity": 1, "price": "30.00"},
                     {"item_id": 11, "quantity": 2, "price": "20.00"},
@@ -63,6 +81,7 @@ class OrderApiTests(APITestCase):
         self.assertEqual(order.order_number, 1)
         self.assertEqual(order.total, Decimal("50.00"))
         self.assertEqual(order.order_products.count(), 2)
+        self.assertEqual(response.data["iva"], "3.70")
 
     def test_client_can_add_product_and_total_is_updated(self):
         from apps.products.models import Product
@@ -85,6 +104,7 @@ class OrderApiTests(APITestCase):
         self.assertEqual(response.status_code, 201)
         order.refresh_from_db()
         self.assertEqual(order.total, Decimal("25.00"))
+        self.assertEqual(response.data["iva"], "1.85")
         self.assertEqual(
             OrderProduct.objects.get(order=order).quantity,
             2,
