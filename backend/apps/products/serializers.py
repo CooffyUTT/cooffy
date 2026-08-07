@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Product
+from .models import Category, Product, ProductStock
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -10,6 +10,8 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ProductMenuListSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
+    available_in_branches = serializers.SerializerMethodField()
+    branch_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -19,11 +21,25 @@ class ProductMenuListSerializer(serializers.ModelSerializer):
             'price',
             'image',
             'category',
+            'available_in_branches',
+            'branch_id',
         ]
+
+    def get_available_in_branches(self, obj):
+        return [
+            stock.branch_id
+            for stock in obj.branch_stocks.all()
+            if stock.stock != ProductStock.StockState.OUT_OF_STOCK
+        ]
+
+    def get_branch_id(self, obj):
+        return self.context.get('branch_id')
 
 
 class ProductMenuDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
+    available_in_branches = serializers.SerializerMethodField()
+    branch_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -35,7 +51,19 @@ class ProductMenuDetailSerializer(serializers.ModelSerializer):
             'description',
             'modifiers',
             'category',
+            'available_in_branches',
+            'branch_id',
         ]
+
+    def get_available_in_branches(self, obj):
+        return [
+            stock.branch_id
+            for stock in obj.branch_stocks.all()
+            if stock.stock != ProductStock.StockState.OUT_OF_STOCK
+        ]
+
+    def get_branch_id(self, obj):
+        return self.context.get('branch_id')
 
 
 class ProductManageSerializer(serializers.ModelSerializer):

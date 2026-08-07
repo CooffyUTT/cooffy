@@ -10,15 +10,22 @@ export interface CartProduct {
   tag?: string;
   image?: string | null;
   branchId?: number;
+  availableInBranches?: number[];
 }
 
 export interface CartItem extends CartProduct {
   quantity: number;
 }
 
+export type AddToCartResult =
+  | { ok: true }
+  | { ok: false; reason: "unavailable" }
+  | { ok: false; reason: "different_branch"; productBranchId: number };
+
 interface CartContextType {
   cart: CartItem[];
   addToCart: (product: CartProduct) => void;
+  tryAddToCart: (product: CartProduct, productBranchName?: string | null) => AddToCartResult;
   updateQuantity: (id: number, delta: number) => void;
   removeFromCart: (id: number) => void;
   clearCart: () => void;
@@ -32,7 +39,7 @@ interface CartContextType {
   setBranchId: (id: number | null, name?: string | null) => void;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
-  canAddToCart: (productBranchId?: number) => boolean;
+  canAddToCart: (productBranchId?: number | null) => boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -102,9 +109,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const canAddToCart = useCallback(
-    (productBranchId?: number) => {
+    (productBranchId?: number | null) => {
       if (cart.length === 0) return true;
-      if (productBranchId === undefined || branchId === null) return true;
+      if (productBranchId === undefined || productBranchId === null) return false;
+      if (branchId === null) return false;
       return productBranchId === branchId;
     },
     [cart.length, branchId]
@@ -121,6 +129,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return [...prev, { ...product, quantity: 1 }];
     });
   }, []);
+
+  const tryAddToCart = useCallback(
+    (product: CartProduct, productBranchName?: string | null): AddToCartResult => {
+      if (product.branchId === undefined || product.branchId === null) {
+        return { ok: false, reason: "unavailable" };
+      }
+      if (cart.length === 0) {
+        setBranchId(product.branchId, productBranchName ?? null);
+        addToCart(product);
+        return { ok: true };
+      }
+      if (branchId === null || product.branchId !== branchId) {
+        return {
+          ok: false,
+          reason: "different_branch",
+          productBranchId: product.branchId,
+        };
+      }
+      addToCart(product);
+      return { ok: true };
+    },
+    [cart.length, branchId, addToCart, setBranchId]
+  );
 
   const updateQuantity = useCallback((id: number, delta: number) => {
     setCart((prev) =>
@@ -156,6 +187,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       value={{
         cart,
         addToCart,
+        tryAddToCart,
         updateQuantity,
         removeFromCart,
         clearCart,

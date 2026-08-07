@@ -17,6 +17,7 @@ from .serializers import (
     OrderCreateSerializer,
     OrderProductCreateSerializer,
 )
+from .services import get_unavailable_products
 from apps.products.models import Product
 
 
@@ -150,6 +151,28 @@ class OrderViewSet(viewsets.ModelViewSet):
                         f"'{product.name}' tiene un límite de "
                         f"{product.max_per_order} unidades por pedido."
                     )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        unavailable = get_unavailable_products(
+            order.branch_id, [{"item_id": item_id}]
+        )
+        if unavailable:
+            return Response(
+                {
+                    "detail": (
+                        f"'{unavailable[0].product_name}' no está disponible "
+                        "en la sucursal del pedido."
+                    ),
+                    "unavailable": [
+                        {
+                            "item_id": u.product_id,
+                            "name": u.product_name,
+                            "reason": u.reason,
+                        }
+                        for u in unavailable
+                    ],
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )

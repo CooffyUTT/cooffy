@@ -1,0 +1,41 @@
+info:
+  name: Add Product - Cross Branch Rejected
+  type: http
+  seq: 11
+
+# Smoke check for the cross-branch rule on the add-product action (RN-13).
+# Expects 400 with the unavailable product in the `unavailable` detail.
+# Pre-conditions: authenticated client; an existing PENDING order owned
+# by the client with `branch_id` set to a branch that does NOT carry the
+# product in the request body.
+
+http:
+  method: POST
+  url: http://localhost:8000/api/orders/1/add-product/
+  body:
+    type: json
+    data: |-
+      {
+        "item_id": 20,
+        "quantity": 1
+      }
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+  runtime:
+    scripts:
+      - type: tests
+        code: |-
+          test("rejects products not offered by the order's branch", () => {
+            expect(res.status).to.equal(400);
+            const data = res.getBody();
+            expect(data).to.have.property("unavailable");
+            expect(data.unavailable).to.be.an("array").with.length.greaterThan(0);
+          });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

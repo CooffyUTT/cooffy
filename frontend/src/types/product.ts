@@ -45,6 +45,7 @@ export interface ProductList {
   image: string | null;
   category: Category | null;
   branchId?: number;
+  availableInBranches?: number[];
 }
 
 export interface ProductDetail extends ProductList {

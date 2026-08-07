@@ -450,11 +450,30 @@ export function CheckoutView() {
               <p className="text-xs text-red-600 mt-1">
                 {(() => {
                   const err = createOrder.error as unknown as {
-                    response?: { data?: { detail?: string; order_products?: string[] } };
+                    response?: {
+                      data?: {
+                        detail?: string;
+                        order_products?: Array<{ name?: string; reason?: string }>;
+                        branch_id?: string[];
+                      };
+                    };
                     message?: string;
                   };
-                  if (err?.response?.data?.detail) return err.response.data.detail;
-                  if (err?.response?.data?.order_products?.[0]) return err.response.data.order_products[0];
+                  const data = err?.response?.data;
+                  if (Array.isArray(data?.order_products) && data.order_products.length > 0) {
+                    const list = data.order_products
+                      .map((p) => p?.name)
+                      .filter(Boolean)
+                      .join(", ");
+                    const reason = data.order_products[0]?.reason === "out_of_stock"
+                      ? "ya no tienen stock"
+                      : "no se ofrecen en la sucursal seleccionada";
+                    return list
+                      ? `Los siguientes productos ${reason}: ${list}. Vuelve al menú para ajustar tu pedido.`
+                      : `Algunos productos ${reason}. Vuelve al menú para ajustar tu pedido.`;
+                  }
+                  if (data?.detail) return data.detail;
+                  if (data?.branch_id) return data.branch_id[0];
                   if (err?.message) return err.message;
                   return "Ocurrió un error inesperado";
                 })()}

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { ShoppingCart, AlertCircle, ArrowDownWideNarrow, ChevronLeft, ChevronRight, Store, ChevronDown } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { ShoppingCart, AlertCircle, ArrowDownWideNarrow, ChevronLeft, ChevronRight, Store, ChevronDown, MapPin } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useProducts } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
@@ -29,8 +29,14 @@ export function MenuView() {
   
   const [isCategoryLoading, setIsCategoryLoading] = useState(false);
 
-  const { setIsCartOpen, totalItems, branchId, branchName, setBranchId } = useCart();
+  const { setIsCartOpen, totalItems, branchId, branchName, setBranchId, clearCart } = useCart();
   const { data: branches, isLoading: branchesLoading } = useBranches();
+
+  useEffect(() => {
+    if (branchId === null) {
+      clearCart();
+    }
+  }, [branchId, clearCart]);
 
   const debouncedSearch = useDebounce(searchTerm, 300);
   const { data: categories } = useCategories();
@@ -133,7 +139,7 @@ export function MenuView() {
                 <span className="truncate max-w-[120px]">
                   {branchesLoading
                     ? "Cargando..."
-                    : selectedBranchLabel ?? "Todas"}
+                    : selectedBranchLabel ?? "Selecciona sucursal"}
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 text-on-surface-variant shrink-0" />
               </button>
@@ -145,17 +151,6 @@ export function MenuView() {
                     onClick={() => setShowBranchDropdown(false)}
                   />
                   <div className="absolute right-0 top-full mt-1 z-50 w-64 bg-surface border border-outline-variant rounded-xl shadow-lg overflow-hidden">
-                    <button
-                      onClick={() => handleBranchSelect(null, null)}
-                      className={`w-full text-left px-4 py-3 text-sm hover:bg-surface-container-low transition-colors ${
-                        branchId === null
-                          ? "bg-primary/5 text-primary font-semibold"
-                          : "text-on-surface"
-                      }`}
-                    >
-                      Todas las sucursales
-                    </button>
-                    <div className="border-t border-outline-variant/30" />
                     {branches?.map((branch) => (
                       <button
                         key={branch.id}
@@ -235,7 +230,19 @@ export function MenuView() {
           </section>
         )}
 
-        {showSkeleton ? (
+        {branchId === null ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center bg-surface-container-lowest/60 border border-outline-variant/30 rounded-2xl px-6">
+            <div className="w-14 h-14 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
+              <MapPin className="h-7 w-7" />
+            </div>
+            <p className="text-on-surface font-semibold text-lg mb-1">
+              Selecciona una sucursal
+            </p>
+            <p className="text-sm text-on-surface-variant max-w-sm">
+              Elige la sucursal donde recogerás tu pedido para ver el menú disponible.
+            </p>
+          </div>
+        ) : showSkeleton ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="animate-pulse rounded-2xl border border-outline-variant/20 bg-surface-container-low overflow-hidden">
@@ -260,7 +267,7 @@ export function MenuView() {
           <p className="text-on-surface-variant text-sm text-center py-12">
             {debouncedSearch
               ? `No se encontraron resultados para "${debouncedSearch}"`
-              : "No hay productos disponibles."}
+              : "No hay productos disponibles en esta sucursal."}
           </p>
         ) : (
           <>

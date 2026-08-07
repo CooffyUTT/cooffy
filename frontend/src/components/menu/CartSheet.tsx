@@ -106,6 +106,8 @@ export default function CartSheet() {
               <Button
                 className="w-full bg-primary text-white py-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:bg-on-primary-fixed-variant"
                 onClick={handleCheckout}
+                disabled={branchId === null}
+                title={branchId === null ? "Selecciona una sucursal para continuar" : undefined}
               >
                 Continuar al pago <ArrowRight className="h-4 w-4" />
               </Button>

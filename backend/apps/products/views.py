@@ -32,7 +32,11 @@ class ProductMenuView(viewsets.ReadOnlyModelViewSet):
     ordering = ['name']
 
     def get_queryset(self):
-        qs = Product.objects.filter(active=True).select_related('category')
+        qs = (
+            Product.objects.filter(active=True)
+            .select_related('category')
+            .prefetch_related('branch_stocks')
+        )
         category = self.request.query_params.get('category')
         if category:
             qs = qs.filter(category_id=category)
@@ -42,6 +46,13 @@ class ProductMenuView(viewsets.ReadOnlyModelViewSet):
                 raise ValidationError({'branch': 'El parámetro "branch" debe ser un número entero.'})
             qs = qs.filter(branch_stocks__branch_id=int(branch))
         return qs
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        branch = self.request.query_params.get('branch')
+        if branch is not None and branch.isdigit():
+            context['branch_id'] = int(branch)
+        return context
 
     def get_serializer_class(self):
         if self.action == 'list':

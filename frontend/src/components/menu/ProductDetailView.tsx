@@ -1,32 +1,54 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Loader2, AlertCircle, ShoppingCart, Check, Minus, Plus, ArrowLeft, X } from "lucide-react";
+import { ChevronRight, Loader2, AlertCircle, ShoppingCart, Check, Minus, Plus, ArrowLeft, X, AlertTriangle, Store } from "lucide-react";
 import { useProduct } from "@/hooks/useProduct";
 import { useProducts } from "@/hooks/useProducts";
+import { useBranches } from "@/hooks/useBranches";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import Header from "./Header";
-import { ProductCarousel } from "../carousel/ProductCarousel"; 
+import { ProductCarousel } from "../carousel/ProductCarousel";
 
 interface ProductDetailViewProps {
   productId: number;
 }
 
 export function ProductDetailView({ productId }: ProductDetailViewProps) {
-  const { addToCart, cartTotal, canAddToCart } = useCart();
+  const { tryAddToCart, canAddToCart, cartTotal, clearCart, setBranchId, addToCart, branchName: cartBranchName } = useCart();
+  const { data: branches } = useBranches();
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [showSummaryNotice, setShowSummaryNotice] = useState(false);
+  const [pendingSwitch, setPendingSwitch] = useState<{
+    productBranchId: number;
+    productBranchName: string;
+  } | null>(null);
 
   const { data: product, isLoading, error } = useProduct(productId);
-  
+
   const { data: productsData } = useProducts();
   const allProducts = productsData?.results ?? [];
 
+  const productBranch = branches?.find((b) => b.id === product?.branchId);
+  const productBranchName = productBranch?.name;
+
   const isAvailable = product ? canAddToCart(product.branchId) : false;
+  const isCrossBranch =
+    !!product &&
+    !isAvailable &&
+    product.branchId !== undefined &&
+    product.branchId !== null;
 
   const handleDecreaseQuantity = () => {
     if (quantity > 1) {
@@ -39,24 +61,47 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
   };
 
   const handleAdd = () => {
-    if (!product || !isAvailable) return;
-    
-    for (let i = 0; i < quantity; i++) {
-      addToCart(product);
+    if (!product || (!isAvailable && !isCrossBranch)) return;
+
+    const result = tryAddToCart(product, productBranchName);
+
+    if (result.ok) {
+      for (let i = 1; i < quantity; i++) {
+        tryAddToCart(product, productBranchName);
+      }
+      setAdded(true);
+      setShowSummaryNotice(true);
+      setTimeout(() => setAdded(false), 2000);
+      setTimeout(() => setShowSummaryNotice(false), 5000);
+      return;
     }
 
+    if (result.reason === "different_branch" && productBranchName) {
+      setPendingSwitch({
+        productBranchId: result.productBranchId,
+        productBranchName,
+      });
+    }
+  };
+
+  const handleConfirmSwitch = () => {
+    if (!pendingSwitch || !product) return;
+    clearCart();
+    setBranchId(pendingSwitch.productBranchId, pendingSwitch.productBranchName);
+    addToCart(product);
+    for (let i = 1; i < quantity; i++) {
+      addToCart(product);
+    }
+    setPendingSwitch(null);
     setAdded(true);
     setShowSummaryNotice(true);
-
     setTimeout(() => setAdded(false), 2000);
     setTimeout(() => setShowSummaryNotice(false), 5000);
   };
 
-  // 1. Productos Similares: Misma categoría, excluyendo el actual
   const similarProducts = (allProducts ?? [])
     .filter((p) => p.category?.id === product?.category?.id && p.id !== productId);
 
-  // 2. Venta Cruzada (Combina con): Categorías distintas a la actual
   const crossSellProducts = (allProducts ?? [])
     .filter((p) => p.category?.id !== product?.category?.id && p.id !== productId);
 
@@ -94,7 +139,6 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
       <Header />
 
       <div className="pt-20 md:pt-24">
-        {/* Botón Volver y Breadcrumbs */}
         <div className="max-w-[1100px] mx-auto px-4 md:px-10 pt-4 pb-2 flex flex-col gap-3">
           <div>
             <Link href="/menu">
@@ -106,7 +150,6 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
           </div>
 
           <nav>
-            {/* 14. Reducir protagonismo del breadcrumb (text-xs) */}
             <ol className="flex items-center gap-1.5 text-xs text-on-surface-variant">
               <li>
                 <Link href="/menu" className="hover:text-primary transition-colors">
@@ -127,11 +170,9 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
           </nav>
         </div>
 
-        {/* Contenido principal */}
         <main className="max-w-[1100px] mx-auto px-4 md:px-10 pb-28 md:pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
 
-            {/* 11. Columna izquierda: Imagen con sombra, borde, hover y transición suave */}
             <div className="group relative aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden bg-surface-container-low border border-border/60 shadow-md hover:shadow-xl transition-all duration-300">
               {product.image ? (
                 <Image
@@ -149,14 +190,12 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
               )}
             </div>
 
-            {/* 13. Columna derecha: Info (Mayor espaciado entre bloques con gap-8) */}
             <div className="flex flex-col gap-8">
-              {/* Bloque Nombre, Precio y Estado */}
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold text-on-surface mb-3">
                   {product.name}
                 </h1>
-                
+
                 <div className="flex items-center justify-between mt-2">
                   <p className="text-3xl font-extrabold text-primary tracking-tight">
                     ${product.price.toFixed(2)}
@@ -165,18 +204,25 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
                   <div className="flex items-center gap-1.5 text-sm font-semibold">
                     {isAvailable ? (
                       <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                        🟢 Disponible
+                        <Check className="h-3.5 w-3.5" /> Disponible
+                        {productBranchName && (
+                          <span className="text-emerald-700/80">· {productBranchName}</span>
+                        )}
+                      </span>
+                    ) : isCrossBranch ? (
+                      <span className="flex items-center gap-1.5 text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                        <Store className="h-3.5 w-3.5" />
+                        Vendido en {productBranchName ?? "otra sucursal"}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1.5 text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
-                        🔴 No disponible en esta sucursal
+                        🔴 No disponible
                       </span>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* 12. Encapsular la descripción en un bloque visual */}
               {product.description && (
                 <div className="bg-surface-container-lowest/60 border border-border/60 rounded-xl p-4 shadow-sm">
                   <h3 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">
@@ -188,7 +234,6 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
                 </div>
               )}
 
-              {/* Modificadores / Ingredientes */}
               {product.modifiers && product.modifiers.length > 0 && (
                 <div>
                   <h3 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">
@@ -207,9 +252,8 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
                 </div>
               )}
 
-              {/* Selector de cantidad y Botón Agregar */}
               <div className="space-y-4 pt-2">
-                {isAvailable && (
+                {(isAvailable || isCrossBranch) && (
                   <div className="flex flex-col gap-2.5">
                     <label className="text-xs font-medium text-on-surface-variant uppercase tracking-wider">
                       Cantidad
@@ -239,19 +283,25 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
                   </div>
                 )}
 
-                {/* Botón agregar */}
                 <Button
                   onClick={handleAdd}
-                  disabled={!isAvailable}
+                  disabled={!isAvailable && !isCrossBranch}
                   className={`w-full h-12 rounded-xl font-semibold text-base flex items-center justify-center gap-2 transition-all duration-300 shadow-md ${
-                    added 
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white scale-[1.01]" 
-                      : ""
+                    isCrossBranch
+                      ? "bg-amber-500 hover:bg-amber-600 text-white"
+                      : added
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white scale-[1.01]"
+                        : ""
                   }`}
                 >
                   {added ? (
                     <>
                       <Check className="h-5 w-5 animate-bounce" /> Agregado al carrito
+                    </>
+                  ) : isCrossBranch ? (
+                    <>
+                      <AlertTriangle className="h-5 w-5" />
+                      Cambiar a {productBranchName ?? "otra sucursal"}
                     </>
                   ) : (
                     <>
@@ -263,7 +313,6 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
             </div>
           </div>
 
-          {/* Carrusel 1: Venta Cruzada (Combina con) */}
           <div className="mt-16">
             <ProductCarousel
               title="Combina ideal con"
@@ -271,7 +320,6 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
             />
           </div>
 
-          {/* Carrusel 2: Productos Similares (También te puede gustar) */}
           <div className="mt-12">
             <ProductCarousel
               title="También te puede gustar"
@@ -280,7 +328,6 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
           </div>
         </main>
 
-        {/* Aviso Único Unificado: Toast + Resumen del Carrito */}
         {showSummaryNotice && (
           <div className="fixed bottom-20 md:bottom-6 right-4 left-4 md:left-auto md:w-96 z-50 bg-background border border-border shadow-2xl rounded-2xl p-4 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
             <div className="flex items-start justify-between pb-3 border-b border-border">
@@ -295,8 +342,8 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
                   <p className="text-xs text-on-surface-variant">Agregado al carrito</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setShowSummaryNotice(false)} 
+              <button
+                onClick={() => setShowSummaryNotice(false)}
                 className="text-on-surface-variant hover:text-on-surface p-1 rounded-lg"
               >
                 <X className="h-4 w-4" />
@@ -310,7 +357,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
               </span>
             </div>
 
-            <Link href="/cart" className="w-full">
+            <Link href="/menu/checkout" className="w-full">
               <Button className="w-full h-10 rounded-xl font-semibold gap-2 text-sm">
                 <ShoppingCart className="h-4 w-4" />
                 Ver carrito
@@ -319,7 +366,6 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
           </div>
         )}
 
-        {/* Sticky CTA (Barra Fija Inferior en Móvil) */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-md border-t border-border z-40 md:hidden shadow-lg">
           <div className="flex items-center justify-between gap-4 max-w-[1100px] mx-auto">
             <div>
@@ -330,14 +376,22 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
             </div>
             <Button
               onClick={handleAdd}
-              disabled={!isAvailable}
+              disabled={!isAvailable && !isCrossBranch}
               className={`flex-1 h-12 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 max-w-[200px] transition-all duration-300 ${
-                added ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
+                isCrossBranch
+                  ? "bg-amber-500 hover:bg-amber-600 text-white"
+                  : added
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : ""
               }`}
             >
               {added ? (
                 <>
                   <Check className="h-4 w-4" /> ¡Agregado!
+                </>
+              ) : isCrossBranch ? (
+                <>
+                  <AlertTriangle className="h-4 w-4" /> Cambiar
                 </>
               ) : (
                 <>
@@ -348,6 +402,39 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={pendingSwitch !== null}
+        onOpenChange={(open) => !open && setPendingSwitch(null)}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+              <DialogTitle>Este producto es de otra sucursal</DialogTitle>
+            </div>
+            <DialogDescription>
+              <span className="font-semibold text-on-surface">«{product.name}»</span> se vende en{" "}
+              <span className="font-semibold text-on-surface">
+                «{pendingSwitch?.productBranchName ?? "otra sucursal"}»
+              </span>
+              . Tu carrito es para{" "}
+              <span className="font-semibold text-on-surface">
+                «{cartBranchName ?? "otra sucursal"}»
+              </span>
+              . Si cambias de sucursal se vaciará el carrito actual.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingSwitch(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmSwitch}>
+              Cambiar a «{pendingSwitch?.productBranchName}» y vaciar carrito
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -46,7 +46,7 @@ class OrderApiTests(APITestCase):
         response = self.client.post(
             reverse("orders-list"),
             {
-                "branch_id": 1,
+                "branch_id": self.branch.id,
                 "client_id": self.client_user.id,
                 "payment_method": "cash",
                 "order_products": [],
@@ -58,14 +58,27 @@ class OrderApiTests(APITestCase):
         self.assertIn("order_products", response.data)
 
     def test_client_can_create_order_and_total_is_persisted(self):
-        from apps.products.models import Product
-        Product.objects.create(id=10, name="P10", price=Decimal("10.00"))
-        Product.objects.create(id=11, name="P11", price=Decimal("20.00"))
+        product_10 = Product.objects.create(
+            id=10, name="P10", price=Decimal("10.00")
+        )
+        product_11 = Product.objects.create(
+            id=11, name="P11", price=Decimal("20.00")
+        )
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=product_10,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=product_11,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
 
         response = self.client.post(
             reverse("orders-list"),
             {
-                "branch_id": 1,
+                "branch_id": self.branch.id,
                 "client_id": self.client_user.id,
                 "payment_method": "cash",
                 "order_products": [
@@ -79,18 +92,24 @@ class OrderApiTests(APITestCase):
         self.assertEqual(response.status_code, 201)
         order = Order.objects.get(client_id=self.client_user.id)
         self.assertEqual(order.order_number, 1)
-        self.assertEqual(order.total, Decimal("50.00"))
+        self.assertEqual(order.total, Decimal("54.00"))
         self.assertEqual(order.order_products.count(), 2)
         self.assertEqual(response.data["iva"], "3.70")
 
     def test_client_can_add_product_and_total_is_updated(self):
-        from apps.products.models import Product
-        Product.objects.create(id=10, name="P10", price=Decimal("12.50"))
+        product_10 = Product.objects.create(
+            id=10, name="P10", price=Decimal("12.50")
+        )
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=product_10,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
 
         order = Order.objects.create(
             order_number=1,
             date="2026-01-01",
-            branch_id=1,
+            branch_id=self.branch.id,
             client_id=self.client_user.id,
             payment_method=1,
         )

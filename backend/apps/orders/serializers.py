@@ -8,6 +8,7 @@ from rest_framework import serializers
 from apps.products.models import Product
 from apps.users.models import User
 from .models import Order, OrderProduct
+from .services import get_unavailable_products
 
 
 class OrderProductSerializer(serializers.ModelSerializer):
@@ -226,6 +227,19 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                     f"'{product.name}' tiene un límite de {product.max_per_order} "
                     f"unidades por pedido. Intentaste agregar {quantity}."
                 )
+
+        unavailable = get_unavailable_products(branch_id, products_data)
+        if unavailable:
+            raise serializers.ValidationError({
+                "order_products": [
+                    {
+                        "item_id": u.product_id,
+                        "name": u.product_name,
+                        "reason": u.reason,
+                    }
+                    for u in unavailable
+                ]
+            })
 
         return attrs
 
