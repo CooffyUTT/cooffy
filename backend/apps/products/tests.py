@@ -101,23 +101,31 @@ class ProductAvailabilityTests(APITestCase):
 class ProductStockTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        owner = User.objects.create_user(
+        cls.owner = User.objects.create_user(
             user='stock-owner@example.com',
             name='Stock Owner',
             password='password',
         )
-        school = School.objects.create(
+        cls.client_user = User.objects.create_user(
+            user='stock-client@example.com',
+            name='Stock Client',
+            password='password',
+        )
+        cls.school = School.objects.create(
             full_name='Stock School',
             short_name='STOCK',
-            admin=owner,
+            admin=cls.owner,
         )
-        company = Company.objects.create(name='Stock Company', owner=owner)
+        cls.company = Company.objects.create(name='Stock Company', owner=cls.owner)
         cls.branch = Branch.objects.create(
             name='Stock Branch',
-            company=company,
-            school=school,
+            company=cls.company,
+            school=cls.school,
         )
         cls.product = Product.objects.create(name='Stock Product', price=Decimal('10.00'))
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.client_user)
 
     def test_product_stock_supports_the_three_mvp_states(self):
         for stock_state in (-1, 0, 1):
@@ -140,3 +148,49 @@ class ProductStockTests(APITestCase):
 
         with self.assertRaises(ValidationError):
             stock.full_clean()
+
+    def test_menu_filters_products_by_branch(self):
+        other_branch = Branch.objects.create(
+            name='Other Stock Branch',
+            company=self.company,
+            school=self.school,
+        )
+        other_product = Product.objects.create(
+            name='Other Branch Product',
+            price=Decimal('12.00'),
+        )
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=self.product,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+        ProductStock.objects.create(
+            branch=other_branch,
+            product=other_product,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+
+        response = self.client.get(
+            reverse('product-menu-list'),
+            {'branch': self.branch.id},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        ids = [item['id'] for item in response.data['results']]
+        self.assertIn(self.product.id, ids)
+        self.assertNotIn(other_product.id, ids)
+
+    def test_menu_without_branch_returns_global_catalog(self):
+        response = self.client.get(reverse('product-menu-list'))
+
+        self.assertEqual(response.status_code, 200)
+        ids = [item['id'] for item in response.data['results']]
+        self.assertIn(self.product.id, ids)
+
+    def test_menu_rejects_invalid_branch_param(self):
+        response = self.client.get(
+            reverse('product-menu-list'),
+            {'branch': 'abc'},
+        )
+
+        self.assertEqual(response.status_code, 400)
