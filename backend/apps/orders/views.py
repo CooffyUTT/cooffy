@@ -176,7 +176,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             or Decimal("0.00")
         )
         
-        order.total = subtotal * Decimal("1.08")
+        order.total = subtotal
         order.save(update_fields=["total"])
 
         order.refresh_from_db()

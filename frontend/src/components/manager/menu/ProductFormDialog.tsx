@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +30,19 @@ const EMPTY_VALUES: ProductFormValues = {
   image: null,
 };
 
+function getInitialValues(product: Product | null): ProductFormValues {
+  if (!product) return EMPTY_VALUES;
+
+  return {
+    name: product.name,
+    price: product.price,
+    description: product.description ?? "",
+    max_per_order:
+      product.max_per_order !== null ? String(product.max_per_order) : "",
+    image: null,
+  };
+}
+
 export function ProductFormDialog({
   open,
   onOpenChange,
@@ -37,26 +50,10 @@ export function ProductFormDialog({
   isSubmitting,
   onSubmit,
 }: ProductFormDialogProps) {
-  const [values, setValues] = useState<ProductFormValues>(EMPTY_VALUES);
+  const [values, setValues] = useState<ProductFormValues>(() =>
+    getInitialValues(product),
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (!open) return;
-
-    if (product) {
-      setValues({
-        name: product.name,
-        price: product.price,
-        description: product.description ?? "",
-        max_per_order:
-          product.max_per_order !== null ? String(product.max_per_order) : "",
-        image: null,
-      });
-    } else {
-      setValues(EMPTY_VALUES);
-    }
-    setErrors({});
-  }, [open, product]);
 
   const validate = (): boolean => {
     const nextErrors: Record<string, string> = {};

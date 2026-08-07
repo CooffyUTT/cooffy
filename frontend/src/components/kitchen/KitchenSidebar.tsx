@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { UtensilsCrossed, LayoutDashboard, BookOpen, History, LogOut } from 'lucide-react';
+import { LayoutDashboard, BookOpen, History, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function KitchenSidebar() {

@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
   CreditCard,
@@ -219,7 +219,7 @@ export function CheckoutView() {
                       <span>${orderSubtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-on-surface-variant">
-                      <span>IVA (8%)</span>
+                      <span>IVA incluido (8%)</span>
                       <span>${Number(createdOrder.iva).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-dashed border-outline-variant/20">
@@ -371,7 +371,7 @@ export function CheckoutView() {
               <span>${subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm text-on-surface-variant">
-              <span>Impuesto (8%)</span>
+              <span>IVA incluido (8%)</span>
               <span>${tax.toFixed(2)}</span>
             </div>
             <div className="bg-primary/5 rounded-xl p-3 mt-2">

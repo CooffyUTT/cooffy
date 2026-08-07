@@ -10,7 +10,7 @@ export const getServiceTypeBadge = (type: string) => {
     case 'takeaway':
       return { label: 'Para llevar', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' };
     case 'dine_in':
-      return { label: 'Consumir aqui', color: 'bg-teal-50 text-teal-700 border-teal-200' };
+      return { label: 'Consumir aquí', color: 'bg-teal-50 text-teal-700 border-teal-200' };
     case 'preorder':
     default:
       return { label: 'Pedido anticipado', color: 'bg-purple-50 text-purple-700 border-purple-200' };

@@ -25,8 +25,7 @@ export function MenuManagerView() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchProducts = useCallback(async (searchTerm?: string) => {
-    setIsLoading(true);
+  const loadProducts = useCallback(async (searchTerm?: string) => {
     try {
       const data = await listManageProducts(searchTerm);
       setProducts(data.results);
@@ -39,9 +38,16 @@ export function MenuManagerView() {
     }
   }, []);
 
+  const fetchProducts = useCallback(async (searchTerm?: string) => {
+    setIsLoading(true);
+    await loadProducts(searchTerm);
+  }, [loadProducts]);
+
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    // The effect starts the initial remote data load; state updates happen after the request.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadProducts();
+  }, [loadProducts]);
 
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -161,6 +167,7 @@ export function MenuManagerView() {
       />
 
       <ProductFormDialog
+        key={`${isDialogOpen ? "open" : "closed"}-${editingProduct?.id ?? "new"}`}
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         product={editingProduct}

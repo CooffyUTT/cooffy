@@ -1,12 +1,12 @@
 export interface OrderItemModifier {
-  id: number;
-  name: string;
-  price?: number;
+  text: string;
+  severity: 'danger' | 'info' | 'warning';
 }
 
 export interface OrderItem {
-  id: number;
+  id: string;
   name: string;
+  type: 'beverage' | 'food';
   quantity: number;
   price: number;
   unitPrice?: number;
@@ -35,8 +35,6 @@ export interface Order {
   paymentMethod: 'cash' | 'card';
   items: OrderItem[];
   notes?: string;
-  price: string;
-  excluded_modifiers: string[] | null;
 }
 
 export interface KitchenOrder {

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { api } from "@/lib/api";
-import axios from 'axios';
 
 interface RegisterErrors {
   name?: string;
@@ -67,7 +66,7 @@ export function useRegisterForm() {
     setFormData(updatedFormData);
 
     if (type !== 'checkbox') {
-      let fieldError = validateField(name, value, updatedFormData);
+       const fieldError = validateField(name, value, updatedFormData);
       
       if (name === 'password' && updatedFormData.confirmPassword) {
         const confirmError = validateField('confirmPassword', updatedFormData.confirmPassword, updatedFormData);
@@ -146,7 +145,7 @@ export function useRegisterForm() {
       params.append('password', formData.password);
       params.append('school_id', formData.school_id || '1');
 
-      const response = await api.post('/api/auth/register/', params.toString(), {
+       await api.post('/api/auth/register/', params.toString(), {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
 
@@ -157,7 +156,7 @@ export function useRegisterForm() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       router.push('/');
       
-    } catch (error) {
+    } catch {
       toast.error("Error del sistema", { description: "No se pudo crear la cuenta." });
     } finally {
       setIsLoading(false);

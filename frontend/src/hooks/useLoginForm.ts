@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'; // 👈 1. Import de Next.js Router
 import { LoginCredentials } from '@/types/auth';
 import { toast } from 'sonner';
 import { api } from "@/lib/api";
-import axios, { AxiosError } from 'axios'; // 👈 Asegúrate de importar AxiosError
+import axios from 'axios';
 
 interface FormErrors {
   user?: string;

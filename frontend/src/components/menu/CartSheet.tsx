@@ -94,7 +94,7 @@ export default function CartSheet() {
                 <span>${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm text-on-surface-variant">
-                <span>Impuesto (8%)</span>
+                <span>IVA incluido (8%)</span>
                 <span>${tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-lg font-bold text-on-surface pt-2 border-t border-dashed border-outline-variant/20">

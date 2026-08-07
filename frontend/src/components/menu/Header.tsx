@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Search, Bell, ShoppingCart, User } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Input } from "@/components/ui/input";
@@ -19,9 +20,9 @@ export default function ClientHeader({ searchValue = "", onSearchChange }: Clien
       // Slot 1: Navegación del cliente
       navigation={
         <>
-          <a className="text-primary border-b-2 border-primary py-2 font-semibold text-sm" href="/menu">
-            Menú
-          </a>
+           <Link className="text-primary border-b-2 border-primary py-2 font-semibold text-sm" href="/menu">
+             Menú
+           </Link>
           <a className="text-on-surface-variant hover:text-primary transition-colors py-2 font-semibold text-sm" href="/orders">
             Pedidos
           </a>
