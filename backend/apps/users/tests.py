@@ -58,7 +58,7 @@ class ClientRegistrationTests(APITestCase):
             short_name='REG',
         )
         response = self.client.post(
-            reverse("create-client"),
+            reverse("user-register"),
             {
                 "user": "new-client@school.edu.mx",
                 "name": "New Client",
@@ -74,7 +74,7 @@ class ClientRegistrationTests(APITestCase):
 
     def test_client_registration_rejects_non_institutional_email(self):
         response = self.client.post(
-            reverse("create-client"),
+            reverse("user-register"),
             {
                 "user": "new-client@example.com",
                 "name": "New Client",
