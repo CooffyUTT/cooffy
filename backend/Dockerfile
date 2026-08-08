@@ -2,6 +2,9 @@
 
 FROM python:3.14-slim AS builder
 
+# Shared with the frontend build; unused here, declared to accept the workflow arg.
+ARG NEXT_PUBLIC_API_URL
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 ENV UV_COMPILE_BYTECODE=1 \
