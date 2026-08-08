@@ -10,9 +10,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   backend:
-    build: ./backend
+    build: ../backend
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     environment:
       POSTGRES_HOST: postgres
       DJANGO_ENV: ${DJANGO_ENV:-production}
@@ -24,7 +24,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost}
     restart: unless-stopped
@@ -34,7 +34,7 @@ services:
       - backend
 
   nginx:
-    build: ./docker/nginx
+    build: ./nginx
     restart: unless-stopped
     ports:
       - "80:80"
