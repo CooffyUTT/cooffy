@@ -108,6 +108,7 @@ class OrderListSerializer(OrderClientNameMixin, serializers.ModelSerializer):
             "client_name",
             "total",
             "state",
+            "payment_method",
             "payment_status",
             "created_at",
             "comment",
