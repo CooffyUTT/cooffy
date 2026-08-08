@@ -108,6 +108,7 @@ class OrderListSerializer(OrderClientNameMixin, serializers.ModelSerializer):
             "client_name",
             "total",
             "state",
+            "payment_method",
             "payment_status",
             "created_at",
             "comment",
@@ -119,6 +120,7 @@ class OrderDetailSerializer(OrderClientNameMixin, serializers.ModelSerializer):
     order_products = OrderProductSerializer(many=True, read_only=True)
     client_name = serializers.SerializerMethodField()
     iva = serializers.SerializerMethodField()
+    estimated_completion_minutes = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -141,7 +143,18 @@ class OrderDetailSerializer(OrderClientNameMixin, serializers.ModelSerializer):
             "comment",
             "updated_at",
             "order_products",
+            "estimated_completion_minutes",
         ]
+
+    def get_estimated_completion_minutes(self, obj):
+        estimates = {
+            Order.State.PENDING: 15,
+            Order.State.PREPARING: 10,
+            Order.State.READY: 0,
+            Order.State.PICKED_UP: 0,
+            Order.State.REJECTED: 0,
+        }
+        return estimates.get(obj.state, 0)
 
     def get_iva(self, obj):
         subtotal = sum(op.price for op in obj.order_products.all())

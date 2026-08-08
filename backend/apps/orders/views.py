@@ -206,3 +206,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(
             OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED
         )
+
+    @action(detail=False, methods=["get"], url_path="my-orders")
+    def my_orders(self, request):
+        qs = self.get_queryset()
+        serializer = OrderListSerializer(qs, many=True, context={"request": request})
+        return Response(serializer.data)
