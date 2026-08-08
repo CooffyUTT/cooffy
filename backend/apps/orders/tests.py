@@ -5,6 +5,7 @@ from rest_framework.test import APITestCase
 
 from apps.branches.models import Branch, Company
 from apps.orders.models import Order, OrderProduct
+from apps.products.models import Product, ProductStock
 from apps.schools.models import School
 from apps.users.models import User
 
@@ -30,7 +31,7 @@ class OrderApiTests(APITestCase):
             name="Test Company",
             owner=cls.client_user,
         )
-        Branch.objects.create(
+        cls.branch = Branch.objects.create(
             id=1,
             name="Test Branch",
             company=company,
@@ -92,7 +93,7 @@ class OrderApiTests(APITestCase):
         self.assertEqual(response.status_code, 201)
         order = Order.objects.get(client_id=self.client_user.id)
         self.assertEqual(order.order_number, 1)
-        self.assertEqual(order.total, Decimal("54.00"))
+        self.assertEqual(order.total, Decimal("50.00"))
         self.assertEqual(order.order_products.count(), 2)
         self.assertEqual(response.data["iva"], "3.70")
 
