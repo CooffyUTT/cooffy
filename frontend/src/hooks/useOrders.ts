@@ -24,7 +24,7 @@ export function useOrders(state?: string, refetchInterval?: number) {
   });
 }
 
-export function useOrder(id: number) {
+export function useOrder(id: number, refetchInterval?: number) {
   return useQuery({
     queryKey: ["order", id],
     queryFn: async () => {
@@ -33,6 +33,7 @@ export function useOrder(id: number) {
       return data;
     },
     enabled: id > 0,
+    refetchInterval,
   });
 }
 
