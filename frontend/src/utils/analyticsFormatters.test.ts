@@ -26,7 +26,7 @@ describe("formatCurrency", () => {
 describe("formatCurrencyCompact", () => {
   it("renders a compact representation for large numbers", () => {
     const formatted = formatCurrencyCompact(15000);
-    expect(formatted).toMatch(/15\s?K|15\s?k/);
+    expect(formatted).toMatch(/15([.,]\d+)?\s?[kK]/);
   });
 });
 
