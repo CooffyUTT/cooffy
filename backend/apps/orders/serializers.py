@@ -253,16 +253,12 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
         unavailable = get_unavailable_products(branch_id, products_data)
         if unavailable:
-            reason_labels = {
-                "not_offered": "No disponible en esta sucursal",
-                "out_of_stock": "Sin stock en esta sucursal",
-            }
             raise serializers.ValidationError({
                 "order_products": [
                     {
                         "item_id": u.product_id,
                         "name": u.product_name,
-                        "reason": reason_labels.get(u.reason, u.reason),
+                        "reason": u.reason,
                     }
                     for u in unavailable
                 ]

@@ -339,7 +339,7 @@ class OrderApiTests(APITestCase):
         error = str(response.data)
         self.assertIn("pedido activo", error)
 
-    def test_unavailable_product_error_includes_spanish_reason(self):
+    def test_unavailable_product_error_includes_product_name_and_reason(self):
         product = Product.objects.create(
             id=80, name="Ensalada", price=Decimal("40.00")
         )
@@ -362,7 +362,10 @@ class OrderApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, 400)
-        error = str(response.data)
         self.assertIn("order_products", response.data)
-        self.assertIn("Sin stock", error)
-        self.assertIn("Ensalada", error)
+        order_product_errors = response.data["order_products"]
+        self.assertEqual(len(order_product_errors), 1)
+        err = order_product_errors[0]
+        self.assertEqual(err["name"], "Ensalada")
+        self.assertEqual(err["reason"], "out_of_stock")
+        self.assertEqual(err["item_id"], str(product.id))
