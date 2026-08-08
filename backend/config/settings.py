@@ -36,6 +36,13 @@ ALLOWED_HOSTS: list[str] = config(
     cast=Csv(),
 )
 
+# Trusted origins for CSRF when serving over the public origin behind a proxy
+CSRF_TRUSTED_ORIGINS: list[str] = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='',
+    cast=Csv(),
+)
+
 
 # Application definition
 
@@ -142,6 +149,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Static files collected here by `collectstatic`; served by nginx in production
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Trust the X-Forwarded-Proto header set by nginx so request.is_secure() works
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Media files (user-uploaded content)
 # https://docs.djangoproject.com/en/6.0/topics/files/
