@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   CreditCard,
@@ -38,6 +39,52 @@ const PAYMENT_HINTS: Record<PaymentMethod, string> = {
   card: "Podrás pagar al recoger tu pedido.",
   cash: "Ten preparado el monto exacto.",
 };
+
+interface OrderProductError {
+  name?: string;
+  reason?: string;
+}
+
+function extractOrderErrorMessage(error: unknown): string {
+  const err = error as {
+    response?: { data?: unknown };
+    message?: string;
+  };
+  const data = err?.response?.data;
+
+  if (data && typeof data === "object") {
+    const dataObj = data as Record<string, unknown>;
+
+    if (Array.isArray(dataObj.order_products) && dataObj.order_products.length > 0) {
+      const list = (dataObj.order_products as OrderProductError[])
+        .map((p) => p?.name)
+        .filter((name): name is string => Boolean(name))
+        .join(", ");
+      const reason = (dataObj.order_products[0] as OrderProductError)?.reason === "out_of_stock"
+        ? "ya no tienen stock"
+        : "no se ofrecen en la sucursal seleccionada";
+      return list
+        ? `Los siguientes productos ${reason}: ${list}. Vuelve al menú para ajustar tu pedido.`
+        : `Algunos productos ${reason}. Vuelve al menú para ajustar tu pedido.`;
+    }
+
+    if (typeof dataObj.detail === "string" && dataObj.detail) {
+      return dataObj.detail;
+    }
+
+    for (const value of Object.values(dataObj)) {
+      if (Array.isArray(value) && value.length > 0 && typeof value[0] === "string") {
+        return value[0];
+      }
+      if (typeof value === "string" && value) {
+        return value;
+      }
+    }
+  }
+
+  if (err?.message) return err.message;
+  return "Ocurrió un error inesperado";
+}
 
 export function CheckoutView() {
   const router = useRouter();
@@ -80,9 +127,14 @@ export function CheckoutView() {
       })),
     };
 
-    const order = await createOrder.mutateAsync(payload);
-    setCreatedOrder(order);
-    clearCart();
+    try {
+      const order = await createOrder.mutateAsync(payload);
+      setCreatedOrder(order);
+      clearCart();
+    } catch (error) {
+      const message = extractOrderErrorMessage(error);
+      toast.error("No se pudo registrar el pedido", { description: message });
+    }
   };
 
   if (createdOrder) {
@@ -448,35 +500,7 @@ export function CheckoutView() {
             <div>
               <p className="text-sm font-medium text-red-800">Error al crear el pedido</p>
               <p className="text-xs text-red-600 mt-1">
-                {(() => {
-                  const err = createOrder.error as unknown as {
-                    response?: {
-                      data?: {
-                        detail?: string;
-                        order_products?: Array<{ name?: string; reason?: string }>;
-                        branch_id?: string[];
-                      };
-                    };
-                    message?: string;
-                  };
-                  const data = err?.response?.data;
-                  if (Array.isArray(data?.order_products) && data.order_products.length > 0) {
-                    const list = data.order_products
-                      .map((p) => p?.name)
-                      .filter(Boolean)
-                      .join(", ");
-                    const reason = data.order_products[0]?.reason === "out_of_stock"
-                      ? "ya no tienen stock"
-                      : "no se ofrecen en la sucursal seleccionada";
-                    return list
-                      ? `Los siguientes productos ${reason}: ${list}. Vuelve al menú para ajustar tu pedido.`
-                      : `Algunos productos ${reason}. Vuelve al menú para ajustar tu pedido.`;
-                  }
-                  if (data?.detail) return data.detail;
-                  if (data?.branch_id) return data.branch_id[0];
-                  if (err?.message) return err.message;
-                  return "Ocurrió un error inesperado";
-                })()}
+                {extractOrderErrorMessage(createOrder.error)}
               </p>
             </div>
           </div>
