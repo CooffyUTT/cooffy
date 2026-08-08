@@ -1,37 +1,61 @@
+from decimal import Decimal
+
 from django.db import transaction
-from django.utils import timezone
 from django.db.models import Max
+from django.utils import timezone
 from rest_framework import serializers
-from .models import Order, OrderProduct
+
 from apps.products.models import Product
 from apps.users.models import User
+from .models import Order, OrderProduct
+from .services import get_unavailable_products
 
 
 class OrderProductSerializer(serializers.ModelSerializer):
+    """
+    Serializer unificado para OrderProduct que incluye soporte para
+    los nombres de productos e imágenes en la respuesta JSON.
+    """
+    product_name = serializers.SerializerMethodField()
     item_name = serializers.SerializerMethodField()
     item_image = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderProduct
-        fields = ['id', 'item_id', 'quantity', 'price', 'excluded_modifiers', 'item_name', 'item_image']
-        read_only_fields = ('id',)
+        fields = [
+            "id",
+            "item_id",
+            "quantity",
+            "price",
+            "excluded_modifiers",
+            "product_name",
+            "item_name",
+            "item_image",
+        ]
+        read_only_fields = ("id", "price")
 
     def _get_product(self, item_id):
         context = self.context or {}
-        products = context.setdefault('_products', {})
+        products = context.setdefault("_products", {})
         if item_id not in products:
             products[item_id] = Product.objects.filter(pk=item_id).first()
         return products[item_id]
 
-    def get_item_name(self, obj):
+    def get_product_name(self, obj):
+        products_map = self.context.get("products_map", {})
+        if obj.item_id in products_map:
+            return products_map[obj.item_id].name
         product = self._get_product(obj.item_id)
-        return product.name if product else None
+        return product.name if product else f"Producto #{obj.item_id}"
+
+    def get_item_name(self, obj):
+        return self.get_product_name(obj)
 
     def get_item_image(self, obj):
         product = self._get_product(obj.item_id)
         if not product or not product.image:
             return None
-        request = self.context.get('request') if self.context else None
+        request = self.context.get("request") if self.context else None
         if request is not None:
             return request.build_absolute_uri(product.image.url)
         return product.image.url
@@ -40,7 +64,7 @@ class OrderProductSerializer(serializers.ModelSerializer):
 class OrderProductCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderProduct
-        fields = ['item_id', 'quantity', 'excluded_modifiers']
+        fields = ["item_id", "quantity", "excluded_modifiers"]
 
     def validate_item_id(self, value):
         if not Product.objects.filter(pk=value).exists():
@@ -56,9 +80,9 @@ class OrderProductCreateSerializer(serializers.ModelSerializer):
 class OrderClientNameMixin:
     def _get_client(self, client_id):
         context = self.context or {}
-        clients = context.setdefault('_clients', {})
+        clients = context.setdefault("_clients", {})
         if client_id not in clients:
-            clients[client_id] = User.objects.filter(pk=client_id).only('name', 'lastname').first()
+            clients[client_id] = User.objects.filter(pk=client_id).only("name", "lastname").first()
         return clients[client_id]
 
     def get_client_name(self, obj):
@@ -76,45 +100,67 @@ class OrderListSerializer(OrderClientNameMixin, serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'id',
-            'order_number',
-            'date',
-            'branch_id',
-            'client_id',
-            'client_name',
-            'total',
-            'state',
-            'payment_status',
-            'created_at',
-            'comment',
-            'order_products',
+            "id",
+            "order_number",
+            "date",
+            "branch_id",
+            "client_id",
+            "client_name",
+            "total",
+            "state",
+            "payment_status",
+            "created_at",
+            "comment",
+            "order_products",
         ]
 
 
 class OrderDetailSerializer(OrderClientNameMixin, serializers.ModelSerializer):
     order_products = OrderProductSerializer(many=True, read_only=True)
     client_name = serializers.SerializerMethodField()
+    iva = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = [
-            'id',
-            'order_number',
-            'date',
-            'branch_id',
-            'client_id',
-            'client_name',
-            'created_at',
-            'prepared_at',
-            'picked_up_at',
-            'scheduled_pickup_at',
-            'total',
-            'state',
-            'payment_method',
-            'payment_status',
-            'comment',
-            'order_products',
+            "id",
+            "order_number",
+            "date",
+            "branch_id",
+            "client_id",
+            "client_name",
+            "created_at",
+            "prepared_at",
+            "picked_up_at",
+            "scheduled_pickup_at",
+            "total",
+            "iva",
+            "state",
+            "payment_method",
+            "payment_status",
+            "comment",
+            "updated_at",
+            "order_products",
         ]
+
+    def get_iva(self, obj):
+        subtotal = sum(op.price for op in obj.order_products.all())
+        # Prices already include IVA; expose only the tax portion of the total.
+        iva = subtotal - (subtotal / Decimal("1.08"))
+        return str(iva.quantize(Decimal("0.01")))
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        item_ids = {op["item_id"] for op in data.get("order_products", [])}
+        if item_ids:
+            products = Product.objects.filter(pk__in=item_ids)
+            products_map = {p.pk: p for p in products}
+        else:
+            products_map = {}
+        for op in data.get("order_products", []):
+            product = products_map.get(op["item_id"])
+            op["product_name"] = product.name if product else f"Producto #{op['item_id']}"
+        return data
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
@@ -123,52 +169,120 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'branch_id',
-            'client_id',
-            'scheduled_pickup_at',
-            'total',
-            'state',
-            'payment_method',
-            'payment_status',
-            'comment',
-            'order_products',
+            "branch_id",
+            "scheduled_pickup_at",
+            "payment_method",
+            "comment",
+            "order_products",
         ]
-        read_only_fields = ('total',)
+        read_only_fields = ("total",)
+
+    def validate_branch_id(self, value):
+        from apps.branches.models import Branch
+
+        branch = Branch.objects.filter(pk=value, active=True).first()
+        if not branch:
+            raise serializers.ValidationError("La sucursal no existe o está inactiva.")
+        if not branch.accepting_orders:
+            raise serializers.ValidationError("Esta sucursal no está aceptando pedidos en este momento.")
+        return value
 
     def validate_order_products(self, value):
         if not value:
-            raise serializers.ValidationError("El pedido debe tener al menos un producto.")
+            raise serializers.ValidationError(
+                "El pedido debe tener al menos un producto."
+            )
         return value
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        branch_id = attrs.get("branch_id")
+        products_data = attrs.get("order_products", [])
+
+        active_order_exists = Order.objects.filter(
+            client_id=user.id,
+            branch_id=branch_id,
+            state__in=[Order.State.PENDING, Order.State.PREPARING],
+        ).exists()
+        if active_order_exists:
+            raise serializers.ValidationError(
+                "Ya tienes un pedido activo en esta sucursal."
+            )
+
+        product_ids = [p["item_id"] for p in products_data]
+        products = Product.objects.filter(pk__in=product_ids, active=True)
+        products_map = {p.pk: p for p in products}
+
+        missing_ids = [pid for pid in product_ids if pid not in products_map]
+        if missing_ids:
+            raise serializers.ValidationError(
+                f"Productos no disponibles o inactivos: {missing_ids}"
+            )
+
+        for p in products_data:
+            product = products_map[p["item_id"]]
+            quantity = p["quantity"]
+            if product.max_per_order and quantity > product.max_per_order:
+                raise serializers.ValidationError(
+                    f"'{product.name}' tiene un límite de {product.max_per_order} "
+                    f"unidades por pedido. Intentaste agregar {quantity}."
+                )
+
+        unavailable = get_unavailable_products(branch_id, products_data)
+        if unavailable:
+            raise serializers.ValidationError({
+                "order_products": [
+                    {
+                        "item_id": u.product_id,
+                        "name": u.product_name,
+                        "reason": u.reason,
+                    }
+                    for u in unavailable
+                ]
+            })
+
+        return attrs
 
     @transaction.atomic
     def create(self, validated_data):
-        products_data = validated_data.pop('order_products')
+        products_data = validated_data.pop("order_products")
+        user = self.context["request"].user
 
-        item_ids = [p['item_id'] for p in products_data]
-        products = Product.objects.in_bulk(item_ids)
+        product_ids = [p["item_id"] for p in products_data]
+        products = Product.objects.filter(pk__in=product_ids)
+        products_map = {p.pk: p for p in products}
 
-        max_num = Order.objects.aggregate(max_num=Max('order_number'))['max_num'] or 0
-        order_number = max_num + 1
+        last_order = (
+            Order.objects.filter(
+                branch_id=validated_data["branch_id"],
+                date=timezone.now().date(),
+            )
+            .aggregate(max_num=Max("order_number"))
+            .get("max_num")
+        )
+        order_number = (last_order or 0) + 1
 
         order = Order.objects.create(
             order_number=order_number,
             date=timezone.now().date(),
+            client_id=user.id,
             **validated_data,
         )
 
-        order_products = []
+        total = Decimal("0.00")
         for p in products_data:
-            product = products[p['item_id']]
-            order_products.append(
-                OrderProduct(
-                    order=order,
-                    price=product.price * p['quantity'],
-                    **p,
-                )
+            product = products_map[p["item_id"]]
+            line_total = product.price * p["quantity"]
+            OrderProduct.objects.create(
+                order=order,
+                item_id=p["item_id"],
+                quantity=p["quantity"],
+                price=line_total,
+                excluded_modifiers=p.get("excluded_modifiers", []),
             )
-        OrderProduct.objects.bulk_create(order_products)
+            total += line_total
 
-        order.total = sum(op.price for op in order_products)
-        order.save(update_fields=['total'])
+        order.total = total
+        order.save(update_fields=["total"])
 
         return order

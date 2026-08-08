@@ -91,7 +91,7 @@ function buildBranchFormData(data: BranchUpdateData): FormData {
 export function ManagerView() {
   const router = useRouter();
 
-  const [isAuthorized, setIsAuthorized] = useState(() => {
+  const [isAuthorized] = useState(() => {
     if (typeof window === "undefined") return false;
 
     const userDataStr = localStorage.getItem("userData");

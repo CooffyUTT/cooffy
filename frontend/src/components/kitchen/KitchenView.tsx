@@ -3,26 +3,25 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { KitchenOrder } from '@/types/kitchen';
+import type { OrderState } from '@/types/order';
 
 import { KitchenSidebar } from './KitchenSidebar';
 import { KitchenHeader } from './KitchenHeader';
 import { KitchenSummary } from './KitchenSummary';
 import { KanbanColumn } from './KanbanColumn';
 import { OrderCard } from './OrderCard';
-import { useOrders } from '@/hooks/useOrders';
-import { updateOrderState } from "@/services/orderService";
+import { useOrders, useUpdateOrderState } from '@/hooks/useOrders';
+
 
 export function KitchenView() {
   const router = useRouter();
+  const updateState = useUpdateOrderState();
 
   const [isAuthorized] = useState(() => {
     if (typeof window === "undefined") return false;
-
     const userDataStr = localStorage.getItem("userData");
     if (!userDataStr) return false;
-
     try {
       const userData = JSON.parse(userDataStr);
       const groups: string[] = userData.groups || [];
@@ -35,22 +34,17 @@ export function KitchenView() {
   const [kitchenActive, setKitchenActive] = useState(true);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
 
-  const queryClient = useQueryClient();
-  const stateMutation = useMutation({
-    mutationFn: ({ orderId, state }: { orderId: number; state: string }) =>
-      updateOrderState(orderId, state),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      setConfirmingId(null);
-    },
-  });
-
   const { data: pendingOrders = [], isError: pendingError } = useOrders('pending', 5000);
   const { data: preparingOrders = [], isError: preparingError } = useOrders('preparing', 10000);
   const { data: readyOrders = [], isError: readyError } = useOrders('ready', 10000);
   const { data: pickedUpOrders = [], isError: pickedUpError } = useOrders('picked_up', 30000);
 
-  const allOrders: KitchenOrder[] = [...pendingOrders, ...preparingOrders, ...readyOrders, ...pickedUpOrders];
+  const allOrders: KitchenOrder[] = [
+    ...(pendingOrders as unknown as KitchenOrder[]),
+    ...(preparingOrders as unknown as KitchenOrder[]),
+    ...(readyOrders as unknown as KitchenOrder[]),
+    ...(pickedUpOrders as unknown as KitchenOrder[]),
+  ];
   const hasError = pendingError || preparingError || readyError || pickedUpError;
 
   useEffect(() => {
@@ -59,8 +53,13 @@ export function KitchenView() {
     }
   }, [isAuthorized, router]);
 
-  const moveOrder = (orderId: number, nextState: string) => {
-    stateMutation.mutate({ orderId, state: nextState });
+  const moveOrder = (orderId: number, nextState: OrderState) => {
+    updateState.mutate(
+      { orderId, state: nextState },
+      {
+        onSuccess: () => setConfirmingId(null),
+      }
+    );
   };
 
   if (!isAuthorized) {
@@ -103,7 +102,7 @@ export function KitchenView() {
             count={pendingOrders.length}
           >
             <AnimatePresence>
-              {pendingOrders.map(order => (
+              {(pendingOrders as unknown as KitchenOrder[]).map(order => (
                 <OrderCard
                   key={order.id}
                   order={order}
@@ -125,7 +124,7 @@ export function KitchenView() {
             count={preparingOrders.length}
           >
             <AnimatePresence>
-              {preparingOrders.map(order => (
+              {(preparingOrders as unknown as KitchenOrder[]).map(order => (
                 <OrderCard
                   key={order.id}
                   order={order}
@@ -147,7 +146,7 @@ export function KitchenView() {
             count={readyOrders.length}
           >
             <AnimatePresence>
-              {readyOrders.map(order => (
+              {(readyOrders as unknown as KitchenOrder[]).map(order => (
                 <OrderCard
                   key={order.id}
                   order={order}
@@ -157,6 +156,9 @@ export function KitchenView() {
                   onAction={() => moveOrder(order.id, "picked_up")}
                   actionLabel="ENTREGADO / RECOGIDO"
                   actionColor="bg-emerald-600 hover:bg-emerald-700"
+                  secondaryActionLabel="NO RECOGIDO"
+                  secondaryActionColor="bg-red-500 hover:bg-red-600"
+                  onSecondaryAction={() => moveOrder(order.id, "rejected")}
                 />
               ))}
             </AnimatePresence>

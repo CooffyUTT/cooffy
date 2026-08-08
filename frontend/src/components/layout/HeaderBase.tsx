@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Store } from "lucide-react";
 
 interface HeaderBaseProps {
   /** Logo personalizado opcional, si no se pasa usa el por defecto */

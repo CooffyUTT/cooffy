@@ -3,8 +3,11 @@ from decimal import Decimal
 from django.contrib.auth.models import Group
 from django.urls import reverse
 from rest_framework.test import APITestCase
+from django.core.exceptions import ValidationError
 
-from apps.products.models import Category, Product
+from apps.branches.models import Branch, Company
+from apps.products.models import Category, Product, ProductStock
+from apps.schools.models import School
 from apps.users.models import User
 
 
@@ -93,3 +96,181 @@ class ProductAvailabilityTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.active_product.refresh_from_db()
         self.assertFalse(self.active_product.active)
+
+
+class ProductStockTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = User.objects.create_user(
+            user='stock-owner@example.com',
+            name='Stock Owner',
+            password='password',
+        )
+        cls.client_user = User.objects.create_user(
+            user='stock-client@example.com',
+            name='Stock Client',
+            password='password',
+        )
+        cls.school = School.objects.create(
+            full_name='Stock School',
+            short_name='STOCK',
+            admin=cls.owner,
+        )
+        cls.company = Company.objects.create(name='Stock Company', owner=cls.owner)
+        cls.branch = Branch.objects.create(
+            name='Stock Branch',
+            company=cls.company,
+            school=cls.school,
+        )
+        cls.product = Product.objects.create(name='Stock Product', price=Decimal('10.00'))
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.client_user)
+
+    def test_product_stock_supports_the_three_mvp_states(self):
+        for stock_state in (-1, 0, 1):
+            stock = ProductStock.objects.create(
+                branch=self.branch,
+                product=Product.objects.create(
+                    name=f'Product {stock_state}',
+                    price=Decimal('10.00'),
+                ),
+                stock=stock_state,
+            )
+            self.assertEqual(stock.stock, stock_state)
+
+    def test_product_stock_rejects_values_outside_mvp_states(self):
+        stock = ProductStock(
+            branch=self.branch,
+            product=self.product,
+            stock=2,
+        )
+
+        with self.assertRaises(ValidationError):
+            stock.full_clean()
+
+    def test_menu_filters_products_by_branch(self):
+        other_branch = Branch.objects.create(
+            name='Other Stock Branch',
+            company=self.company,
+            school=self.school,
+        )
+        other_product = Product.objects.create(
+            name='Other Branch Product',
+            price=Decimal('12.00'),
+        )
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=self.product,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+        ProductStock.objects.create(
+            branch=other_branch,
+            product=other_product,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+
+        response = self.client.get(
+            reverse('product-menu-list'),
+            {'branch': self.branch.id},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        ids = [item['id'] for item in response.data['results']]
+        self.assertIn(self.product.id, ids)
+        self.assertNotIn(other_product.id, ids)
+
+    def test_menu_without_branch_returns_global_catalog(self):
+        response = self.client.get(reverse('product-menu-list'))
+
+        self.assertEqual(response.status_code, 200)
+        ids = [item['id'] for item in response.data['results']]
+        self.assertIn(self.product.id, ids)
+
+    def test_menu_rejects_invalid_branch_param(self):
+        response = self.client.get(
+            reverse('product-menu-list'),
+            {'branch': 'abc'},
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_menu_exposes_available_in_branches_per_product(self):
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=self.product,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+
+        response = self.client.get(reverse('product-menu-list'))
+
+        self.assertEqual(response.status_code, 200)
+        item = next(
+            i for i in response.data['results'] if i['id'] == self.product.id
+        )
+        self.assertEqual(item['available_in_branches'], [self.branch.id])
+        self.assertIsNone(item['branch_id'])
+
+    def test_menu_exposes_branch_id_when_filtered_by_branch(self):
+        other_branch = Branch.objects.create(
+            name='Branch scope other',
+            company=self.company,
+            school=self.school,
+        )
+        in_scope = Product.objects.create(
+            name='In scope product',
+            price=Decimal('15.00'),
+        )
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=in_scope,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+        ProductStock.objects.create(
+            branch=other_branch,
+            product=in_scope,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+
+        response = self.client.get(
+            reverse('product-menu-list'),
+            {'branch': self.branch.id},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        item = next(i for i in response.data['results'] if i['id'] == in_scope.id)
+        self.assertEqual(item['branch_id'], self.branch.id)
+        self.assertCountEqual(
+            item['available_in_branches'],
+            [self.branch.id, other_branch.id],
+        )
+
+    def test_menu_excludes_out_of_stock_branches_from_available_in_branches(self):
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=self.product,
+            stock=ProductStock.StockState.OUT_OF_STOCK,
+        )
+
+        response = self.client.get(reverse('product-menu-list'))
+
+        self.assertEqual(response.status_code, 200)
+        item = next(
+            i for i in response.data['results'] if i['id'] == self.product.id
+        )
+        self.assertEqual(item['available_in_branches'], [])
+
+    def test_menu_exposes_branch_id_on_product_detail(self):
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=self.product,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+
+        response = self.client.get(
+            reverse('product-menu-detail', args=[self.product.id]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['available_in_branches'], [self.branch.id])
+        self.assertIsNone(response.data['branch_id'])

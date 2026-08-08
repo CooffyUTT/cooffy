@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Branch, Company
+from apps.schools.models import School
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -29,8 +30,15 @@ class CompanyLinkSerializer(serializers.Serializer):
     company = serializers.PrimaryKeyRelatedField(
         queryset=Company.objects.filter(active=True),
     )
+    school = serializers.PrimaryKeyRelatedField(
+        queryset=School.objects.filter(active=True),
+        required=False,
+    )
 
     def validate_company(self, company):
+        request = self.context.get('request')
+        if request and request.user.is_superuser:
+            return company
         school = self.context.get('school')
         if school is None:
             raise serializers.ValidationError(
@@ -61,6 +69,7 @@ class BranchSerializer(serializers.ModelSerializer):
             'schedule',
             'image',
             'active',
+            'accepting_orders',
             'created_at',
             'updated_at',
         ]
@@ -74,11 +83,20 @@ class BranchSerializer(serializers.ModelSerializer):
 
 
 class BranchCreateSerializer(serializers.ModelSerializer):
+    school = serializers.PrimaryKeyRelatedField(
+        queryset=School.objects.filter(active=True),
+        required=False,
+    )
+
     class Meta:
         model = Branch
-        fields = ['name', 'company', 'location', 'schedule', 'image']
+        fields = ['name', 'company', 'school', 'location', 'schedule', 'image']
 
     def validate_company(self, company):
+        request = self.context.get('request')
+        if request and request.user.is_superuser:
+            return company
+
         if not company.active:
             raise serializers.ValidationError(
                 'La compañía seleccionada está inactiva.'

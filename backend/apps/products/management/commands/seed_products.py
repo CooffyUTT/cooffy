@@ -13,14 +13,17 @@ import requests
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from apps.products.models import Category, Product
+from apps.branches.models import Branch
+from apps.products.models import Category, Product, ProductStock
 
 SEED_CATEGORIES = [
     {"name": "Burritos"},
     {"name": "Sándwiches"},
     {"name": "Bebidas"},
+    {"name": "Bebidas calientes"},
     {"name": "Hamburguesas"},
     {"name": "Snacks"},
+    {"name": "Postres"},
 ]
 
 SEED_PRODUCTS = [
@@ -113,6 +116,105 @@ SEED_PRODUCTS = [
         "image": "https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400",
         "modifiers": ["Sabritas original", "Cheetos", "Doritos"],
         "max_per_order": 6,
+    },
+    {
+        "name": "Café americano",
+        "price": 25.00,
+        "category": "Bebidas calientes",
+        "description": "Café de grano recién preparado, aroma y cuerpo equilibrados.",
+        "image": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400",
+        "modifiers": ["sin azúcar", "con azúcar", "canela", "miel"],
+        "max_per_order": 5,
+    },
+    {
+        "name": "Café con leche",
+        "price": 30.00,
+        "category": "Bebidas calientes",
+        "description": "Café de grano con leche al vapor y una capa de espuma.",
+        "image": "https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400",
+        "modifiers": ["sin azúcar", "leche deslactosada", "leche de almendra", "extra espuma"],
+        "max_per_order": 5,
+    },
+    {
+        "name": "Capuchino",
+        "price": 35.00,
+        "category": "Bebidas calientes",
+        "description": "Espresso con leche al vapor y espuma, espolvoreado con canela.",
+        "image": "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400",
+        "modifiers": ["sin canela", "con chocolate", "doble espresso", "leche de almendra"],
+        "max_per_order": 5,
+    },
+    {
+        "name": "Té helado",
+        "price": 20.00,
+        "category": "Bebidas",
+        "description": "Té frío de jamaica o limón con hielo. Refrescante.",
+        "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400",
+        "modifiers": ["jamaica", "limón", "sin azúcar", "con hielo extra"],
+        "max_per_order": 6,
+    },
+    {
+        "name": "Jugo de naranja",
+        "price": 28.00,
+        "category": "Bebidas",
+        "description": "Jugo natural de naranja recién exprimido, 300 ml.",
+        "image": "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400",
+        "modifiers": ["sin hielo", "con hielo", "natural", "con pulpa"],
+        "max_per_order": 4,
+    },
+    {
+        "name": "Refresco 355ml",
+        "price": 18.00,
+        "category": "Bebidas",
+        "description": "Refresco embotellado frío. Elige tu sabor favorito.",
+        "image": "https://images.unsplash.com/photo-1595981267035-7b04ca84a82d?w=400",
+        "modifiers": ["Cola", "Manzanita", "Naranja", "Toronja"],
+        "max_per_order": 6,
+    },
+    {
+        "name": "Donas",
+        "price": 15.00,
+        "category": "Postres",
+        "description": "Dona glaseada suave y esponjosa. Ideal para acompañar tu café.",
+        "image": "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=400",
+        "modifiers": ["glaseado", "chocolate", "canela y azúcar", "rellena de fresa"],
+        "max_per_order": 6,
+    },
+    {
+        "name": "Galletas",
+        "price": 10.00,
+        "category": "Postres",
+        "description": "Galletas recién horneadas. Elige la variedad.",
+        "image": "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=400",
+        "modifiers": ["chispas de chocolate", "avena con pasas", "mantequilla"],
+        "max_per_order": 6,
+    },
+    {
+        "name": "Pastel de chocolate",
+        "price": 45.00,
+        "category": "Postres",
+        "description": "Rebanada de pastel de chocolate húmedo con frosting.",
+        "image": "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400",
+        "modifiers": ["sin frosting", "con nuez", "porción doble"],
+        "max_per_order": 3,
+    },
+    {
+        "name": "Quesadilla",
+        "price": 30.00,
+        "category": "Snacks",
+        "description": "Tortilla de harina con queso derretido a la plancha.",
+        "image": "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400",
+        "modifiers": ["con salsa", "sin salsa", "con frijoles", "doble queso"],
+        "max_per_order": 4,
+    },
+    {
+        "name": "Hot dog",
+        "price": 32.00,
+        "category": "Snacks",
+        "description": "Pan suave con salchicha, cebolla, salsa y papitas al gusto.",
+        "image": "https://images.unsplash.com/photo-1619740455993-9e612b1af08a?w=400",
+        "modifiers": ["con tocino", "sin cebolla", "salsa especial", "extra papitas"],
+        "max_per_order": 4,
     },
 ]
 
@@ -207,5 +309,54 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f'\n{created} producto(s) creado(s), {skipped} ya existían.'
+            )
+        )
+
+        # Vincular 4-8 productos por sucursal activa (estado por defecto:
+        # sin stock activado). El control de inventario se gestionará después.
+        # Las sucursales de una misma empresa comparten un núcleo de productos;
+        # entre empresas distintas se evita la repetición mientras el pool alcance.
+        products = list(Product.objects.order_by('id'))
+        branches_by_company = {}
+        for branch in Branch.objects.filter(active=True).order_by('company_id', 'id'):
+            branches_by_company.setdefault(branch.company_id, []).append(branch)
+
+        if not branches_by_company:
+            self.stdout.write(self.style.WARNING('No hay sucursales activas; no se crearon vínculos de stock.'))
+            return
+
+        target = 6
+        shared = 3
+        cursor = 0
+        total_created = 0
+
+        for company_id in sorted(branches_by_company):
+            branches = branches_by_company[company_id]
+            window = target + (len(branches) - 1) * shared
+            company_start = cursor
+            for offset, branch in enumerate(branches):
+                start = company_start + offset * shared
+                picks = products[start:start + target]
+                if len(picks) < target:
+                    picks = (products[start:] + products[:target - len(picks)])
+                ProductStock.objects.filter(branch=branch).delete()
+                ProductStock.objects.bulk_create(
+                    ProductStock(
+                        branch=branch,
+                        product=product,
+                        stock=ProductStock.StockState.NOT_TRACKED,
+                    )
+                    for product in picks
+                )
+                total_created += len(picks)
+                self.stdout.write(
+                    f'    {branch.name}: {len(picks)} producto(s)'
+                )
+            cursor += window
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'\n{total_created} vínculo(s) producto-sucursal creado(s) '
+                f'para {sum(len(b) for b in branches_by_company.values())} sucursal(es).'
             )
         )

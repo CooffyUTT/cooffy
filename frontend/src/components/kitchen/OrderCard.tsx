@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Clock, ImageIcon, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Clock, ImageIcon, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { KitchenOrder } from '@/types/kitchen';
 import { getTimeBadgeColor } from '@/utils/kitchenHelpers';
@@ -13,6 +13,9 @@ interface OrderCardProps {
   actionLabel: string;
   actionColor: string;
   onAction: () => void;
+  secondaryActionLabel?: string;
+  secondaryActionColor?: string;
+  onSecondaryAction?: () => void;
   isPulse?: boolean;
   confirmingId: number | null;
   setConfirmingId: (id: number | null) => void;
@@ -23,6 +26,9 @@ export function OrderCard({
   actionLabel,
   actionColor,
   onAction,
+  secondaryActionLabel,
+  secondaryActionColor,
+  onSecondaryAction,
   isPulse = false,
   confirmingId,
   setConfirmingId
@@ -39,7 +45,10 @@ export function OrderCard({
     return () => clearInterval(interval);
   }, [order.created_at]);
 
-  const totalProducts = order.order_products.reduce((acc, item) => acc + item.quantity, 0);
+  const totalProducts = (order.order_products || []).reduce(
+    (acc, item) => acc + item.quantity, 
+    0
+  );
 
   return (
     <motion.div
@@ -53,12 +62,15 @@ export function OrderCard({
       }`}
     >
       <div className="space-y-2.5">
+        {/* Encabezado: Número de Orden y Tiempo Transcurrido */}
         <div className="flex justify-between items-start border-b border-slate-100 pb-2">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-black text-slate-900">#{order.order_number}</span>
             </div>
-            <p className="text-sm font-bold text-slate-600 mt-0.5">{order.client_name}</p>
+            <p className="text-sm font-bold text-slate-600 mt-0.5">
+              {order.client_name ?? 'Cliente'}
+            </p>
           </div>
 
           <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-extrabold text-xs border ${getTimeBadgeColor(elapsedMinutes)}`}>
@@ -67,12 +79,14 @@ export function OrderCard({
           </div>
         </div>
 
+        {/* Contador de Productos */}
         <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
           {totalProducts} {totalProducts === 1 ? 'PRODUCTO' : 'PRODUCTOS'}
         </div>
 
+        {/* Lista de Productos de la Orden */}
         <div className="space-y-2.5">
-          {order.order_products.map((item) => (
+          {(order.order_products || []).map((item) => (
             <div key={item.id} className="space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
               <div className="flex items-center justify-between text-base font-bold text-slate-900">
                 <span className="flex items-center gap-2">
@@ -94,16 +108,18 @@ export function OrderCard({
                 </span>
               </div>
 
+              {/* Modificadores o Modificaciones Excluidas */}
               {item.excluded_modifiers && item.excluded_modifiers.length > 0 && (
-                <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-bold">
+                <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-bold mt-1">
                   <AlertTriangle size={15} className="shrink-0 text-amber-600" />
-                  <span>{item.excluded_modifiers.join(', ')}</span>
+                  <span>Sin: {item.excluded_modifiers.join(', ')}</span>
                 </div>
               )}
             </div>
           ))}
         </div>
 
+        {/* Comentario global de la orden */}
         {order.comment && (
           <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs font-bold">
             <AlertTriangle size={15} className="shrink-0 text-red-600" />
@@ -112,34 +128,50 @@ export function OrderCard({
         )}
       </div>
 
-      <div className="flex justify-end pt-1 border-t border-slate-100">
-        <span className="text-2xl font-black text-slate-900">${Number(order.total).toFixed(2)}</span>
+      {/* Precio Total */}
+      <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+        <span className="text-xs font-bold text-slate-400">Total:</span>
+        <span className="text-xl font-black text-slate-900">
+          ${Number(order.total || 0).toFixed(2)}
+        </span>
       </div>
 
+      {/* Botones de Acción */}
       <div className="pt-2">
         {confirmingId === order.id ? (
           <div className="flex gap-2">
             <Button
               onClick={onAction}
-              className="flex-1 h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm rounded-xl"
+              className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm rounded-xl"
             >
               ✔ CONFIRMAR
             </Button>
             <Button
               onClick={() => setConfirmingId(null)}
               variant="outline"
-              className="h-14 px-4 border-slate-300 text-slate-700 font-bold text-xs rounded-xl"
+              className="h-12 px-4 border-slate-300 text-slate-700 font-bold text-xs rounded-xl"
             >
               CANCELAR
             </Button>
           </div>
         ) : (
-          <Button
-            onClick={() => setConfirmingId(order.id)}
-            className={`w-full h-14 text-white font-extrabold text-sm rounded-xl shadow-md transition-all ${actionColor}`}
-          >
-            {actionLabel}
-          </Button>
+          <div className="space-y-2">
+            <Button
+              onClick={() => setConfirmingId(order.id)}
+              className={`w-full h-12 text-white font-extrabold text-sm rounded-xl shadow-xs transition-all ${actionColor}`}
+            >
+              {actionLabel}
+            </Button>
+            {secondaryActionLabel && onSecondaryAction && (
+              <Button
+                onClick={onSecondaryAction}
+                variant="outline"
+                className={`w-full h-10 font-bold text-xs rounded-xl ${secondaryActionColor}`}
+              >
+                {secondaryActionLabel}
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </motion.div>

@@ -3,8 +3,10 @@ from decimal import Decimal
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
+from apps.branches.models import Branch, Company
 from apps.orders.models import Order, OrderProduct
-from apps.products.models import Category, Product
+from apps.products.models import Category, Product, ProductStock
+from apps.schools.models import School
 from apps.users.models import User
 
 
@@ -217,3 +219,203 @@ class OrderBusinessRuleRegressionTests(APITestCase):
         self.assertNotEqual(response.status_code, 200)
         order.refresh_from_db()
         self.assertEqual(order.state, "delivered")
+
+
+class OrderBranchScopeRegressionTests(APITestCase):
+    """RN-13: every item in an order must be offered by the order's branch.
+
+    A product is considered offered by a branch when there is a
+    ``ProductStock(branch_id, product_id)`` row with ``stock != OUT_OF_STOCK``.
+    Orders and ``add-product`` actions that violate this rule must be
+    rejected with 4xx and must not persist any line.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            user="branch-scope@school.edu.mx",
+            name="Branch Scope Client",
+            password="password",
+        )
+        cls.school = School.objects.create(
+            full_name="Branch Scope School",
+            short_name="BSS",
+            admin=cls.user,
+        )
+        cls.company = Company.objects.create(
+            name="Branch Scope Co", owner=cls.user
+        )
+        cls.branch_a = Branch.objects.create(
+            name="Branch A",
+            company=cls.company,
+            school=cls.school,
+            accepting_orders=True,
+        )
+        cls.branch_b = Branch.objects.create(
+            name="Branch B",
+            company=cls.company,
+            school=cls.school,
+            accepting_orders=True,
+        )
+
+        category = Category.objects.create(name="Scope")
+        cls.product_only_in_b = Product.objects.create(
+            name="Only in B",
+            price=Decimal("10.00"),
+            category=category,
+            active=True,
+        )
+        cls.product_a_in_stock = Product.objects.create(
+            name="A in stock",
+            price=Decimal("10.00"),
+            category=category,
+            active=True,
+        )
+        cls.product_a_out_of_stock = Product.objects.create(
+            name="A out of stock",
+            price=Decimal("10.00"),
+            category=category,
+            active=True,
+        )
+        cls.product_a_not_tracked = Product.objects.create(
+            name="A not tracked",
+            price=Decimal("10.00"),
+            category=category,
+            active=True,
+        )
+
+        ProductStock.objects.create(
+            branch=cls.branch_b,
+            product=cls.product_only_in_b,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+        ProductStock.objects.create(
+            branch=cls.branch_a,
+            product=cls.product_a_in_stock,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+        ProductStock.objects.create(
+            branch=cls.branch_a,
+            product=cls.product_a_out_of_stock,
+            stock=ProductStock.StockState.OUT_OF_STOCK,
+        )
+        ProductStock.objects.create(
+            branch=cls.branch_a,
+            product=cls.product_a_not_tracked,
+            stock=ProductStock.StockState.NOT_TRACKED,
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.user)
+
+    def _create_payload(self, branch_id, products):
+        return {
+            "branch_id": branch_id,
+            "payment_method": "cash",
+            "order_products": [
+                {"item_id": pid, "quantity": 1} for pid in products
+            ],
+        }
+
+    def test_order_creation_succeeds_when_all_products_offered_and_in_stock(self):
+        """Happy path: every product is in stock at the chosen branch."""
+        response = self.client.post(
+            reverse("orders-list"),
+            self._create_payload(
+                self.branch_a.id, [self.product_a_in_stock.id]
+            ),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            Order.objects.filter(client_id=self.user.id).count(), 1
+        )
+
+    def test_order_creation_succeeds_when_product_stock_is_not_tracked(self):
+        """``NOT_TRACKED`` products are orderable (no inventory gate)."""
+        response = self.client.post(
+            reverse("orders-list"),
+            self._create_payload(
+                self.branch_a.id, [self.product_a_not_tracked.id]
+            ),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+    def test_order_creation_rejects_products_not_offered_by_branch(self):
+        """A product with no ``ProductStock`` for the branch is rejected."""
+        response = self.client.post(
+            reverse("orders-list"),
+            self._create_payload(
+                self.branch_a.id, [self.product_only_in_b.id]
+            ),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("order_products", response.data)
+        self.assertFalse(
+            Order.objects.filter(client_id=self.user.id).exists()
+        )
+
+    def test_order_creation_rejects_products_out_of_stock_in_branch(self):
+        """A product whose branch stock is ``OUT_OF_STOCK`` is rejected."""
+        response = self.client.post(
+            reverse("orders-list"),
+            self._create_payload(
+                self.branch_a.id, [self.product_a_out_of_stock.id]
+            ),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("order_products", response.data)
+        self.assertFalse(
+            Order.objects.filter(client_id=self.user.id).exists()
+        )
+
+    def test_add_product_to_pending_order_rejects_products_from_other_branch(self):
+        """``add-product`` must also enforce the branch scope."""
+        order = Order.objects.create(
+            order_number=1,
+            date="2026-01-01",
+            branch_id=self.branch_a.id,
+            client_id=self.user.id,
+            payment_method="cash",
+        )
+
+        response = self.client.post(
+            reverse("orders-add-product", args=[order.id]),
+            {"item_id": self.product_only_in_b.id, "quantity": 1},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("unavailable", response.data)
+        self.assertEqual(
+            OrderProduct.objects.filter(order=order).count(), 0
+        )
+
+    def test_add_product_to_pending_order_rejects_out_of_stock_products(self):
+        """``add-product`` rejects products that are out of stock in the order's branch."""
+        order = Order.objects.create(
+            order_number=1,
+            date="2026-01-01",
+            branch_id=self.branch_a.id,
+            client_id=self.user.id,
+            payment_method="cash",
+        )
+
+        response = self.client.post(
+            reverse("orders-add-product", args=[order.id]),
+            {"item_id": self.product_a_out_of_stock.id, "quantity": 1},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("unavailable", response.data)
+        self.assertEqual(
+            OrderProduct.objects.filter(order=order).count(), 0
+        )

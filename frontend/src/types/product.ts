@@ -44,6 +44,8 @@ export interface ProductList {
   price: number;
   image: string | null;
   category: Category | null;
+  branchId?: number;
+  availableInBranches?: number[];
 }
 
 export interface ProductDetail extends ProductList {

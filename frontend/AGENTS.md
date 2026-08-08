@@ -15,7 +15,8 @@
 - Add shadcn components with the CLI rather than copying components manually.
 - Existing state/data tools are TanStack Query, Zustand, react-hook-form and
   zod. Follow existing patterns before introducing alternatives.
-- Cart state is in `src/context/CartContext.tsx`; it applies 8% tax.
+- Cart state is in `src/context/CartContext.tsx`; product prices include IVA and
+  the context only extracts the included tax for display.
 - Login and registration forms use `src/hooks/useLoginForm.ts` and
   `src/hooks/useRegisterForm.ts`.
 
