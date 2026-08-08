@@ -5,8 +5,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // 👈 Importamos useRouter para la redirección
 import { AnimatePresence } from 'framer-motion';
-import { Order } from '@/types/kitchen';
-import { INITIAL_ORDERS } from '@/data/mockOrders';
+import { DEFAULT_BRANCH_ID } from '@/lib/constants';
+import { useKitchenOrders, useAdvanceOrder, useToggleAccepting } from '@/hooks/useKitchenOrders';
 
 import { KitchenSidebar } from './KitchenSidebar';
 import { KitchenHeader } from './KitchenHeader';
@@ -33,13 +33,12 @@ export function KitchenView() {
     }
   });
 
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
-  const [kitchenActive, setKitchenActive] = useState(true);
+  const { orders, acceptingOrders, isError } = useKitchenOrders(DEFAULT_BRANCH_ID);
+  const advanceOrder = useAdvanceOrder(DEFAULT_BRANCH_ID);
+  const toggleAccepting = useToggleAccepting(DEFAULT_BRANCH_ID);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isConnected] = useState(true);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
-  // 👈 useEffect para verificar sesión y rol en LocalStorage
   useEffect(() => {
     if (!isAuthorized) {
       router.push("/");
@@ -58,11 +57,8 @@ export function KitchenView() {
     }
   };
 
-  const moveOrder = (
-    orderId: string, 
-    nextStatus: 'pending' | 'preparing' | 'ready' | 'delivered' | 'not_picked_up'
-  ) => {
-    setOrders(prev => prev.filter(o => o.id !== orderId));
+  const moveOrder = (orderId: string) => {
+    advanceOrder.mutate(Number(orderId));
     setConfirmingId(null);
   };
 
@@ -86,11 +82,11 @@ export function KitchenView() {
       <KitchenSidebar />
 
       <main className="flex-1 flex flex-col p-4 gap-3 overflow-hidden">
-        <KitchenHeader 
-          isConnected={isConnected}
-          kitchenActive={kitchenActive}
+        <KitchenHeader
+          isConnected={!isError}
+          kitchenActive={acceptingOrders}
           isFullscreen={isFullscreen}
-          onToggleActive={() => setKitchenActive(!kitchenActive)}
+          onToggleActive={() => toggleAccepting.mutate()}
           onToggleFullscreen={toggleFullscreen}
         />
 
@@ -111,7 +107,7 @@ export function KitchenView() {
                   order={order} 
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
-                  onAction={() => moveOrder(order.id, 'preparing')}
+                  onAction={() => moveOrder(order.id)}
                   actionLabel="INICIAR PREPARACIÓN"
                   actionColor="bg-amber-500 hover:bg-amber-600"
                 />
@@ -133,7 +129,7 @@ export function KitchenView() {
                   order={order} 
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
-                  onAction={() => moveOrder(order.id, 'ready')}
+                  onAction={() => moveOrder(order.id)}
                   actionLabel="MARCAR COMO LISTO"
                   actionColor="bg-blue-600 hover:bg-blue-700"
                 />
@@ -156,7 +152,7 @@ export function KitchenView() {
                   isPulse={true}
                   confirmingId={confirmingId}
                   setConfirmingId={setConfirmingId}
-                  onAction={() => moveOrder(order.id, 'delivered')}
+                  onAction={() => moveOrder(order.id)}
                   actionLabel="ENTREGADO / RECOGIDO"
                   actionColor="bg-emerald-600 hover:bg-emerald-700"
                 />

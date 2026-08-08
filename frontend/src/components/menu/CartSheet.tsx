@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { ShoppingBag, ShoppingCart, Minus, Plus, Trash2, ArrowRight } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
@@ -13,16 +14,22 @@ import {
 } from "@/components/ui/sheet";
 
 export default function CartSheet() {
-  const { 
-    cart, 
-    updateQuantity, 
-    removeFromCart, 
-    subtotal, 
-    tax, 
-    total, 
-    isCartOpen, 
-    setIsCartOpen 
+  const router = useRouter();
+  const {
+    cart,
+    updateQuantity,
+    removeFromCart,
+    subtotal,
+    tax,
+    total,
+    isCartOpen,
+    setIsCartOpen
   } = useCart();
+
+  const handleGoToCheckout = () => {
+    setIsCartOpen(false);
+    router.push("/menu/checkout");
+  };
 
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
@@ -89,7 +96,10 @@ export default function CartSheet() {
               </div>
             </div>
             <SheetFooter>
-              <Button className="w-full bg-primary text-white py-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:bg-on-primary-fixed-variant">
+              <Button
+                onClick={handleGoToCheckout}
+                className="w-full h-auto bg-primary text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:bg-on-primary-fixed-variant"
+              >
                 Continuar al pago <ArrowRight className="h-4 w-4" />
               </Button>
             </SheetFooter>

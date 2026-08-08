@@ -1,5 +1,20 @@
 from django.db import models
 
+STATE_SEQUENCE = ["pending", "preparing", "ready", "delivered"]
+
+
+class PaymentMethod(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    is_digital = models.BooleanField()
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "payment_methods"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
 
 class Order(models.Model):
     order_number = models.BigIntegerField()
@@ -7,12 +22,17 @@ class Order(models.Model):
     branch_id = models.BigIntegerField(default=1)
     client_id = models.BigIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     prepared_at = models.DateTimeField(null=True, blank=True)
     picked_up_at = models.DateTimeField(null=True, blank=True)
     scheduled_pickup_at = models.DateTimeField(null=True, blank=True)
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     state = models.CharField(max_length=20, default="pending")
-    payment_method = models.IntegerField()
+    payment_method = models.ForeignKey(
+        PaymentMethod,
+        on_delete=models.PROTECT,
+        related_name="orders",
+    )
     payment_status = models.CharField(max_length=20, default="pending")
     comment = models.TextField(blank=True, null=True)
 

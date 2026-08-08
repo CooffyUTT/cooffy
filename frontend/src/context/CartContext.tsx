@@ -20,6 +20,7 @@ interface CartContextType {
   addToCart: (product: CartProduct) => void;
   updateQuantity: (id: number, delta: number) => void;
   removeFromCart: (id: number) => void;
+  clearCart: () => void;
   totalItems: number;
   subtotal: number;
   tax: number;
@@ -64,6 +65,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const clearCart = () => {
+    setCart([]);
+  };
+
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const tax = subtotal * 0.08;
@@ -76,6 +81,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         addToCart,
         updateQuantity,
         removeFromCart,
+        clearCart,
         totalItems,
         subtotal,
         tax,
