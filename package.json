@@ -7,6 +7,7 @@
         "front:test:watch": "pnpm --dir frontend test:watch",
         "front:typecheck": "pnpm --dir frontend typecheck",
         "front:install": "pnpm --dir frontend install",
+        "front:build": "pnpm --dir frontend build",
         "back:uv": "uv --directory backend",
         "back": "pnpm back:uv run python -u manage.py runserver",
         "back:manage": "pnpm back:uv run python -u manage.py",
@@ -15,7 +16,10 @@
         "back:lock": "pnpm back:uv lock",
         "dev": "concurrently -n back,front \"pnpm back\" \"pnpm front\"",
         "install:all": "cross-env-shell \"pnpm install && pnpm front:install && pnpm back:install\"",
-        "init:all": "cross-env-shell \"pnpm install:all && docker compose up -d && pnpm back:manage migrate && pnpm back:manage seed && pnpm dev\""
+        "init:all": "cross-env-shell \"pnpm install:all && docker compose up -d && pnpm back:manage migrate && pnpm back:manage seed && pnpm dev\"",
+        "docker:build": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml build\"",
+        "docker:up": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml up -d\"",
+        "docker:down": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml down\""
     },
     "devDependencies": {
         "@usebruno/cli": "^4.0.0",
