@@ -172,3 +172,47 @@ class OrderApiTests(APITestCase):
         response = self.client.get(reverse("orders-list"))
 
         self.assertEqual(response.status_code, 401)
+
+    def test_my_orders_returns_only_client_orders(self):
+        own_order = Order.objects.create(
+            order_number=1,
+            date="2026-01-01",
+            branch_id=1,
+            client_id=self.client_user.id,
+            payment_method=1,
+        )
+        Order.objects.create(
+            order_number=2,
+            date="2026-01-01",
+            branch_id=1,
+            client_id=self.other_user.id,
+            payment_method=1,
+        )
+
+        response = self.client.get(reverse("orders-my-orders"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], own_order.id)
+
+    def test_my_orders_requires_authentication(self):
+        self.client.force_authenticate(user=None)
+
+        response = self.client.get(reverse("orders-my-orders"))
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_estimated_completion_minutes_in_order_detail(self):
+        order = Order.objects.create(
+            order_number=1,
+            date="2026-01-01",
+            branch_id=1,
+            client_id=self.client_user.id,
+            payment_method=1,
+            state=Order.State.PENDING,
+        )
+
+        response = self.client.get(reverse("orders-detail", args=[order.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["estimated_completion_minutes"], 15)
