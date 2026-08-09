@@ -45,6 +45,9 @@ export function useCreateOrder() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
+    onError: (error) => {
+      console.error("useCreateOrder failed", error);
+    },
   });
 }
 
