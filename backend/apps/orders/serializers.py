@@ -228,8 +228,18 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
         missing_ids = [pid for pid in product_ids if pid not in products_map]
         if missing_ids:
+            missing_products = Product.objects.filter(pk__in=missing_ids)
+            missing_names = {
+                p.pk: p.name
+                for p in missing_products.only("pk", "name")
+            }
+            missing_details = [
+                f"'{missing_names.get(pid, f'Producto #{pid}')}' (ID: {pid})"
+                for pid in missing_ids
+            ]
             raise serializers.ValidationError(
-                f"Productos no disponibles o inactivos: {missing_ids}"
+                f"Los siguientes productos están inactivos o no existen: "
+                + "; ".join(missing_details)
             )
 
         for p in products_data:

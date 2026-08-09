@@ -216,3 +216,156 @@ class OrderApiTests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["estimated_completion_minutes"], 15)
+
+    def test_inactive_product_error_includes_product_name(self):
+        inactive = Product.objects.create(
+            id=50, name="Café con Leche", price=Decimal("35.00"), active=False
+        )
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=inactive,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+
+        response = self.client.post(
+            reverse("orders-list"),
+            {
+                "branch_id": self.branch.id,
+                "payment_method": "cash",
+                "order_products": [
+                    {"item_id": inactive.id, "quantity": 1},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        error = str(response.data)
+        self.assertIn("Café con Leche", error)
+        self.assertIn("inactivos", error)
+
+    def test_max_per_order_exceeded_error_message(self):
+        product = Product.objects.create(
+            id=60, name="Burrito", price=Decimal("45.00"), max_per_order=2
+        )
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=product,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+
+        response = self.client.post(
+            reverse("orders-list"),
+            {
+                "branch_id": self.branch.id,
+                "payment_method": "cash",
+                "order_products": [
+                    {"item_id": product.id, "quantity": 5},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        error = str(response.data)
+        self.assertIn("Burrito", error)
+        self.assertIn("límite", error)
+        self.assertIn("2", error)
+        self.assertIn("5", error)
+
+    def test_branch_not_accepting_orders_error_message(self):
+        school = School.objects.create(
+            full_name="Closed School", short_name="CLSD"
+        )
+        company = Company.objects.create(
+            name="Closed Co", owner=self.client_user
+        )
+        closed_branch = Branch.objects.create(
+            name="Cerrada",
+            company=company,
+            school=school,
+            active=True,
+            accepting_orders=False,
+        )
+
+        response = self.client.post(
+            reverse("orders-list"),
+            {
+                "branch_id": closed_branch.id,
+                "payment_method": "cash",
+                "order_products": [
+                    {"item_id": 999, "quantity": 1},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        error = str(response.data)
+        self.assertIn("aceptando pedidos", error)
+
+    def test_active_order_exists_error_message(self):
+        product = Product.objects.create(
+            id=70, name="Donas", price=Decimal("15.00")
+        )
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=product,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+
+        Order.objects.create(
+            order_number=1,
+            date="2026-01-01",
+            branch_id=self.branch.id,
+            client_id=self.client_user.id,
+            payment_method="cash",
+            state=Order.State.PENDING,
+        )
+
+        response = self.client.post(
+            reverse("orders-list"),
+            {
+                "branch_id": self.branch.id,
+                "payment_method": "cash",
+                "order_products": [
+                    {"item_id": product.id, "quantity": 1},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        error = str(response.data)
+        self.assertIn("pedido activo", error)
+
+    def test_unavailable_product_error_includes_product_name_and_reason(self):
+        product = Product.objects.create(
+            id=80, name="Ensalada", price=Decimal("40.00")
+        )
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=product,
+            stock=ProductStock.StockState.OUT_OF_STOCK,
+        )
+
+        response = self.client.post(
+            reverse("orders-list"),
+            {
+                "branch_id": self.branch.id,
+                "payment_method": "cash",
+                "order_products": [
+                    {"item_id": product.id, "quantity": 1},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("order_products", response.data)
+        order_product_errors = response.data["order_products"]
+        self.assertEqual(len(order_product_errors), 1)
+        err = order_product_errors[0]
+        self.assertEqual(err["name"], "Ensalada")
+        self.assertEqual(err["reason"], "out_of_stock")
+        self.assertEqual(err["item_id"], str(product.id))
