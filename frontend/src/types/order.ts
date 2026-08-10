@@ -31,6 +31,7 @@ export interface Order {
   comment: string | null;
   updated_at: string;
   order_products: OrderProduct[];
+  estimated_completion_minutes?: number | null;
 }
 
 export interface OrderProductInput {

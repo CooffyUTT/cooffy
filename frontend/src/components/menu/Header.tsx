@@ -23,9 +23,9 @@ export default function ClientHeader({ searchValue = "", onSearchChange }: Clien
            <Link className="text-primary border-b-2 border-primary py-2 font-semibold text-sm" href="/menu">
              Menú
            </Link>
-          <a className="text-on-surface-variant hover:text-primary transition-colors py-2 font-semibold text-sm" href="/orders">
-            Pedidos
-          </a>
+          <Link className="text-on-surface-variant hover:text-primary transition-colors py-2 font-semibold text-sm" href="/menu/orders">
+            Mis pedidos
+          </Link>
           <a className="text-on-surface-variant hover:text-primary transition-colors py-2 font-semibold text-sm" href="/promotions">
             Promociones
           </a>
