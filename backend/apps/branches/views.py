@@ -40,6 +40,11 @@ class BranchViewSet(viewsets.ModelViewSet):
             return
         super().check_permissions(request)
 
+    def get_permissions(self):
+        if self.action == 'toggle_accepting':
+            return [permissions.IsAuthenticated()]
+        return super().get_permissions()
+
     def get_school(self):
         school = getattr(self, '_school', None)
         if school is None:
@@ -51,6 +56,19 @@ class BranchViewSet(viewsets.ModelViewSet):
 
         if user.is_superuser:
             return Branch.objects.select_related('company', 'school').all()
+
+        if self.action == 'toggle_accepting':
+            if user.groups.filter(name='gerente').exists():
+                return Branch.objects.filter(
+                    company__owner=user,
+                    active=True,
+                ).select_related('company', 'school')
+            if user.groups.filter(name='empleado').exists():
+                return Branch.objects.filter(
+                    id=user.branch_id,
+                    active=True,
+                ).select_related('company', 'school')
+            return Branch.objects.none()
 
         if user.groups.filter(name='admin_escolar').exists():
             school = self.get_school()
@@ -172,6 +190,43 @@ class BranchViewSet(viewsets.ModelViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        return Response(
+            BranchSerializer(branch, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["post"], url_path="toggle-accepting")
+    def toggle_accepting(self, request, pk=None):
+        branch = self.get_object()
+        user = request.user
+
+        if not user.is_superuser:
+            is_empleado = user.groups.filter(name='empleado').exists()
+            is_gerente = user.groups.filter(name='gerente').exists()
+
+            if not is_empleado and not is_gerente:
+                self.permission_denied(
+                    request,
+                    message='Solo empleados y gerentes pueden alternar la recepción de pedidos.',
+                )
+
+            if is_empleado:
+                if user.branch_id != branch.id:
+                    self.permission_denied(
+                        request,
+                        message='Solo puedes alternar la recepción de pedidos de tu sucursal asignada.',
+                    )
+
+            if is_gerente:
+                if branch.company.owner != user:
+                    self.permission_denied(
+                        request,
+                        message='Solo puedes alternar la recepción de pedidos de sucursales de tus empresas.',
+                    )
+
+        branch.accepting_orders = not branch.accepting_orders
+        branch.save(update_fields=['accepting_orders', 'updated_at'])
+
         return Response(
             BranchSerializer(branch, context={'request': request}).data,
             status=status.HTTP_200_OK,
