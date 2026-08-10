@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -6,15 +5,15 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from apps.users.models import User
+from .permissions import IsUserManagerPermission, _user_belongs_to_scope, get_users_in_scope
 from .serializers import (
     LoginSerializer,
     UserSerializer,
     CreateClientSerializer,
     UpdateUserSerializer,
-) # serializadores del CRUD de usuarios
+)
 
 
-# Create your views here.
 class LoginView(APIView):
     """Endpoint para autenticar usuarios"""
     permission_classes = [AllowAny]
@@ -26,7 +25,6 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user_obj']
 
-            # Generar JWT tokens
             refresh = RefreshToken.for_user(user)
 
             return Response({
@@ -51,7 +49,7 @@ class UserViewSet(viewsets.ViewSet):
       POST /api/auth/register/      -> Registra un nuevo cliente.
       GET /api/auth/<pk>/           -> Detalle de un usuario.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsUserManagerPermission]
 
     def get_object(self, pk=None):
         try:
@@ -59,12 +57,28 @@ class UserViewSet(viewsets.ViewSet):
         except (User.DoesNotExist, ValueError):
             return None
 
+    def _get_object_in_scope(self, pk):
+        user = self.get_object(pk)
+        if user is None:
+            return None, Response(
+                {"error": "Usuario no encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        if self.request.user.is_superuser:
+            return user, None
+        if not _user_belongs_to_scope(self.request.user, user):
+            return None, Response(
+                {"error": "Usuario no encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return user, None
+
     def list(self, request):
         role_param = request.query_params.get('role', None)
         allowed_roles = ['gerente', 'cliente', 'empleado']
 
-        # Base QuerySet: Solo usuarios que pertenezcan a los grupos permitidos
-        queryset = User.objects.filter(groups__name__in=allowed_roles).distinct()
+        queryset = get_users_in_scope(request.user)
+        queryset = queryset.filter(groups__name__in=allowed_roles).distinct()
 
         if role_param:
             role_param = role_param.lower()
@@ -80,12 +94,9 @@ class UserViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
-        user = self.get_object(pk)
-        if user is None:
-            return Response(
-                {"error": "Usuario no encontrado."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        user, error = self._get_object_in_scope(pk)
+        if error:
+            return error
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -96,12 +107,9 @@ class UserViewSet(viewsets.ViewSet):
         return self._update(request, pk, partial=False)
 
     def _update(self, request, pk, partial):
-        user = self.get_object(pk)
-        if user is None:
-            return Response(
-                {"error": "Usuario no encontrado."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        user, error = self._get_object_in_scope(pk)
+        if error:
+            return error
 
         serializer = UpdateUserSerializer(user, data=request.data, partial=partial)
         if not serializer.is_valid():
@@ -111,13 +119,31 @@ class UserViewSet(viewsets.ViewSet):
         return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
     def destroy(self, request, pk=None):
-        """desactiva al usuario"""
-        user = self.get_object(pk)
-        if user is None:
+        user, error = self._get_object_in_scope(pk)
+        if error:
+            return error
+
+        if request.user.is_superuser:
+            pass
+        elif request.user.groups.filter(name='gerente').exists():
+            pass
+        else:
             return Response(
-                {"error": "Usuario no encontrado."},
-                status=status.HTTP_404_NOT_FOUND,
+                {"error": "Solo los gerentes pueden dar de baja usuarios."},
+                status=status.HTTP_403_FORBIDDEN,
             )
+
+        if not request.user.is_superuser:
+            if user.id == request.user.id:
+                return Response(
+                    {"error": "No puedes darte de baja a ti mismo."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if user.is_superuser or user.groups.filter(name__in=['gerente', 'admin_escolar']).exists():
+                return Response(
+                    {"error": "No puedes dar de baja a este usuario."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         user.active = False
         user.save(update_fields=["active", "updated_at"])
