@@ -51,3 +51,6 @@ PostgreSQL 16 is required; start it with `docker compose up -d` when not using
   `<type>/rf-XX-short-description` and keep one PR per subtask.
 - Use Conventional Commits and target PRs at `develop`; see `CONTRIBUTING.md`
   for the RF issue and review flow.
+- When opening a PR, fill its description using the template at
+  `.github/pull_request_template.md` (RF-XX, Related to, Closes, Descripción,
+  Cambios realizados, Qué testear?, Notas adicionales).
