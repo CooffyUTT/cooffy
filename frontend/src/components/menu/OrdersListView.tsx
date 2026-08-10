@@ -181,7 +181,7 @@ export function OrdersListView() {
             <h2 className="text-lg font-bold text-on-surface mb-1">
               Aún no tienes pedidos
             </h2>
-            <p className="text-sm text-on-surface-variant max-w-xs">
+            <p className="text-sm text-on-surface-variant max-w-sm">
               Cuando realices un pedido aparecerá aquí para que puedas darle
               seguimiento.
             </p>
