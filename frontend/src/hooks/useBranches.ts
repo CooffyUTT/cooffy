@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { toggleAcceptingOrders } from "@/lib/branchesApi";
 
 export interface Branch {
   id: number;
@@ -25,5 +26,20 @@ export function useBranches() {
       return response.data.results;
     },
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useToggleAcceptingOrders() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (branchId: number) => toggleAcceptingOrders(branchId),
+    onSuccess: (branch) => {
+      queryClient.setQueryData<Branch[]>(["branches-public"], (prev) =>
+        prev?.map((b) => (b.id === branch.id ? { ...b, ...branch } : b)) ?? prev,
+      );
+      queryClient.invalidateQueries({ queryKey: ["branches-public"] });
+      queryClient.invalidateQueries({ queryKey: ["branch", branch.id] });
+    },
   });
 }
