@@ -488,7 +488,7 @@ class OrderStateMachineTests(SimpleTestCase):
     VALID = {
         "pending": {"preparing", "rejected"},
         "preparing": {"ready", "rejected"},
-        "ready": {"picked_up", "rejected"},
+        "ready": {"picked_up"},
         "picked_up": set(),
         "rejected": set(),
     }
@@ -535,7 +535,6 @@ class OrderStateTransitionApiTests(APITestCase):
         ("preparing", "ready"),
         ("preparing", "rejected"),
         ("ready", "picked_up"),
-        ("ready", "rejected"),
     ]
 
     INVALID_TRANSITIONS = [
@@ -545,6 +544,7 @@ class OrderStateTransitionApiTests(APITestCase):
         ("preparing", "picked_up"),
         ("ready", "pending"),
         ("ready", "preparing"),
+        ("ready", "rejected"),
         ("picked_up", "pending"),
         ("picked_up", "preparing"),
         ("picked_up", "ready"),
