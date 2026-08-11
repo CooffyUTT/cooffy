@@ -62,13 +62,6 @@ export default function ProductCard({ product }: ProductProps) {
       return;
     }
 
-    if (result.reason === "unavailable") {
-      toast.error("Producto no disponible", {
-        description: "Este producto no se puede agregar al carrito.",
-      });
-      return;
-    }
-
     if (result.reason === "different_branch" && productBranchName) {
       setPendingSwitch({
         productBranchId: result.productBranchId,
