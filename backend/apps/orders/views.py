@@ -18,6 +18,7 @@ from .serializers import (
     OrderProductCreateSerializer,
 )
 from .services import get_unavailable_products
+from .state_machine import can_transition
 from apps.products.models import Product
 
 
@@ -95,13 +96,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
-            valid_transitions = {
-                Order.State.PENDING: [Order.State.PREPARING, Order.State.REJECTED],
-                Order.State.PREPARING: [Order.State.READY, Order.State.REJECTED],
-                Order.State.READY: [Order.State.PICKED_UP, Order.State.REJECTED],
-            }
-            allowed_next = valid_transitions.get(order.state, [])
-            if new_state not in allowed_next:
+            if not can_transition(order.state, new_state):
                 return Response(
                     {"detail": f"No se puede cambiar de '{order.state}' a '{new_state}'."},
                     status=status.HTTP_400_BAD_REQUEST,
@@ -170,6 +165,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                             "item_id": u.product_id,
                             "name": u.product_name,
                             "reason": u.reason,
+                            "message": u.message,
                         }
                         for u in unavailable
                     ],
