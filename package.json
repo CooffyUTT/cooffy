@@ -17,9 +17,9 @@
         "dev": "concurrently -n back,front \"pnpm back\" \"pnpm front\"",
         "install:all": "cross-env-shell \"pnpm install && pnpm front:install && pnpm back:install\"",
         "init:all": "cross-env-shell \"pnpm install:all && docker compose up -d && pnpm back:manage migrate && pnpm back:manage seed && pnpm dev\"",
-        "docker:build": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml build\"",
-        "docker:up": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml up -d\"",
-        "docker:down": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml down\""
+        "docker:build": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml --env-file .env build\"",
+        "docker:up": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml --env-file .env up -d\"",
+        "docker:down": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml --env-file .env down\""
     },
     "devDependencies": {
         "@usebruno/cli": "^4.0.0",
