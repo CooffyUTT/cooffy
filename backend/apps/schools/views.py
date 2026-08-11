@@ -1,5 +1,6 @@
 from rest_framework import viewsets, filters, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import School
@@ -33,3 +34,30 @@ class SchoolViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         school = serializer.save()
         return Response(SchoolSerializer(school).data, status=status.HTTP_201_CREATED)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='active',
+        permission_classes=[AllowAny],
+        authentication_classes=[],
+    )
+    def active(self, request):
+        """Lista pública de escuelas activas con dominio para el registro."""
+        qs = (
+            School.objects
+            .filter(active=True)
+            .exclude(domain_address__isnull=True)
+            .exclude(domain_address='')
+            .order_by('full_name')
+        )
+        data = [
+            {
+                'id': school.id,
+                'short_name': school.short_name,
+                'full_name': school.full_name,
+                'domain_address': school.domain_address,
+            }
+            for school in qs
+        ]
+        return Response(data, status=status.HTTP_200_OK)

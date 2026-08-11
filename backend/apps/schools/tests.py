@@ -247,3 +247,68 @@ class SchoolDomainTests(APITestCase):
         self.assertTrue(
             School.objects.filter(domain_address="ut-tijuana.edu.mx").exists()
         )
+
+
+class SchoolActiveEndpointTests(APITestCase):
+    """RF-02: el registro público debe poder listar escuelas activas."""
+
+    def setUp(self):
+        self.active_one = School.objects.create(
+            full_name="Universidad Tecnológica de Tijuana",
+            short_name="UTT",
+            domain_address="utt.edu.mx",
+        )
+        self.active_two = School.objects.create(
+            full_name="Universidad Autónoma de Baja California",
+            short_name="UABC",
+            domain_address="uabc.edu.mx",
+        )
+        School.objects.create(
+            full_name="Inactive School",
+            short_name="INA",
+            domain_address="ina.edu.mx",
+            active=False,
+        )
+
+    def test_active_endpoint_is_public_and_returns_only_active_schools(self):
+        response = self.client.get(reverse("school-active"))
+
+        self.assertEqual(response.status_code, 200)
+        ids = {item["id"] for item in response.data}
+        self.assertEqual(ids, {self.active_one.id, self.active_two.id})
+        self.assertEqual(len(response.data), 2)
+
+    def test_active_endpoint_payload_shape(self):
+        response = self.client.get(reverse("school-active"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            set(response.data[0].keys()),
+            {"id", "short_name", "full_name", "domain_address"},
+        )
+
+    def test_active_endpoint_orders_by_full_name(self):
+        response = self.client.get(reverse("school-active"))
+
+        self.assertEqual(response.status_code, 200)
+        full_names = [item["full_name"] for item in response.data]
+        self.assertEqual(full_names, sorted(full_names))
+
+    def test_active_endpoint_requires_no_authentication(self):
+        response = self.client.get(reverse("school-active"))
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_active_endpoint_excludes_school_without_domain(self):
+        School.objects.create(
+            full_name="No Domain Active",
+            short_name="NDA",
+            domain_address=None,
+        )
+
+        response = self.client.get(reverse("school-active"))
+
+        self.assertEqual(response.status_code, 200)
+        full_names = [item["full_name"] for item in response.data]
+        self.assertIn("Universidad Tecnológica de Tijuana", full_names)
+        self.assertNotIn("No Domain Active", full_names)
