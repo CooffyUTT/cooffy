@@ -259,6 +259,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                         "item_id": u.product_id,
                         "name": u.product_name,
                         "reason": u.reason,
+                        "message": u.message,
                     }
                     for u in unavailable
                 ]
