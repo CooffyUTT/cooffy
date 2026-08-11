@@ -34,6 +34,7 @@ export function OrderCard({
   setConfirmingId
 }: OrderCardProps) {
   const [elapsedMinutes, setElapsedMinutes] = useState(0);
+  const [confirmingReject, setConfirmingReject] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -138,7 +139,31 @@ export function OrderCard({
 
       {/* Botones de Acción */}
       <div className="pt-2">
-        {confirmingId === order.id ? (
+        {confirmingReject ? (
+          <div className="space-y-2 rounded-xl bg-red-50 border border-red-200 p-3">
+            <p className="text-xs font-bold text-red-800 text-center">
+              ¿Estás seguro que deseas rechazar este pedido?
+            </p>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  setConfirmingReject(false);
+                  onSecondaryAction?.();
+                }}
+                className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-xl"
+              >
+                SÍ, RECHAZAR
+              </Button>
+              <Button
+                onClick={() => setConfirmingReject(false)}
+                variant="outline"
+                className="h-11 px-4 border-slate-300 text-slate-700 font-bold text-xs rounded-xl"
+              >
+                CANCELAR
+              </Button>
+            </div>
+          </div>
+        ) : confirmingId === order.id ? (
           <div className="flex gap-2">
             <Button
               onClick={onAction}
@@ -164,7 +189,7 @@ export function OrderCard({
             </Button>
             {secondaryActionLabel && onSecondaryAction && (
               <Button
-                onClick={onSecondaryAction}
+                onClick={() => setConfirmingReject(true)}
                 variant="outline"
                 className={`w-full h-10 font-bold text-xs rounded-xl ${secondaryActionColor}`}
               >
