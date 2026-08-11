@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getProducts } from "@/services/productService";
 
 export function useProducts(
@@ -11,5 +11,6 @@ export function useProducts(
   return useQuery({
     queryKey: ["products", search, ordering, category, page, branch],
     queryFn: () => getProducts({ search, ordering, category, page, branch }),
+    placeholderData: keepPreviousData,
   });
 }

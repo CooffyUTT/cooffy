@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Loader2, AlertCircle, ShoppingCart, Check, Minus, Plus, ArrowLeft, X, AlertTriangle, Store } from "lucide-react";
+import { isAxiosError } from "axios";
+import { ChevronRight, Loader2, AlertCircle, ShoppingCart, Check, Minus, Plus, ArrowLeft, X, AlertTriangle, Store, PackageSearch } from "lucide-react";
 import { toast } from "sonner";
 import { useProduct } from "@/hooks/useProduct";
 import { useProducts } from "@/hooks/useProducts";
@@ -123,12 +124,24 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
   }
 
   if (error || !product) {
+    const isNotFound = isAxiosError(error) && error.response?.status === 404;
     return (
       <>
         <Header />
         <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-4 pt-20">
-          <AlertCircle className="h-12 w-12 text-error" />
-          <p className="text-on-surface font-medium text-lg">No se pudo cargar el producto</p>
+          {isNotFound ? (
+            <PackageSearch className="h-12 w-12 text-on-surface-variant" />
+          ) : (
+            <AlertCircle className="h-12 w-12 text-error" />
+          )}
+          <p className="text-on-surface font-medium text-lg">
+            {isNotFound ? "Producto no encontrado" : "No se pudo cargar el producto"}
+          </p>
+          {isNotFound && (
+            <p className="text-sm text-on-surface-variant max-w-sm text-center">
+              Es posible que el producto ya no esté disponible o que el enlace sea incorrecto.
+            </p>
+          )}
           <Link href="/menu">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
