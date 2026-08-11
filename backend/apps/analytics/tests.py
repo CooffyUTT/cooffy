@@ -34,6 +34,39 @@ class AnalyticsApiTests(APITestCase):
         cls.manager.groups.add(manager_group)
         cls.other_manager.groups.add(manager_group)
 
+        cls.school = School.objects.create(
+            full_name="Test School",
+            short_name="TS",
+        )
+        cls.supervisor = User.objects.create_user(
+            user="supervisor@school.edu.mx",
+            name="Supervisor",
+            password="password",
+            school=cls.school,
+        )
+        cls.other_supervisor = User.objects.create_user(
+            user="other-supervisor@school.edu.mx",
+            name="Other Supervisor",
+            password="password",
+            school=cls.school,
+        )
+        cls.admin_school = User.objects.create_user(
+            user="admin-school@school.edu.mx",
+            name="Admin Escolar",
+            password="password",
+            school=cls.school,
+        )
+        cls.superuser = User.objects.create_superuser(
+            user="super@school.edu.mx",
+            name="Superuser",
+            password="password",
+        )
+        supervisor_group = Group.objects.create(name="supervisor")
+        cls.supervisor.groups.add(supervisor_group)
+        cls.other_supervisor.groups.add(supervisor_group)
+        admin_group = Group.objects.create(name="admin_escolar")
+        cls.admin_school.groups.add(admin_group)
+
         category = Category.objects.create(name="Bebidas")
         cls.product_a = Product.objects.create(
             name="Café americano",
@@ -46,10 +79,6 @@ class AnalyticsApiTests(APITestCase):
             category=category,
         )
 
-        cls.school = School.objects.create(
-            full_name="Test School",
-            short_name="TS",
-        )
         cls.company = Company.objects.create(
             name="Test Company",
             owner=cls.manager,
@@ -77,6 +106,11 @@ class AnalyticsApiTests(APITestCase):
             company=cls.other_company,
             school=cls.school,
         )
+
+        cls.supervisor.branch = cls.branch
+        cls.supervisor.save(update_fields=["branch"])
+        cls.other_supervisor.branch = cls.other_branch
+        cls.other_supervisor.save(update_fields=["branch"])
 
         today = timezone.now().date()
         local_time = lambda h, m=0: timezone.make_aware(  # noqa: E731
@@ -137,11 +171,43 @@ class AnalyticsApiTests(APITestCase):
             branch_id=cls.branch.id,
             client_id=cls.client_user.id,
             payment_method=1,
-            state="pending",
+            state="preparing",
             total="25.00",
         )
         OrderProduct.objects.create(
             order=cls.order4, item_id=cls.product_a.id, quantity=1, price="25.00"
+        )
+
+        cls.old_order = Order.objects.create(
+            order_number=5,
+            date=today - timedelta(days=7),
+            branch_id=cls.branch.id,
+            client_id=cls.client_user.id,
+            payment_method=1,
+            state="ready",
+            total="15.00",
+        )
+        OrderProduct.objects.create(
+            order=cls.old_order, item_id=cls.product_a.id, quantity=1, price="15.00"
+        )
+
+        cls.pending_order = Order.objects.create(
+            order_number=6,
+            date=today,
+            branch_id=cls.branch.id,
+            client_id=cls.client_user.id,
+            payment_method=1,
+            state="pending",
+            total="40.00",
+        )
+        cls.rejected_order = Order.objects.create(
+            order_number=7,
+            date=today,
+            branch_id=cls.branch.id,
+            client_id=cls.client_user.id,
+            payment_method=1,
+            state="rejected",
+            total="50.00",
         )
 
         cls.other_order = Order.objects.create(
@@ -298,6 +364,13 @@ class AnalyticsApiTests(APITestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    def test_admin_escolar_rejected(self):
+        self.client.force_authenticate(user=self.admin_school)
+
+        response = self.client.get(reverse("analytics-daily-summary"))
+
+        self.assertEqual(response.status_code, 403)
+
     # RN-23
 
     def test_rn23_manager_only_sees_own_branch_data(self):
@@ -320,13 +393,72 @@ class AnalyticsApiTests(APITestCase):
         self.assertEqual(response.data["orders_count"], 1)
         self.assertEqual(response.data["sales_total"], "999.00")
 
+    def test_rn23_supervisor_only_sees_own_branch(self):
+        self.client.force_authenticate(user=self.supervisor)
+
+        response = self.client.get(
+            reverse("analytics-daily-summary"),
+            {"period": "daily"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["orders_count"], 3)
+        self.assertEqual(response.data["sales_total"], "180.00")
+
+        self.client.force_authenticate(user=self.other_supervisor)
+        response = self.client.get(
+            reverse("analytics-daily-summary"),
+            {"period": "daily"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["orders_count"], 1)
+        self.assertEqual(response.data["sales_total"], "999.00")
+
+    def test_superuser_sees_all_branches(self):
+        self.client.force_authenticate(user=self.superuser)
+
+        response = self.client.get(
+            reverse("analytics-daily-summary"),
+            {"period": "daily"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["orders_count"], 4)
+        self.assertEqual(response.data["sales_total"], "1179.00")
+
     # period filtering
 
-    def test_period_weekly_includes_older_order(self):
+    def test_period_weekly_is_inclusive_of_today_and_7_days(self):
         response = self.client.get(
             reverse("analytics-daily-summary"),
             {"period": "weekly"},
         )
 
         self.assertEqual(response.status_code, 200)
+        # order4 (hace 2 días) cuenta dentro de la semana; old_order (hace 7
+        # días) queda fuera del límite semanal inclusive de hoy.
         self.assertEqual(response.data["orders_count"], 4)
+        self.assertEqual(response.data["sales_total"], "205.00")
+
+    def test_period_monthly_includes_orders_within_30_days(self):
+        response = self.client.get(
+            reverse("analytics-daily-summary"),
+            {"period": "monthly"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["orders_count"], 5)
+        self.assertEqual(response.data["sales_total"], "220.00")
+
+    # estado de pedido (RF-04-02)
+
+    def test_pending_and_rejected_orders_excluded_from_sales(self):
+        response = self.client.get(
+            reverse("analytics-daily-summary"),
+            {"period": "daily"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["orders_count"], 3)
+        self.assertEqual(response.data["sales_total"], "180.00")
