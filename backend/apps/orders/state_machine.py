@@ -19,7 +19,7 @@ ALL_STATES = (
 VALID_TRANSITIONS: Mapping[str, frozenset[str]] = {
     "pending": frozenset({"preparing", "rejected"}),
     "preparing": frozenset({"ready", "rejected"}),
-    "ready": frozenset({"picked_up", "rejected"}),
+    "ready": frozenset({"picked_up"}),
     "picked_up": frozenset(),
     "rejected": frozenset(),
 }

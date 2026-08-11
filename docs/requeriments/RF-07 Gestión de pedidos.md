@@ -35,7 +35,7 @@ Transiciones válidas:
 |----|---|
 | `pending` | `preparing`, `rejected` |
 | `preparing` | `ready`, `rejected` |
-| `ready` | `picked_up`, `rejected` |
+| `ready` | `picked_up` |
 | `picked_up` | — (terminal) |
 | `rejected` | — (terminal) |
 

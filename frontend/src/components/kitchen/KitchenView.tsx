@@ -190,6 +190,9 @@ export function KitchenView() {
                   onAction={() => moveOrder(order.id, 'preparing')}
                   actionLabel="INICIAR PREPARACIÓN"
                   actionColor="bg-amber-500 hover:bg-amber-600"
+                  secondaryActionLabel="RECHAZAR"
+                  secondaryActionColor="bg-red-500 hover:bg-red-600"
+                  onSecondaryAction={() => moveOrder(order.id, 'rejected')}
                 />
               ))}
             </AnimatePresence>
@@ -235,9 +238,6 @@ export function KitchenView() {
                   onAction={() => moveOrder(order.id, 'picked_up')}
                   actionLabel="ENTREGADO / RECOGIDO"
                   actionColor="bg-emerald-600 hover:bg-emerald-700"
-                  secondaryActionLabel="NO RECOGIDO"
-                  secondaryActionColor="bg-red-500 hover:bg-red-600"
-                  onSecondaryAction={() => moveOrder(order.id, 'rejected')}
                 />
               ))}
             </AnimatePresence>
