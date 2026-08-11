@@ -137,7 +137,8 @@ class Command(BaseCommand):
         today = timezone.now().date()
         period = options['period']
         days_back = PERIOD_DAYS[period]
-        window_start = today - timedelta(days=days_back)
+        # Ventana móvil e inclusiva de hoy (mismo criterio que la API).
+        window_start = today - timedelta(days=days_back - 1)
         existing_in_window = Order.objects.filter(date__gte=window_start).count()
 
         expected_orders = int(EXPECTED_ORDERS_PER_DAY * days_back)
@@ -162,7 +163,7 @@ class Command(BaseCommand):
         max_num = Order.objects.aggregate(max_num=Max('order_number'))['max_num'] or 0
         created = 0
 
-        for day_offset in range(days_back, -1, -1):
+        for day_offset in range(days_back - 1, -1, -1):
             order_date = today - timedelta(days=day_offset)
             orders_today = random.randint(*ORDERS_PER_DAY_RANGE)
 

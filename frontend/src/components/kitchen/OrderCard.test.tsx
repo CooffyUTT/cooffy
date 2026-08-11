@@ -1,6 +1,28 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+// framer-motion animations can race with React re-renders in parallel test
+// workers (flaky clicks landing on the wrong button). Render plain divs,
+// stripping motion-only props so React doesn't warn about non-boolean attrs.
+vi.mock("framer-motion", () => {
+  const MOTION_PROPS = new Set([
+    "layout", "initial", "animate", "exit", "transition",
+    "whileHover", "whileTap", "whileInView", "variants", "custom",
+  ]);
+  return {
+    motion: {
+      div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => {
+        for (const key of Object.keys(props)) {
+          if (MOTION_PROPS.has(key)) delete props[key];
+        }
+        return <div {...props}>{children}</div>;
+      },
+    },
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  };
+});
+
 import { OrderCard } from "@/components/kitchen/OrderCard";
 import type { KitchenOrder } from "@/types/kitchen";
 
@@ -51,17 +73,17 @@ describe("OrderCard reject confirmation", () => {
     renderCard({ onSecondaryAction });
 
     // Botón RECHAZAR visible, aún no se rechaza
-    const rejectButton = screen.getByRole("button", { name: "RECHAZAR" });
+    const rejectButton = await screen.findByRole("button", { name: "RECHAZAR" });
     await user.click(rejectButton);
     expect(onSecondaryAction).not.toHaveBeenCalled();
 
-    // Confirmación visible
+    // Confirmación visible (esperar el re-render del estado)
     expect(
-      screen.getByText("¿Estás seguro que deseas rechazar este pedido?"),
+      await screen.findByText("¿Estás seguro que deseas rechazar este pedido?"),
     ).toBeInTheDocument();
 
     // Confirmar ejecuta la acción
-    await user.click(screen.getByRole("button", { name: "SÍ, RECHAZAR" }));
+    await user.click(await screen.findByRole("button", { name: "SÍ, RECHAZAR" }));
     expect(onSecondaryAction).toHaveBeenCalledTimes(1);
   });
 
@@ -70,11 +92,11 @@ describe("OrderCard reject confirmation", () => {
     const onSecondaryAction = vi.fn();
     renderCard({ onSecondaryAction });
 
-    await user.click(screen.getByRole("button", { name: "RECHAZAR" }));
-    await user.click(screen.getByRole("button", { name: "CANCELAR" }));
+    await user.click(await screen.findByRole("button", { name: "RECHAZAR" }));
+    await user.click(await screen.findByRole("button", { name: "CANCELAR" }));
 
     expect(onSecondaryAction).not.toHaveBeenCalled();
     // De vuelta a los botones normales
-    expect(screen.getByRole("button", { name: "RECHAZAR" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "RECHAZAR" })).toBeInTheDocument();
   });
 });
