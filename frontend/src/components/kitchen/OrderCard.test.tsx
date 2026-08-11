@@ -7,6 +7,9 @@ import type { KitchenOrder } from "@/types/kitchen";
 const ORDER: KitchenOrder = {
   id: 1,
   order_number: 5,
+  date: "2026-08-11",
+  branch_id: 1,
+  client_id: 1,
   client_name: "Cliente Test",
   created_at: new Date().toISOString(),
   total: "30.00",
@@ -17,7 +20,6 @@ const ORDER: KitchenOrder = {
       id: 1,
       item_id: 10,
       quantity: 2,
-      price: "30.00",
       unitPrice: 15,
       item_name: "Torta",
       item_image: null,
