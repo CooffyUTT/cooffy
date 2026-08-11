@@ -173,10 +173,6 @@ export function ManagerView() {
     }
   };
 
-  const handleAddBranch = () => {
-    alert("Modal de agregar sucursal próximamente...");
-  };
-
   const handleManageBranch = () => {
     setActiveTab('menu');
   };
@@ -203,7 +199,7 @@ export function ManagerView() {
           <MenuManagerView />
         ) : (
           <>
-            <BranchHeader onAddBranch={handleAddBranch} />
+            <BranchHeader />
 
             {isLoadingBranches ? (
               <div className="flex items-center justify-center py-16">
