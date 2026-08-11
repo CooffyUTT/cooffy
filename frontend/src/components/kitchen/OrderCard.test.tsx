@@ -3,15 +3,25 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // framer-motion animations can race with React re-renders in parallel test
-// workers (flaky clicks landing on the wrong button). Render plain divs.
-vi.mock("framer-motion", () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => (
-      <div {...props}>{children}</div>
-    ),
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-}));
+// workers (flaky clicks landing on the wrong button). Render plain divs,
+// stripping motion-only props so React doesn't warn about non-boolean attrs.
+vi.mock("framer-motion", () => {
+  const MOTION_PROPS = new Set([
+    "layout", "initial", "animate", "exit", "transition",
+    "whileHover", "whileTap", "whileInView", "variants", "custom",
+  ]);
+  return {
+    motion: {
+      div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => {
+        for (const key of Object.keys(props)) {
+          if (MOTION_PROPS.has(key)) delete props[key];
+        }
+        return <div {...props}>{children}</div>;
+      },
+    },
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  };
+});
 
 import { OrderCard } from "@/components/kitchen/OrderCard";
 import type { KitchenOrder } from "@/types/kitchen";
