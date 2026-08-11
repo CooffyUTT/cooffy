@@ -5,6 +5,7 @@ from django.db.models import Max
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.branches.models import Branch
 from apps.products.models import Product
 from apps.users.models import User
 from .models import Order, OrderProduct
@@ -191,8 +192,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ("total",)
 
     def validate_branch_id(self, value):
-        from apps.branches.models import Branch
-
         branch = Branch.objects.filter(pk=value, active=True).first()
         if not branch:
             raise serializers.ValidationError("La sucursal no existe o está inactiva.")
@@ -271,6 +270,12 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         products_data = validated_data.pop("order_products")
         user = self.context["request"].user
+        branch_id = validated_data["branch_id"]
+
+        # Serialize concurrent creations per branch (RN-21): locking the branch
+        # row makes the Max()+1 computation below race-free so two simultaneous
+        # orders in the same branch/date never get the same order_number.
+        Branch.objects.select_for_update().get(pk=branch_id)
 
         product_ids = [p["item_id"] for p in products_data]
         products = Product.objects.filter(pk__in=product_ids)
