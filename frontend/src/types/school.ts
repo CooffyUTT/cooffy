@@ -13,6 +13,13 @@ export interface SchoolBranch {
   updatedAt: string;
 }
 
+export interface ActiveSchool {
+  id: number;
+  short_name: string;
+  full_name: string;
+  domain_address: string;
+}
+
 export interface SchoolBranchApi {
   id: number;
   name: string;
