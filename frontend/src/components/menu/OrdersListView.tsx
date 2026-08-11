@@ -124,7 +124,7 @@ export function OrdersListView() {
   const { data: branches } = useBranches();
 
   return (
-    <div className="min-h-screen bg-background pb-12">
+    <div className="min-h-screen bg-background pb-12 flex flex-col">
       <header className="sticky top-0 z-30 bg-surface border-b border-outline-variant/30">
         <div className="max-w-[600px] mx-auto px-4 h-16 flex items-center gap-3">
           <button
@@ -138,7 +138,7 @@ export function OrdersListView() {
         </div>
       </header>
 
-      <main className="max-w-[600px] mx-auto px-4 py-6">
+      <main className="max-w-[600px] w-full mx-auto px-4 py-6 flex-1 flex flex-col">
         {isLoading ? (
           <div className="space-y-3" data-testid="orders-loading">
             {[1, 2, 3].map((i) => (
@@ -160,7 +160,7 @@ export function OrdersListView() {
           </div>
         ) : isError ? (
           <div
-            className="flex flex-col items-center justify-center py-12 text-center"
+            className="flex flex-col items-center justify-center flex-1 py-12 text-center"
             role="alert"
           >
             <AlertCircle className="h-12 w-12 text-error mb-3" />
@@ -174,25 +174,24 @@ export function OrdersListView() {
             </p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
-              <Receipt className="h-8 w-8" />
+            <div className="flex-1 flex flex-col items-center justify-center my-auto py-8 text-center px-4">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4 shrink-0">
+                <Receipt className="h-8 w-8" />
+              </div>
+              <h2 className="text-lg font-bold text-on-surface mb-1">
+                Aún no tienes pedidos
+              </h2>
+              <p className="text-sm text-on-surface-variant mb-6">
+                Cuando realices un pedido aparecerá aquí para que puedas darle seguimiento.
+              </p>
+              <button
+                onClick={() => router.push("/menu")}
+                className="px-5 py-2.5 bg-primary text-on-primary font-semibold text-sm rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
+              >
+                Ver menú
+              </button>
             </div>
-            <h2 className="text-lg font-bold text-on-surface mb-1">
-              Aún no tienes pedidos
-            </h2>
-            <p className="text-sm text-on-surface-variant max-w-sm">
-              Cuando realices un pedido aparecerá aquí para que puedas darle
-              seguimiento.
-            </p>
-            <button
-              onClick={() => router.push("/menu")}
-              className="mt-6 text-sm font-semibold text-primary hover:underline"
-            >
-              Ver menú
-            </button>
-          </div>
-        ) : (
+          ) : (
           <div
             className="space-y-3"
             data-testid="orders-list"
