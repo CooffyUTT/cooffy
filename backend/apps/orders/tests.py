@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.contrib.auth.models import Group
+from django.db import connection
 from django.test import SimpleTestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase
@@ -49,6 +50,14 @@ class OrderApiTests(APITestCase):
             active=True,
             accepting_orders=True,
         )
+
+        # Avanzar la secuencia de branches para que los siguientes Branch.objects.create()
+        # (sin id explícito) no colisionen con el id=1 anterior (fix fragilidad flake).
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT setval(pg_get_serial_sequence('branches', 'id'), "
+                "GREATEST((SELECT MAX(id) FROM branches), 1))"
+            )
 
     def setUp(self):
         self.client.force_authenticate(user=self.client_user)
@@ -379,6 +388,98 @@ class OrderApiTests(APITestCase):
         self.assertEqual(err["name"], "Ensalada")
         self.assertEqual(err["reason"], "out_of_stock")
         self.assertEqual(err["item_id"], str(product.id))
+        self.assertIn("agotado", err["message"])
+
+    def test_product_with_stock_only_in_another_branch_is_rejected(self):
+        other_branch = Branch.objects.create(
+            name="Other Branch",
+            company=self.branch.company,
+            school=self.branch.school,
+            active=True,
+            accepting_orders=True,
+        )
+        product = Product.objects.create(
+            id=90, name="Sandwich", price=Decimal("30.00")
+        )
+        ProductStock.objects.create(
+            branch=other_branch,
+            product=product,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+
+        response = self.client.post(
+            reverse("orders-list"),
+            {
+                "branch_id": self.branch.id,
+                "payment_method": "cash",
+                "order_products": [
+                    {"item_id": product.id, "quantity": 1},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        order_product_errors = response.data["order_products"]
+        self.assertEqual(len(order_product_errors), 1)
+        err = order_product_errors[0]
+        self.assertEqual(err["name"], "Sandwich")
+        self.assertEqual(err["reason"], "not_offered")
+        self.assertEqual(err["item_id"], str(product.id))
+        self.assertIn("no pertenece a esta sucursal", err["message"])
+
+    def test_product_with_stock_in_branch_can_be_ordered(self):
+        product = Product.objects.create(
+            id=91, name="Torta", price=Decimal("40.00")
+        )
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=product,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+
+        response = self.client.post(
+            reverse("orders-list"),
+            {
+                "branch_id": self.branch.id,
+                "payment_method": "cash",
+                "order_products": [
+                    {"item_id": product.id, "quantity": 1},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        order = Order.objects.get(client_id=self.client_user.id)
+        self.assertEqual(order.total, Decimal("40.00"))
+
+    def test_product_not_tracked_can_be_ordered(self):
+        product = Product.objects.create(
+            id=92, name="Galletas", price=Decimal("10.00")
+        )
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=product,
+            stock=ProductStock.StockState.NOT_TRACKED,
+        )
+
+        response = self.client.post(
+            reverse("orders-list"),
+            {
+                "branch_id": self.branch.id,
+                "payment_method": "cash",
+                "order_products": [
+                    {"item_id": product.id, "quantity": 1},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        order = Order.objects.get(client_id=self.client_user.id)
+        self.assertEqual(order.total, Decimal("10.00"))
+
 
 
 class OrderStateMachineTests(SimpleTestCase):
