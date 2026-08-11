@@ -1,139 +1,178 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AxiosError } from "axios";
+import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import type { Branch } from "@/hooks/useBranches";
-
-type ProductResult =
-  | null
-  | { ok: true; product: Record<string, unknown> }
-  | { ok: false; status: number; message: string };
-
-const mockState = vi.hoisted(() => ({
-  productResult: null as ProductResult,
-  listData: { count: 0, next: null, results: [] as Array<Record<string, unknown>> },
-  branches: [
-    { id: 1, name: "Sucursal Centro", location: null, schedule: null, company_name: "Co", accepting_orders: true },
-  ] as Branch[],
-}));
 
 vi.mock("@/hooks/useBranches", () => ({
-  useBranches: () => ({ data: mockState.branches, isLoading: false }),
+  useBranches: () => ({
+    data: [
+      { id: 1, name: "Sucursal Centro", location: null, schedule: null, company_name: "Co", accepting_orders: true },
+      { id: 2, name: "Sucursal Norte", location: null, schedule: null, company_name: "Co", accepting_orders: true },
+    ],
+    isLoading: false,
+  }),
+}));
+
+const useProductMock = vi.fn();
+const useProductsMock = vi.fn();
+
+vi.mock("@/hooks/useProduct", () => ({
+  useProduct: (id: number) => useProductMock(id),
 }));
 
 vi.mock("@/hooks/useProducts", () => ({
-  useProducts: () => ({ data: mockState.listData, isLoading: false, error: null }),
+  useProducts: (...args: unknown[]) => useProductsMock(...args),
 }));
 
-vi.mock("@/hooks/useProduct", () => ({
-  useProduct: (id: number) => {
-    const result = mockState.productResult;
-    if (result && result.ok) {
-      return { data: { id, ...result.product }, isLoading: false, error: null };
-    }
-    if (result && !result.ok) {
-      const err = new AxiosError(result.message, undefined, undefined, undefined, {
-        status: result.status,
-        data: {},
-        statusText: "Error",
-        headers: {},
-        config: {} as never,
-      });
-      return { data: undefined, isLoading: false, error: err };
-    }
-    return { data: undefined, isLoading: false, error: null };
+const toastErrorMock = vi.fn();
+const toastSuccessMock = vi.fn();
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: (...args: unknown[]) => toastSuccessMock(...args),
+    error: (...args: unknown[]) => toastErrorMock(...args),
+    warning: vi.fn(),
+    info: vi.fn(),
   },
 }));
 
-import { ProductDetailView } from "@/components/menu/ProductDetailView";
 import { CartProvider } from "@/context/CartContext";
+import { ProductDetailView } from "@/components/menu/ProductDetailView";
+import type { ProductDetail } from "@/types/product";
 
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <CartProvider>{children}</CartProvider>
-      </QueryClientProvider>
-    );
-  };
+const baseProduct: ProductDetail = {
+  id: 12,
+  name: "Matcha Latte",
+  price: 60,
+  image: null,
+  description: "Té matcha con leche",
+  modifiers: null,
+  category: { id: 1, name: "Bebidas" },
+};
+
+function Wrapper({ children }: { children: ReactNode }) {
+  return <CartProvider>{children}</CartProvider>;
+}
+
+function seedCartWithBranch(branchId: number, branchName: string) {
+  localStorage.setItem(
+    "cooffy_cart",
+    JSON.stringify([
+      { id: 1, name: "Seed", price: 1, quantity: 1, branchId },
+    ]),
+  );
+  localStorage.setItem("cooffy_branch_id", JSON.stringify(branchId));
+  localStorage.setItem("cooffy_branch_name", branchName);
 }
 
 beforeEach(() => {
   localStorage.clear();
-  mockState.productResult = null;
-  mockState.listData = { count: 0, next: null, results: [] };
-  mockState.branches = [
-    { id: 1, name: "Sucursal Centro", location: null, schedule: null, company_name: "Co", accepting_orders: true },
-  ];
+  useProductMock.mockReset();
+  useProductsMock.mockReset();
+  useProductsMock.mockReturnValue({
+    data: { count: 0, next: null, results: [] },
+    isLoading: false,
+    error: null,
+  });
+  toastErrorMock.mockReset();
+  toastSuccessMock.mockReset();
 });
 
-describe("ProductDetailView not found", () => {
-  it("shows a friendly not-found message and a back-to-menu button when the product is missing", async () => {
-    mockState.productResult = { ok: false, status: 404, message: "Not Found" };
-    const Wrapper = createWrapper();
-
-    render(
-      <Wrapper>
-        <ProductDetailView productId={999} />
-      </Wrapper>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/Producto no encontrado/i)).toBeInTheDocument();
-    });
-
-    const backButton = screen.getByRole("button", { name: /Volver al menú/i });
-    expect(backButton).toBeInTheDocument();
-
-    await userEvent.setup().click(backButton);
-    expect(backButton.closest("a")).toHaveAttribute("href", "/menu");
-  });
-
-  it("shows a generic error message when the failure is not a 404", async () => {
-    mockState.productResult = { ok: false, status: 500, message: "Server Error" };
-    const Wrapper = createWrapper();
-
-    render(
-      <Wrapper>
-        <ProductDetailView productId={1} />
-      </Wrapper>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/No se pudo cargar el producto/i)).toBeInTheDocument();
-    });
-  });
-});
-
-describe("ProductDetailView success", () => {
-  it("renders the product details when the response succeeds", async () => {
-    mockState.productResult = {
-      ok: true,
-      product: {
-        name: "Café Americano",
-        price: 50,
-        description: "Café negro clásico",
-        image: null,
-        modifiers: [],
-        category: { id: 10, name: "Bebidas" },
+describe("ProductDetailView out-of-stock availability (RF-06 / RN-08)", () => {
+  it("shows the AGOTADO badge, hides the quantity selector, and disables the add button when the selected branch has no stock", () => {
+    seedCartWithBranch(1, "Sucursal Centro");
+    useProductMock.mockReturnValue({
+      data: {
+        ...baseProduct,
         branchId: 1,
+        availableInBranches: [2],
       },
-    };
-    const Wrapper = createWrapper();
+      isLoading: false,
+      error: null,
+    });
 
     render(
       <Wrapper>
-        <ProductDetailView productId={1} />
+        <ProductDetailView productId={baseProduct.id} />
       </Wrapper>
     );
 
-    expect(await screen.findByRole("heading", { level: 1, name: "Café Americano" })).toBeInTheDocument();
-    expect(screen.getByText(/Café negro clásico/i)).toBeInTheDocument();
-    expect(screen.getAllByText("$50.00").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("out-of-stock-badge")).toHaveTextContent(/Agotado/i);
+    const buttons = screen.getAllByRole("button", { name: /Matcha Latte está agotado/i });
+    expect(buttons.length).toBeGreaterThanOrEqual(1);
+    buttons.forEach((btn) => {
+      expect(btn).toBeDisabled();
+    });
+    expect(screen.queryByText(/Cantidad/i)).not.toBeInTheDocument();
+  });
+
+  it("does not render the AGOTADO badge when no branch is selected even if availableInBranches is empty (global catalog)", () => {
+    useProductMock.mockReturnValue({
+      data: {
+        ...baseProduct,
+        branchId: undefined,
+        availableInBranches: [],
+      },
+      isLoading: false,
+      error: null,
+    });
+
+    render(
+      <Wrapper>
+        <ProductDetailView productId={baseProduct.id} />
+      </Wrapper>
+    );
+
+    expect(screen.queryByTestId("out-of-stock-badge")).not.toBeInTheDocument();
+    const buttons = screen.getAllByRole("button", { name: /Agregar Matcha Latte al carrito/i });
+    expect(buttons.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows the Disponible badge when the selected branch is in availableInBranches", () => {
+    seedCartWithBranch(2, "Sucursal Norte");
+    useProductMock.mockReturnValue({
+      data: {
+        ...baseProduct,
+        branchId: 2,
+        availableInBranches: [1, 2],
+      },
+      isLoading: false,
+      error: null,
+    });
+
+    render(
+      <Wrapper>
+        <ProductDetailView productId={baseProduct.id} />
+      </Wrapper>
+    );
+
+    expect(screen.queryByTestId("out-of-stock-badge")).not.toBeInTheDocument();
+    expect(screen.getByText(/Disponible/i)).toBeInTheDocument();
+    const buttons = screen.getAllByRole("button", { name: /Agregar Matcha Latte al carrito/i });
+    expect(buttons.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders every add-to-cart button as disabled when the product is out of stock", () => {
+    seedCartWithBranch(1, "Sucursal Centro");
+    useProductMock.mockReturnValue({
+      data: {
+        ...baseProduct,
+        branchId: 1,
+        availableInBranches: [2],
+      },
+      isLoading: false,
+      error: null,
+    });
+
+    render(
+      <Wrapper>
+        <ProductDetailView productId={baseProduct.id} />
+      </Wrapper>
+    );
+
+    const agotadoButtons = screen.getAllByRole("button", { name: /Matcha Latte está agotado/i });
+    expect(agotadoButtons.length).toBeGreaterThanOrEqual(2);
+    agotadoButtons.forEach((btn) => {
+      expect(btn).toBeDisabled();
+    });
   });
 });

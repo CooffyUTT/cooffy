@@ -2,10 +2,12 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Plus, Check, Ban, Store, AlertTriangle } from "lucide-react";
+import { Plus, Check, Ban, Store, AlertTriangle, PackageX } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/context/CartContext";
 import { useBranches } from "@/hooks/useBranches";
+import { isOutOfStockInBranch } from "@/lib/productAvailability";
+import type { ProductList } from "@/types/product";
 import { BaseCard, CardMedia, CardFooter } from "../layout/BaseCard";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,19 +20,11 @@ import {
 } from "@/components/ui/dialog";
 
 interface ProductProps {
-  product: {
-    id: number;
-    name: string;
-    price: number;
-    description?: string;
-    tag?: string;
-    image?: string | null;
-    branchId?: number;
-  };
+  product: ProductList;
 }
 
 export default function ProductCard({ product }: ProductProps) {
-  const { tryAddToCart, canAddToCart, clearCart, setBranchId, addToCart, branchName: cartBranchName } = useCart();
+  const { tryAddToCart, canAddToCart, clearCart, setBranchId, addToCart, branchId: cartBranchId, branchName: cartBranchName } = useCart();
   const { data: branches } = useBranches();
   const [added, setAdded] = useState(false);
   const [pendingSwitch, setPendingSwitch] = useState<{
@@ -38,18 +32,27 @@ export default function ProductCard({ product }: ProductProps) {
     productBranchName: string;
   } | null>(null);
 
-  const isAvailable = canAddToCart(product.branchId);
+  const isOutOfStock = isOutOfStockInBranch(product, cartBranchId);
+  const isAvailable = !isOutOfStock && canAddToCart(product.branchId);
   const productBranch = branches?.find((b) => b.id === product.branchId);
   const productBranchName = productBranch?.name;
 
   const isCrossBranch =
     !isAvailable &&
+    !isOutOfStock &&
     product.branchId !== undefined &&
     product.branchId !== null;
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (isOutOfStock) {
+      toast.error("Producto agotado", {
+        description: "Este producto no está disponible en la sucursal seleccionada.",
+      });
+      return;
+    }
 
     const result = tryAddToCart(product, productBranchName);
 
@@ -82,13 +85,17 @@ export default function ProductCard({ product }: ProductProps) {
     setTimeout(() => setAdded(false), 1500);
   };
 
-  const buttonLabel = isCrossBranch
-    ? "Otra sucursal"
-    : added
-      ? "Agregado"
-      : "Agregar";
+  const buttonLabel = isOutOfStock
+    ? "Agotado"
+    : isCrossBranch
+      ? "Otra sucursal"
+      : added
+        ? "Agregado"
+        : "Agregar";
 
-  const buttonIcon = isCrossBranch ? (
+  const buttonIcon = isOutOfStock ? (
+    <Ban className="h-3.5 w-3.5" />
+  ) : isCrossBranch ? (
     <Ban className="h-3.5 w-3.5" />
   ) : added ? (
     <Check className="h-3.5 w-3.5" />
@@ -98,11 +105,24 @@ export default function ProductCard({ product }: ProductProps) {
 
   return (
     <Link href={`/menu/${product.id}`} className="block">
-      <BaseCard className="cursor-pointer h-full">
+      <BaseCard
+        className={`cursor-pointer h-full ${isOutOfStock ? "opacity-60 grayscale" : ""}`}
+      >
         <CardMedia
           src={product.image ?? undefined}
           alt={product.name}
           fallbackText="Foto próximamente"
+          badge={
+            isOutOfStock ? (
+              <span
+                data-testid="out-of-stock-badge"
+                className="inline-flex items-center gap-1 rounded-full bg-rose-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md"
+              >
+                <PackageX className="h-3 w-3" />
+                Agotado
+              </span>
+            ) : undefined
+          }
         />
 
         <div className="p-4 flex-1 flex flex-col justify-between">
@@ -113,9 +133,6 @@ export default function ProductCard({ product }: ProductProps) {
                 ${product.price.toFixed(2)}
               </span>
             </div>
-            {product.description && (
-              <p className="text-xs text-on-surface-variant line-clamp-2">{product.description}</p>
-            )}
             {isCrossBranch && productBranchName && (
               <p className="text-[11px] text-on-surface-variant/70 flex items-center gap-1 mt-1">
                 <Store className="h-3 w-3" />
@@ -125,25 +142,27 @@ export default function ProductCard({ product }: ProductProps) {
           </div>
 
           <CardFooter className="pt-3">
-            {product.tag ? (
-              <span className="text-[11px] font-semibold text-on-surface-variant/70 uppercase tracking-wide">
-                {product.tag}
-              </span>
-            ) : (
-              <span />
-            )}
+            <span />
             <button
               onClick={handleAdd}
-              disabled={!isAvailable && !isCrossBranch}
-              aria-label={isAvailable ? `Agregar ${product.name} al carrito` : `${product.name} es de otra sucursal`}
+              disabled={isOutOfStock || (!isAvailable && !isCrossBranch)}
+              aria-label={
+                isOutOfStock
+                  ? `${product.name} está agotado`
+                  : isAvailable
+                    ? `Agregar ${product.name} al carrito`
+                    : `${product.name} es de otra sucursal`
+              }
               className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
-                isCrossBranch
-                  ? "border-amber-500 text-amber-700 bg-amber-50 hover:bg-amber-100"
-                  : !isAvailable
-                    ? "border-outline-variant/30 text-on-surface-variant/40 cursor-not-allowed"
-                    : added
-                      ? "border-emerald-600 text-emerald-700 bg-emerald-50"
-                      : "border-primary text-primary hover:bg-primary hover:text-white"
+                isOutOfStock
+                  ? "border-rose-200 text-rose-700 bg-rose-50 cursor-not-allowed"
+                  : isCrossBranch
+                    ? "border-amber-500 text-amber-700 bg-amber-50 hover:bg-amber-100"
+                    : !isAvailable
+                      ? "border-outline-variant/30 text-on-surface-variant/40 cursor-not-allowed"
+                      : added
+                        ? "border-emerald-600 text-emerald-700 bg-emerald-50"
+                        : "border-primary text-primary hover:bg-primary hover:text-white"
               }`}
             >
               {buttonIcon}

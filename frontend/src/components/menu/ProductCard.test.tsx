@@ -13,30 +13,48 @@ vi.mock("@/hooks/useBranches", () => ({
   }),
 }));
 
+const toastErrorMock = vi.fn();
+const toastSuccessMock = vi.fn();
+const toastWarningMock = vi.fn();
+const toastInfoMock = vi.fn();
+
 vi.mock("sonner", () => ({
   toast: {
-    error: vi.fn(),
-    success: vi.fn(),
-    warning: vi.fn(),
-    info: vi.fn(),
+    success: (...args: unknown[]) => toastSuccessMock(...args),
+    error: (...args: unknown[]) => toastErrorMock(...args),
+    warning: (...args: unknown[]) => toastWarningMock(...args),
+    info: (...args: unknown[]) => toastInfoMock(...args),
   },
 }));
 
-import { toast } from "sonner";
 import { CartProvider, useCart } from "@/context/CartContext";
 import ProductCard from "@/components/menu/ProductCard";
+import type { ProductList } from "@/types/product";
 
-const productA = {
+const productA: ProductList = {
   id: 10,
   name: "Café Americano",
   price: 50,
+  image: null,
+  category: { id: 1, name: "Bebidas" },
   branchId: 1,
 };
-const productB = {
+const productB: ProductList = {
   id: 11,
   name: "Té Chai",
   price: 40,
+  image: null,
+  category: { id: 1, name: "Bebidas" },
   branchId: 2,
+};
+const productOutOfStockInBranch1: ProductList = {
+  id: 12,
+  name: "Matcha Latte",
+  price: 60,
+  image: null,
+  category: { id: 1, name: "Bebidas" },
+  branchId: 2,
+  availableInBranches: [2],
 };
 
 function Wrapper({ children }: { children: ReactNode }) {
@@ -45,9 +63,22 @@ function Wrapper({ children }: { children: ReactNode }) {
 
 beforeEach(() => {
   localStorage.clear();
-  vi.mocked(toast.error).mockReset();
-  vi.mocked(toast.success).mockReset();
+  toastErrorMock.mockReset();
+  toastSuccessMock.mockReset();
+  toastWarningMock.mockReset();
+  toastInfoMock.mockReset();
 });
+
+function seedCartWithBranch(branchId: number, branchName: string) {
+  localStorage.setItem(
+    "cooffy_cart",
+    JSON.stringify([
+      { id: 1, name: "Seed", price: 1, quantity: 1, branchId },
+    ]),
+  );
+  localStorage.setItem("cooffy_branch_id", JSON.stringify(branchId));
+  localStorage.setItem("cooffy_branch_name", branchName);
+}
 
 describe("ProductCard cross-branch flow", () => {
   it("adds a product directly when the cart is empty", async () => {
@@ -65,7 +96,7 @@ describe("ProductCard cross-branch flow", () => {
     });
   });
 
-  it("opens the switch-branch dialog when the cart is for a different branch", async () => {
+  it("opens the switch-branch dialog when the cart is for a different branch and the product has no per-branch availability info", async () => {
     const user = userEvent.setup();
     function Seed() {
       const { tryAddToCart } = useCart();
@@ -143,6 +174,8 @@ describe("ProductCard cross-branch flow", () => {
       id: 99,
       name: "Combo especial",
       price: 60,
+      image: null,
+      category: { id: 1, name: "Combos" },
     };
 
     render(
@@ -156,8 +189,88 @@ describe("ProductCard cross-branch flow", () => {
     await user.click(addButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Producto no disponible en esta sucursal");
+      expect(toastErrorMock).toHaveBeenCalledWith("Producto no disponible en esta sucursal");
     });
     expect(JSON.parse(localStorage.getItem("cooffy_cart") ?? "[]")).toHaveLength(0);
+  });
+});
+
+describe("ProductCard out-of-stock availability (RF-06 / RN-08)", () => {
+  it("shows the AGOTADO badge when the selected branch is not in availableInBranches", () => {
+    seedCartWithBranch(1, "Sucursal Centro");
+
+    render(
+      <Wrapper>
+        <ProductCard product={productOutOfStockInBranch1} />
+      </Wrapper>
+    );
+
+    expect(screen.getByTestId("out-of-stock-badge")).toHaveTextContent(/Agotado/i);
+  });
+
+  it("renders a disabled add button labeled 'Agotado' when the product is out of stock in the selected branch", () => {
+    seedCartWithBranch(1, "Sucursal Centro");
+
+    render(
+      <Wrapper>
+        <ProductCard product={productOutOfStockInBranch1} />
+      </Wrapper>
+    );
+
+    const button = screen.getByRole("button", { name: /Matcha Latte está agotado/i });
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent(/Agotado/i);
+  });
+
+  it("does not modify the cart when the disabled add button is clicked", () => {
+    seedCartWithBranch(1, "Sucursal Centro");
+
+    function ReadCart() {
+      const { cart } = useCart();
+      return <span data-testid="cart-count">{cart.length}</span>;
+    }
+
+    const user = userEvent.setup();
+    render(
+      <Wrapper>
+        <ReadCart />
+        <ProductCard product={productOutOfStockInBranch1} />
+      </Wrapper>
+    );
+
+    const button = screen.getByRole("button", { name: /Matcha Latte está agotado/i });
+    expect(button).toBeDisabled();
+
+    void user.click(button);
+
+    expect(screen.getByTestId("cart-count").textContent).toBe("1");
+  });
+
+  it("does not show the AGOTADO badge when no branch is selected (global catalog mode)", () => {
+    render(
+      <Wrapper>
+        <ProductCard product={productOutOfStockInBranch1} />
+      </Wrapper>
+    );
+
+    expect(screen.queryByTestId("out-of-stock-badge")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Agregar Matcha Latte al carrito/i })
+    ).toBeInTheDocument();
+  });
+
+  it("does not show the AGOTADO badge when the selected branch is in availableInBranches", () => {
+    seedCartWithBranch(2, "Sucursal Norte");
+
+    render(
+      <Wrapper>
+        <ProductCard product={productOutOfStockInBranch1} />
+      </Wrapper>
+    );
+
+    expect(screen.queryByTestId("out-of-stock-badge")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Agregar Matcha Latte al carrito/i })
+    ).toBeInTheDocument();
   });
 });

@@ -4,12 +4,13 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { isAxiosError } from "axios";
-import { ChevronRight, Loader2, AlertCircle, ShoppingCart, Check, Minus, Plus, ArrowLeft, X, AlertTriangle, Store, PackageSearch } from "lucide-react";
+import { ChevronRight, Loader2, AlertCircle, ShoppingCart, Check, Minus, Plus, ArrowLeft, X, AlertTriangle, Store, PackageX, PackageSearch } from "lucide-react";
 import { toast } from "sonner";
 import { useProduct } from "@/hooks/useProduct";
 import { useProducts } from "@/hooks/useProducts";
 import { useBranches } from "@/hooks/useBranches";
 import { useCart } from "@/context/CartContext";
+import { isOutOfStockInBranch } from "@/lib/productAvailability";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,7 +28,7 @@ interface ProductDetailViewProps {
 }
 
 export function ProductDetailView({ productId }: ProductDetailViewProps) {
-  const { tryAddToCart, canAddToCart, cartTotal, clearCart, setBranchId, addToCart, branchName: cartBranchName } = useCart();
+  const { tryAddToCart, canAddToCart, cartTotal, clearCart, setBranchId, addToCart, branchId: cartBranchId, branchName: cartBranchName } = useCart();
   const { data: branches } = useBranches();
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -45,9 +46,15 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
   const productBranch = branches?.find((b) => b.id === product?.branchId);
   const productBranchName = productBranch?.name;
 
-  const isAvailable = product ? canAddToCart(product.branchId) : false;
+  const isOutOfStock = product
+    ? isOutOfStockInBranch(product, cartBranchId)
+    : false;
+  const isAvailable = product
+    ? !isOutOfStock && canAddToCart(product.branchId)
+    : false;
   const isCrossBranch =
     !!product &&
+    !isOutOfStock &&
     !isAvailable &&
     product.branchId !== undefined &&
     product.branchId !== null;
@@ -64,6 +71,13 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
 
   const handleAdd = () => {
     if (!product || (!isAvailable && !isCrossBranch)) return;
+
+    if (isOutOfStock) {
+      toast.error("Producto agotado", {
+        description: "Este producto no está disponible en la sucursal seleccionada.",
+      });
+      return;
+    }
 
     const result = tryAddToCart(product, productBranchName);
 
@@ -192,7 +206,10 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
         <main className="max-w-[1100px] mx-auto px-4 md:px-10 pb-28 md:pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
 
-            <div className="group relative aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden bg-surface-container-low border border-border/60 shadow-md hover:shadow-xl transition-all duration-300">
+            <div
+              data-testid="product-image"
+              className={`group relative aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden bg-surface-container-low border border-border/60 shadow-md hover:shadow-xl transition-all duration-300 ${isOutOfStock ? "opacity-60 grayscale" : ""}`}
+            >
               {product.image ? (
                 <Image
                   src={product.image}
@@ -205,6 +222,15 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-on-surface-variant/40">
                   Foto próximamente
+                </div>
+              )}
+              {isOutOfStock && (
+                <div
+                  data-testid="out-of-stock-overlay"
+                  className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-rose-600 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg"
+                >
+                  <PackageX className="h-4 w-4" />
+                  Agotado
                 </div>
               )}
             </div>
@@ -221,7 +247,15 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
                   </p>
 
                   <div className="flex items-center gap-1.5 text-sm font-semibold">
-                    {isAvailable ? (
+                    {isOutOfStock ? (
+                      <span
+                        data-testid="out-of-stock-badge"
+                        className="flex items-center gap-1.5 text-rose-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200"
+                      >
+                        <PackageX className="h-3.5 w-3.5" />
+                        Agotado
+                      </span>
+                    ) : isAvailable ? (
                       <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
                         <Check className="h-3.5 w-3.5" /> Disponible
                         {productBranchName && (
@@ -272,7 +306,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
               )}
 
               <div className="space-y-4 pt-2">
-                {(isAvailable || isCrossBranch) && (
+                {!isOutOfStock && (isAvailable || isCrossBranch) && (
                   <div className="flex flex-col gap-2.5">
                     <label className="text-xs font-medium text-on-surface-variant uppercase tracking-wider">
                       Cantidad
@@ -304,16 +338,27 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
 
                 <Button
                   onClick={handleAdd}
-                  disabled={!isAvailable && !isCrossBranch}
+                  disabled={isOutOfStock || (!isAvailable && !isCrossBranch)}
+                  aria-label={
+                    isOutOfStock
+                      ? `${product.name} está agotado`
+                      : `Agregar ${product.name} al carrito`
+                  }
                   className={`w-full h-12 rounded-xl font-semibold text-base flex items-center justify-center gap-2 transition-all duration-300 shadow-md ${
-                    isCrossBranch
-                      ? "bg-amber-500 hover:bg-amber-600 text-white"
-                      : added
-                        ? "bg-emerald-600 hover:bg-emerald-700 text-white scale-[1.01]"
-                        : ""
+                    isOutOfStock
+                      ? "bg-rose-100 text-rose-700 hover:bg-rose-100 cursor-not-allowed shadow-none"
+                      : isCrossBranch
+                        ? "bg-amber-500 hover:bg-amber-600 text-white"
+                        : added
+                          ? "bg-emerald-600 hover:bg-emerald-700 text-white scale-[1.01]"
+                          : ""
                   }`}
                 >
-                  {added ? (
+                  {isOutOfStock ? (
+                    <>
+                      <PackageX className="h-5 w-5" /> Agotado
+                    </>
+                  ) : added ? (
                     <>
                       <Check className="h-5 w-5 animate-bounce" /> Agregado al carrito
                     </>
@@ -395,16 +440,27 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
             </div>
             <Button
               onClick={handleAdd}
-              disabled={!isAvailable && !isCrossBranch}
+              disabled={isOutOfStock || (!isAvailable && !isCrossBranch)}
+              aria-label={
+                isOutOfStock
+                  ? `${product.name} está agotado`
+                  : `Agregar ${product.name} al carrito`
+              }
               className={`flex-1 h-12 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 max-w-[200px] transition-all duration-300 ${
-                isCrossBranch
-                  ? "bg-amber-500 hover:bg-amber-600 text-white"
-                  : added
-                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                    : ""
+                isOutOfStock
+                  ? "bg-rose-100 text-rose-700 cursor-not-allowed"
+                  : isCrossBranch
+                    ? "bg-amber-500 hover:bg-amber-600 text-white"
+                    : added
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : ""
               }`}
             >
-              {added ? (
+              {isOutOfStock ? (
+                <>
+                  <PackageX className="h-4 w-4" /> Agotado
+                </>
+              ) : added ? (
                 <>
                   <Check className="h-4 w-4" /> ¡Agregado!
                 </>
