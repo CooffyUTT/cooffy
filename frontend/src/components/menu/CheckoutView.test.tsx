@@ -92,6 +92,100 @@ async function openConfirmDialog(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Confirmar pedido" }));
 }
 
+describe("CheckoutView success flow", () => {
+  it("clears the cart and shows a success toast with the order number", async () => {
+    seedCart();
+    const createdOrder = {
+      id: 7,
+      order_number: 42,
+      date: "2026-08-11",
+      branch_id: 1,
+      client_id: 1,
+      created_at: "2026-08-11T15:00:00Z",
+      prepared_at: null,
+      picked_up_at: null,
+      scheduled_pickup_at: null,
+      total: "50.00",
+      iva: "3.70",
+      state: "pending",
+      payment_method: "card",
+      payment_status: "pending",
+      comment: null,
+      updated_at: "2026-08-11T15:00:00Z",
+      order_products: [
+        {
+          id: 1,
+          item_id: 10,
+          quantity: 1,
+          price: "50.00",
+          excluded_modifiers: [],
+          product_name: "Café Americano",
+        },
+      ],
+    };
+    mutateAsyncMock.mockResolvedValue(createdOrder);
+    useCreateOrderMock.mockReturnValue(buildMutationResult(undefined));
+
+    const user = userEvent.setup();
+    render(
+      <Wrapper>
+        <CheckoutView />
+      </Wrapper>,
+    );
+
+    await openConfirmDialog(user);
+    await user.click(screen.getByRole("button", { name: "Confirmar" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Pedido confirmado/i)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Tu pedido ha sido registrado/i)).toBeInTheDocument();
+    expect(screen.getByText(/Pedido #42/)).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem("cooffy_cart") ?? "[]")).toHaveLength(0);
+    expect(toast.success).toHaveBeenCalledWith("Pedido #42 registrado");
+  });
+
+  it("does not render the empty cart view after a successful order", async () => {
+    seedCart();
+    const createdOrder = {
+      id: 8,
+      order_number: 1,
+      date: "2026-08-11",
+      branch_id: 1,
+      client_id: 1,
+      created_at: "2026-08-11T15:00:00Z",
+      prepared_at: null,
+      picked_up_at: null,
+      scheduled_pickup_at: null,
+      total: "50.00",
+      iva: "3.70",
+      state: "pending",
+      payment_method: "card",
+      payment_status: "pending",
+      comment: null,
+      updated_at: "2026-08-11T15:00:00Z",
+      order_products: [],
+    };
+    mutateAsyncMock.mockResolvedValue(createdOrder);
+    useCreateOrderMock.mockReturnValue(buildMutationResult(undefined));
+
+    const user = userEvent.setup();
+    render(
+      <Wrapper>
+        <CheckoutView />
+      </Wrapper>,
+    );
+
+    await openConfirmDialog(user);
+    await user.click(screen.getByRole("button", { name: "Confirmar" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Pedido confirmado/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/Carrito vacío/i)).not.toBeInTheDocument();
+  });
+});
+
 describe("CheckoutView error handling", () => {
   it("shows a toast with the backend detail when the order creation fails", async () => {
     seedCart();

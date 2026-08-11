@@ -25,8 +25,19 @@ from .serializers import (
     OperationTimesSerializer,
 )
 
+# Contrato RF-04-02: únicamente cuentan los pedidos confirmados. Los pedidos
+# pending y rejected se excluyen de todas las métricas (ventas, conteos,
+# productos y tiempos) para mantenerlas consistentes entre sí.
+CONFIRMED_STATES = [
+    Order.State.PREPARING,
+    Order.State.READY,
+    Order.State.PICKED_UP,
+]
+
+# PERIOD_DAYS: cantidad de días calendario que cubre cada periodo. El rango es
+# móvil y cerrado (inclusivo de hoy): start = today - (days - 1).
 PERIOD_DAYS = {
-    'daily': 0,
+    'daily': 1,
     'weekly': 7,
     'monthly': 30,
     'four_monthly': 120,
@@ -38,7 +49,20 @@ class AnalyticsViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated, IsManagerOrSupervisor]
 
     def _get_branch_ids(self):
+        """Contrato RF-04-01 (RN-23): sucursales autorizadas por rol.
+
+        - superuser: todas las sucursales activas.
+        - supervisor: únicamente su sucursal asignada (user.branch_id).
+        - gerente: todas las sucursales activas de sus empresas
+          (company__owner=user). Otros roles no llegan aquí (403 en permisos).
+        """
         user = self.request.user
+        if user.is_superuser:
+            return set(
+                Branch.objects.filter(active=True).values_list('id', flat=True)
+            )
+        if user.groups.filter(name='supervisor').exists():
+            return {user.branch_id} if user.branch_id else set()
         return set(
             Branch.objects.filter(
                 company__owner=user,
@@ -48,9 +72,13 @@ class AnalyticsViewSet(viewsets.ViewSet):
 
     def _resolve_date_range(self):
         period = self.request.query_params.get('period', 'daily')
+        # Zona horaria del proyecto (settings.TIME_ZONE); timezone.now()
+        # devuelve la hora actual en esa zona y .date() obtiene el día local.
         end_date = timezone.now().date()
-        days = PERIOD_DAYS.get(period, 0)
-        start_date = end_date - timedelta(days=days)
+        days = PERIOD_DAYS.get(period, 1)
+        # Contrato RF-04-03: periodos móviles e inclusivos de hoy (7 días
+        # calendario para semanal, 30 mensual, 120 cuatrimestral, 180 semestral).
+        start_date = end_date - timedelta(days=days - 1)
 
         start_param = self.request.query_params.get('start_date')
         end_param = self.request.query_params.get('end_date')
@@ -62,10 +90,13 @@ class AnalyticsViewSet(viewsets.ViewSet):
         return period, start_date, end_date
 
     def _base_order_qs(self, branch_ids, start_date, end_date):
+        # Los pedidos rejected y pending no representan ventas confirmadas ni
+        # operación completada, por lo que se excluyen del análisis.
         return Order.objects.filter(
             branch_id__in=branch_ids,
             date__gte=start_date,
             date__lte=end_date,
+            state__in=CONFIRMED_STATES,
         )
 
     def _resolve_product_names(self, item_ids):

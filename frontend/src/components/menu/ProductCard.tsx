@@ -67,6 +67,11 @@ export default function ProductCard({ product }: ProductProps) {
         productBranchId: result.productBranchId,
         productBranchName,
       });
+      return;
+    }
+
+    if (result.reason === "unavailable") {
+      toast.error("Producto no disponible en esta sucursal");
     }
   };
 

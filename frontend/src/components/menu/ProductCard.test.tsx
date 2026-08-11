@@ -167,6 +167,32 @@ describe("ProductCard cross-branch flow", () => {
       expect(state).toBe("1:2:Sucursal Norte");
     });
   });
+
+  it("shows a toast when a product is not assigned to any branch", async () => {
+    const user = userEvent.setup();
+    const orphanProduct = {
+      id: 99,
+      name: "Combo especial",
+      price: 60,
+      image: null,
+      category: { id: 1, name: "Combos" },
+    };
+
+    render(
+      <Wrapper>
+        <ProductCard product={orphanProduct} />
+      </Wrapper>,
+    );
+
+    const addButton = screen.getByRole("button", { name: /Agregar Combo especial al carrito/i });
+    expect(addButton).not.toBeDisabled();
+    await user.click(addButton);
+
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith("Producto no disponible en esta sucursal");
+    });
+    expect(JSON.parse(localStorage.getItem("cooffy_cart") ?? "[]")).toHaveLength(0);
+  });
 });
 
 describe("ProductCard out-of-stock availability (RF-06 / RN-08)", () => {
