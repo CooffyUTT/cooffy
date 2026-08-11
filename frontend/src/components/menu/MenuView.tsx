@@ -76,7 +76,14 @@ export function MenuView() {
   };
 
   const handleBranchSelect = (id: number | null, name: string | null) => {
+    if (branchId === id) {
+      setShowBranchDropdown(false);
+      return;
+    }
     setBranchId(id, name);
+    setSearchTerm("");
+    setSelectedCategory(null);
+    setOrdering("name");
     setPage(1);
     setShowBranchDropdown(false);
   };
@@ -264,11 +271,20 @@ export function MenuView() {
             </p>
           </div>
         ) : products.length === 0 ? (
-          <p className="text-on-surface-variant text-sm text-center py-12">
-            {debouncedSearch
-              ? `No se encontraron resultados para "${debouncedSearch}"`
-              : "No hay productos disponibles en esta sucursal."}
-          </p>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-on-surface font-medium">
+              {debouncedSearch
+                ? "No se encontraron productos"
+                : selectedCategory !== null
+                  ? "No hay productos en esta categoría"
+                  : "No hay productos disponibles en esta sucursal."}
+            </p>
+            {debouncedSearch && (
+              <p className="text-sm text-on-surface-variant mt-1">
+                Intenta con otra búsqueda o limpia los filtros activos.
+              </p>
+            )}
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 animate-in fade-in duration-200">
