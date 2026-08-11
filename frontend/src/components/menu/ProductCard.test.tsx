@@ -13,6 +13,16 @@ vi.mock("@/hooks/useBranches", () => ({
   }),
 }));
 
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+  },
+}));
+
+import { toast } from "sonner";
 import { CartProvider, useCart } from "@/context/CartContext";
 import ProductCard from "@/components/menu/ProductCard";
 
@@ -35,6 +45,8 @@ function Wrapper({ children }: { children: ReactNode }) {
 
 beforeEach(() => {
   localStorage.clear();
+  vi.mocked(toast.error).mockReset();
+  vi.mocked(toast.success).mockReset();
 });
 
 describe("ProductCard cross-branch flow", () => {
@@ -123,5 +135,29 @@ describe("ProductCard cross-branch flow", () => {
       const state = screen.getByTestId("cart-state").textContent ?? "";
       expect(state).toBe("1:2:Sucursal Norte");
     });
+  });
+
+  it("shows a toast when a product is not assigned to any branch", async () => {
+    const user = userEvent.setup();
+    const orphanProduct = {
+      id: 99,
+      name: "Combo especial",
+      price: 60,
+    };
+
+    render(
+      <Wrapper>
+        <ProductCard product={orphanProduct} />
+      </Wrapper>,
+    );
+
+    const addButton = screen.getByRole("button", { name: /Agregar Combo especial al carrito/i });
+    expect(addButton).not.toBeDisabled();
+    await user.click(addButton);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Producto no disponible en esta sucursal");
+    });
+    expect(JSON.parse(localStorage.getItem("cooffy_cart") ?? "[]")).toHaveLength(0);
   });
 });

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Loader2, AlertCircle, ShoppingCart, Check, Minus, Plus, ArrowLeft, X, AlertTriangle, Store } from "lucide-react";
+import { toast } from "sonner";
 import { useProduct } from "@/hooks/useProduct";
 import { useProducts } from "@/hooks/useProducts";
 import { useBranches } from "@/hooks/useBranches";
@@ -81,6 +82,11 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
         productBranchId: result.productBranchId,
         productBranchName,
       });
+      return;
+    }
+
+    if (result.reason === "unavailable") {
+      toast.error("Producto no disponible en esta sucursal");
     }
   };
 
