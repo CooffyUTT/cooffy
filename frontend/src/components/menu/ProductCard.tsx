@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Plus, Check, Ban, Store, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 import { useCart } from "@/context/CartContext";
 import { useBranches } from "@/hooks/useBranches";
 import { BaseCard, CardMedia, CardFooter } from "../layout/BaseCard";
@@ -63,6 +64,11 @@ export default function ProductCard({ product }: ProductProps) {
         productBranchId: result.productBranchId,
         productBranchName,
       });
+      return;
+    }
+
+    if (result.reason === "unavailable") {
+      toast.error("Producto no disponible en esta sucursal");
     }
   };
 
