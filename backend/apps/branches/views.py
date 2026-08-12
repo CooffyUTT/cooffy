@@ -181,7 +181,8 @@ class BranchViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["put"], url_path="update")
     def update_branch(self, request, pk=None):
-        """Actualiza solo los campos name, location, schedule, image y active."""
+        """Actualiza los campos name, location, schedule, image, active y la
+        ventana de anticipación (min_anticipation_minutes, max_anticipation_hours)."""
         branch = self.get_object()
         serializer = BranchUpdateSerializer(
             branch,

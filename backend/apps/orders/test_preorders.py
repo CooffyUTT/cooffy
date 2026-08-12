@@ -16,7 +16,10 @@ from rest_framework.test import APITestCase
 
 from apps.branches.models import Branch, Company
 from apps.orders.models import Order
-from apps.orders.services import PRE_ORDER_KITCHEN_LEAD_MINUTES
+from apps.orders.services import (
+    PRE_ORDER_KITCHEN_LEAD_MINUTES,
+    pre_order_release_cutoff,
+)
 from apps.orders.state_machine import ALL_STATES, can_transition, is_terminal
 from apps.products.models import Category, Product, ProductStock
 from apps.schools.models import School
@@ -241,6 +244,18 @@ class PreOrderKitchenQueueTests(PreOrderTestBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["state"], "pending")
+
+    def test_pickup_exactly_at_cutoff_appears_in_queue_not_upcoming(self):
+        cutoff = pre_order_release_cutoff()
+        self.make_order(state=Order.State.PENDING, scheduled_pickup_at=cutoff)
+
+        queue = self.client.get(reverse("orders-list"), {"state": "pending"})
+        upcoming = self.client.get(reverse("orders-list"), {"upcoming": "true"})
+
+        self.assertEqual(queue.status_code, 200)
+        self.assertEqual(len(queue.data), 1)
+        self.assertEqual(upcoming.status_code, 200)
+        self.assertEqual(upcoming.data, [])
 
     def test_upcoming_orders_by_pickup_ascending(self):
         later = timezone.now() + timedelta(hours=5)
@@ -475,3 +490,29 @@ class BranchAnticipationWindowApiTests(APITestCase):
         self.branch.refresh_from_db()
         self.assertEqual(self.branch.min_anticipation_minutes, 15)
         self.assertEqual(self.branch.max_anticipation_hours, 48)
+
+    def test_incoherent_anticipation_window_is_rejected(self):
+        response = self.client.patch(
+            reverse("branch-detail", args=[self.branch.id]),
+            {"min_anticipation_minutes": 120, "max_anticipation_hours": 1},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("no puede exceder", str(response.data))
+        self.branch.refresh_from_db()
+        self.assertEqual(self.branch.min_anticipation_minutes, 30)
+        self.assertEqual(self.branch.max_anticipation_hours, 24)
+
+    def test_partial_patch_against_instance_window_is_validated(self):
+        # La instancia tiene 30 min; bajar el máximo a 0 h deja la ventana incoherente.
+        response = self.client.patch(
+            reverse("branch-detail", args=[self.branch.id]),
+            {"max_anticipation_hours": 0},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("no puede exceder", str(response.data))
+        self.branch.refresh_from_db()
+        self.assertEqual(self.branch.max_anticipation_hours, 24)

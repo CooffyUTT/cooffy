@@ -73,6 +73,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                     ),
                 )
             cutoff = pre_order_release_cutoff()
+            # Frontera de liberación: upcoming exige pickup > cutoff (mismo
+            # cutoff que la cola, que conserva pickup <= cutoff), por lo que un
+            # pickup exactamente en el cutoff solo aparece en la cola.
             return qs.filter(
                 scheduled_pickup_at__gt=cutoff,
                 state__in=[
@@ -97,6 +100,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 qs = qs.filter(date=date)
 
         # RN-29: los pre-orders aún no liberados no entran a la cola pending.
+        # exclude(__gt=cutoff) libera pickups en o antes del cutoff; el mismo
+        # cutoff se usa en upcoming con __gt para no solaparse en la frontera.
         if is_kitchen_staff and state == "pending":
             qs = qs.exclude(scheduled_pickup_at__gt=pre_order_release_cutoff())
 
