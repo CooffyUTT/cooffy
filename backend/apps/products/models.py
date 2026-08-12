@@ -53,7 +53,14 @@ class Product(models.Model):
 
     """ Convert image to webp, resize and change name on save """
     def save(self, *args, **kwargs):
-        if self.image and self.image.name:
+        update_fields = kwargs.get('update_fields')
+        # Solo reprocesar la imagen cuando se guarda el campo image.
+        # Si update_fields no la incluye (p. ej. toggle-active con
+        # update_fields=['active', 'updated_at']), respetar la imagen
+        # existente para no generar un archivo huérfano ni perder la URL.
+        should_process_image = update_fields is None or 'image' in update_fields
+
+        if should_process_image and self.image and self.image.name:
             img = Image.open(self.image)
 
             img.thumbnail((800, 800), Image.Resampling.LANCZOS)
