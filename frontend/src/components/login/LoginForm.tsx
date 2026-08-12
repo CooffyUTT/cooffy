@@ -32,7 +32,7 @@ export function LoginForm() {
   } = useLoginForm();
 
   return (
-    <form onSubmit={handleCredentialsLogin} className="w-full space-y-md" noValidate>
+    <form onSubmit={handleCredentialsLogin} className="w-full space-y-6" noValidate>
 
       {/* ============================================================ */}
       {/* CAMPO: Correo Institucional (credentials)                     */}
@@ -128,7 +128,7 @@ export function LoginForm() {
           
 
           {/* Botón de visibilidad e ícono de alerta (derecha) */}
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-xs">
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-2">
             {errors.password && <AlertCircle size={16} className="text-destructive" />}
             <button
               className="text-on-surface-variant/60 hover:text-primary transition-colors cursor-pointer"
@@ -174,7 +174,7 @@ export function LoginForm() {
       {/* ============================================================ */}
       {/* ENLACE PARA REGISTRO                                        */}
       {/* ============================================================ */}
-      <div className="text-center mt-xs">
+      <div className="text-center mt-2">
         <span className="text-xs text-on-surface-variant font-medium">
           ¿No tienes una cuenta?{" "}
         </span>
@@ -191,7 +191,7 @@ export function LoginForm() {
       {/* ============================================================ */}
       {/* DIVISOR "O"                                                  */}
       {/* ============================================================ */}
-      <div className="relative flex items-center py-xs">
+      <div className="relative flex items-center py-2">
         <div className="flex-grow border-t border-outline-variant"></div>
         {/* NOTA: Se ha corregido el fondo fijo `#f9f9ff` por `bg-surface-container-lowest` 
             para que herede el fondo del contenedor y sea compatible con modo oscuro. 
@@ -209,7 +209,7 @@ export function LoginForm() {
         variant="outline"
         onClick={handleSSOLogin}
         disabled={isLoading}
-        className="w-full flex items-center justify-center gap-xs border border-secondary text-secondary hover:bg-secondary/5 py-4 h-auto font-semibold text-sm rounded-lg active:scale-[0.98] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 border border-secondary text-secondary hover:bg-secondary/5 py-4 h-auto font-semibold text-sm rounded-lg active:scale-[0.98] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         type="button"
       >
         {/* El icono `FcGoogle` ya incluye los colores oficiales de Google, 

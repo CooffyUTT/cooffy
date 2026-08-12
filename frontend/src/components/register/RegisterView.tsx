@@ -46,7 +46,7 @@ export function RegisterView() {
   const selectedSchool = schools.find((s) => s.id === formData.school_id);
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-margin-mobile bg-[#f9f9ff] [background-image:radial-gradient(#d1c5b1_0.5px,transparent_0.5px)] [background-size:24px_24px] font-['Plus_Jakarta_Sans',sans-serif]">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-[#f9f9ff] [background-image:radial-gradient(#d1c5b1_0.5px,transparent_0.5px)] [background-size:24px_24px] font-['Plus_Jakarta_Sans',sans-serif]">
       
       <motion.main 
         className="w-full max-w-[480px] z-10"
@@ -56,11 +56,11 @@ export function RegisterView() {
       >
         <div className="bg-surface rounded-xl shadow-[0px_4px_20px_rgba(30,58,90,0.05)] overflow-hidden border border-outline-variant/30 transition-all duration-300 hover:shadow-[0px_10px_30px_rgba(30,58,90,0.12)]">
           
-          <div className="p-lg md:p-xl flex flex-col items-center">
+          <div className="p-8 md:p-12 flex flex-col items-center">
             
             {/* Logo Section */}
-            <motion.div variants={itemVariants} className="mb-md flex flex-col items-center gap-xs w-full">
-              <div className="relative w-full max-w-[180px] h-auto mb-xs flex justify-center">
+            <motion.div variants={itemVariants} className="mb-6 flex flex-col items-center gap-2 w-full">
+              <div className="relative w-full max-w-[180px] h-auto mb-2 flex justify-center">
                 <Image 
                   src="/images/logo.png" 
                   alt="Cooffy Logo" 
@@ -73,18 +73,18 @@ export function RegisterView() {
             </motion.div>
 
             {/* Heading */}
-            <motion.div variants={itemVariants} className="w-full text-center mb-lg">
-              <h2 className="text-2xl font-bold text-on-surface mb-xs">Crea tu cuenta</h2>
+            <motion.div variants={itemVariants} className="w-full text-center mb-8">
+              <h2 className="text-2xl font-bold text-on-surface mb-2">Crea tu cuenta</h2>
               <p className="text-sm text-on-surface-variant">Crea tu cuenta y realiza pedidos desde cualquier lugar del campus.</p>
             </motion.div>
 
             {/* --- NUEVO: Registro con Google en la parte superior --- */}
-            <motion.div variants={itemVariants} className="w-full space-y-4 mb-md">
+            <motion.div variants={itemVariants} className="w-full space-y-4 mb-6">
             <Button
                 variant="outline"
                 onClick={handleSSORegister}
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-xs border border-secondary text-secondary hover:bg-secondary/5 py-3.5 h-auto font-semibold text-sm rounded-lg active:scale-[0.98] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 border border-secondary text-secondary hover:bg-secondary/5 py-3.5 h-auto font-semibold text-sm rounded-lg active:scale-[0.98] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
             >
                 <FcGoogle size={20} className="mr-1" />
@@ -241,7 +241,7 @@ export function RegisterView() {
                         errors.password ? "border-destructive focus:ring-2 focus:ring-destructive/25" : "border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     }`}
                     />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-xs">
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-2">
                     {errors.password && <AlertCircle size={16} className="text-destructive" />}
                     <button 
                         className="text-on-surface-variant/60 hover:text-primary transition-colors cursor-pointer" 
@@ -324,7 +324,7 @@ export function RegisterView() {
                         errors.confirmPassword ? "border-destructive focus:ring-2 focus:ring-destructive/25" : "border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     }`}
                     />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-xs">
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-2">
                     {errors.confirmPassword && <AlertCircle size={16} className="text-destructive" />}
                     {isFieldValid('confirmPassword') && <CheckCircle2 size={16} className="text-primary" />}
                     <button 
@@ -402,7 +402,7 @@ export function RegisterView() {
             </motion.form>
 
             {/* Enlace sutil al Login */}
-            <motion.div variants={itemVariants} className="text-center mt-md">
+            <motion.div variants={itemVariants} className="text-center mt-6">
               <span className="text-xs text-on-surface-variant font-medium">¿Ya tienes cuenta? </span>
               <Link href="/" className="text-xs font-semibold text-primary hover:underline transition-all">
                 Inicia sesión
