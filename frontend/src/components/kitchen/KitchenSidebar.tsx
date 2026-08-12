@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useLogout } from '@/hooks/useLogout';
 
 export function KitchenSidebar() {
-  const { logout } = useLogout();
+  const { performLogout } = useLogout();
 
   return (
     <aside className="w-56 bg-[#5C3D2E] text-white flex flex-col justify-between p-4 shrink-0 shadow-lg">
@@ -30,7 +30,7 @@ export function KitchenSidebar() {
 
       <Button
         type="button"
-        onClick={logout}
+        onClick={performLogout}
         variant="destructive"
         data-testid="logout-button"
         className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 text-xs rounded-xl"

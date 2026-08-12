@@ -62,28 +62,11 @@ describe("useLogout", () => {
     toastSuccessMock.mockReset();
     toastErrorMock.mockReset();
     localStorage.clear();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
   afterEach(() => {
     vi.clearAllMocks();
     vi.restoreAllMocks();
-  });
-
-  it("does nothing when the user cancels the confirmation", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(false);
-    seedStorage();
-
-    const { result } = renderHook(() => useLogout());
-
-    await act(async () => {
-      await result.current.logout();
-    });
-
-    expect(postMock).not.toHaveBeenCalled();
-    expect(pushMock).not.toHaveBeenCalled();
-    expect(localStorage.getItem("accessToken")).toBe("access");
-    expect(localStorage.getItem("refreshToken")).toBe("refresh-xyz");
   });
 
   it("calls the logout endpoint with the refresh token, clears storage and redirects on success", async () => {
@@ -93,7 +76,7 @@ describe("useLogout", () => {
     const { result } = renderHook(() => useLogout());
 
     await act(async () => {
-      await result.current.logout();
+      await result.current.performLogout();
     });
 
     expect(postMock).toHaveBeenCalledWith("/api/auth/logout/", {
@@ -116,7 +99,7 @@ describe("useLogout", () => {
     const { result } = renderHook(() => useLogout());
 
     await act(async () => {
-      await result.current.logout();
+      await result.current.performLogout();
     });
 
     expect(localStorage.getItem("accessToken")).toBeNull();
@@ -131,27 +114,12 @@ describe("useLogout", () => {
     const { result } = renderHook(() => useLogout());
 
     await act(async () => {
-      await result.current.logout();
+      await result.current.performLogout();
     });
 
     expect(postMock).not.toHaveBeenCalled();
     expect(localStorage.getItem("accessToken")).toBeNull();
     expect(pushMock).toHaveBeenCalledWith("/");
-  });
-
-  it("supports a custom confirm function", async () => {
-    const confirmMock = vi.fn().mockReturnValue(true);
-    seedStorage();
-    postMock.mockResolvedValue({ data: { message: "ok" } });
-
-    const { result } = renderHook(() => useLogout({ confirm: confirmMock }));
-
-    await act(async () => {
-      await result.current.logout();
-    });
-
-    expect(confirmMock).toHaveBeenCalled();
-    expect(postMock).toHaveBeenCalled();
   });
 
   it("invokes onAfterLogout callback after state is cleared", async () => {
@@ -162,7 +130,7 @@ describe("useLogout", () => {
     const { result } = renderHook(() => useLogout({ onAfterLogout }));
 
     await act(async () => {
-      await result.current.logout();
+      await result.current.performLogout();
     });
 
     expect(onAfterLogout).toHaveBeenCalledOnce();

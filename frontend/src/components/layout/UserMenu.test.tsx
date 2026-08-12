@@ -9,7 +9,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/hooks/useLogout", () => ({
-  useLogout: () => ({ logout: logoutMock, isLoading: false }),
+  useLogout: () => ({ performLogout: logoutMock, isLoading: false }),
 }));
 
 import { UserMenu } from "@/components/layout/UserMenu";

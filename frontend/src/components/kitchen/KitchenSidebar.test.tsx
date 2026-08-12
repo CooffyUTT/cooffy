@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/hooks/useLogout", () => ({
-  useLogout: () => ({ logout: logoutMock, isLoading: false }),
+  useLogout: () => ({ performLogout: logoutMock, isLoading: false }),
 }));
 
 import { KitchenSidebar } from "@/components/kitchen/KitchenSidebar";
