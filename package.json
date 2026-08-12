@@ -14,6 +14,8 @@
         "back:test": "pnpm back:manage test --noinput",
         "back:install": "pnpm back:uv sync",
         "back:lock": "pnpm back:uv lock",
+        "back:cleandb": "cross-env-shell \"docker compose down -v && docker compose up -d && sleep 5 && pnpm back:manage migrate\"",
+        "back:restoredb": "cross-env-shell \"pnpm back:cleandb && pnpm back:manage seed\"",
         "dev": "concurrently -n back,front \"pnpm back\" \"pnpm front\"",
         "install:all": "cross-env-shell \"pnpm install && pnpm front:install && pnpm back:install\"",
         "init:all": "cross-env-shell \"pnpm install:all && docker compose up -d && pnpm back:manage migrate && pnpm back:manage seed && pnpm dev\"",
