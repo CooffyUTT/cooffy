@@ -1,0 +1,21 @@
+info:
+  name: Remove Product Stock
+  type: http
+  seq: 11
+
+http:
+  method: DELETE
+  url: http://localhost:8000/api/menu/manage/products/1/stocks/?branch_id=1
+  params:
+    - name: branch_id
+      value: "1"
+      type: query
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
