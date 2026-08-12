@@ -147,6 +147,63 @@ El servidor estará disponible en `http://localhost:8000/`
 
 **Nota:** Todos los comandos del backend se ejecutan a través de `uv run`, que activa el entorno virtual automáticamente. No hace falta `source .venv/bin/activate`.
 
+# 🐳 Despliegue con Docker
+
+El repositorio incluye un stack "tipo producción" (Django + Gunicorn, Next.js standalone, PostgreSQL 16 y nginx como proxy reverso en un solo origen). Ideal para demos y despliegues.
+
+## Demo local
+
+1. Crear el `.env` (usa `.env.example` como base) y ajustar las variables de producción:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Variables requeridas fuera de desarrollo:
+
+   | Variable | Descripción |
+   |----------|-------------|
+   | `DJANGO_SECRET_KEY` | Secreto de Django (obligatorio en producción) |
+   | `DJANGO_ALLOWED_HOSTS` | Hosts permitidos; si se accede por IP, incluir esa IP o usar `*` |
+   | `CSRF_TRUSTED_ORIGINS` | Origen público si se usará el admin de Django (ej. `https://demo.cooffy.com`) |
+   | `NGINX_PORT` | Puerto publicado de nginx (default `80`) |
+   | `NEXT_PUBLIC_API_URL` | Opcional; si se omite, el frontend usa rutas relativas contra el mismo origen (funciona en localhost, IP o dominio sin rebuild) |
+
+2. Construir y levantar el stack:
+
+   ```bash
+   pnpm docker:build
+   pnpm docker:up
+   ```
+
+3. Sembrar datos de demo (requiere `--allow-non-dev` fuera de desarrollo):
+
+   ```bash
+   docker compose -f docker/docker-compose.prod.yml exec backend python manage.py seed --allow-non-dev
+   ```
+
+4. Crear el superusuario de Django (primera vez):
+
+   ```bash
+   docker compose -f docker/docker-compose.prod.yml exec backend python manage.py createsuperuser
+   ```
+
+> Los usuarios de los seeds usan la contraseña `admin123` (`admin`, `gerente1`, `cliente1`, `cocina1`, `admin_escolar1`).
+
+## Despliegue con Coolify
+
+GitHub Actions construye y sube las imágenes a GHCR (`ghcr.io/cooffyutt/cooffy-{backend,frontend,nginx}`) al hacer push a `devolp` o `main`. El tag `latest` se publica desde cualquiera de las dos ramas.
+
+Para levantar el stack en Coolify autohosteado se usa el compose con imágenes pre-construidas (sin builds):
+
+```yaml
+# docker/docker-compose.release.yml
+```
+
+- Define las variables de entorno (incluido `DJANGO_SECRET_KEY`) en la UI de Coolify; no usa `env_file`.
+- El tag de imagen se controla con `COOFFY_IMAGE_TAG` (default `latest`).
+- El puerto de nginx se controla con `NGINX_PORT`.
+
 # 📁 Estructura
 
 ```
