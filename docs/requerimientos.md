@@ -31,6 +31,7 @@ Ciertos requisitos son detallados en [Requerimientos](requeriments/)
 | RF-11 | Cliente | Gestión de pagos |
 | RF-12 | Cliente | Consulta del estado del pedido |
 | RF-13 | Admin Escolar | Gestionar sucursales de una escuela |
+| RF-14 | Cliente | Pedidos anticipados |
 
 ## No Funcionales (RNF)
 
@@ -72,3 +73,10 @@ Restricciones especificas
 | RN-22 | RF-02, RF-03, RF-05, RF-07 | Los cambios realizados sobre usuarios, sucursales, productos y pedidos deberán registrar la fecha y hora de la última modificación. | Facilitar auditoría y trazabilidad de la información. |
 | RN-23 | RF-02, RF-03, RF-04, RF-05, RF-07 | Un usuario únicamente podrá administrar la información correspondiente a las sucursales para las que tenga autorización. | Proteger la información entre sucursales. |
 | RN-24 | RF-10 | Los pedidos únicamente podrán contener productos pertenecientes a la misma sucursal donde fueron realizados. | Evitar pedidos con productos de distintas sucursales. |
+| RN-25 | RF-14 | Todo pedido anticipado deberá indicar la fecha y hora programada de recogida. | Permitir preparación y entrega planificada. |
+| RN-26 | RF-14 | La recogida programada deberá estar dentro de la ventana de anticipación definida por la sucursal (por defecto: mínimo 30 minutos y máximo hasta el final del día anterior). | Asegurar tiempos de preparación y operación. |
+| RN-27 | RF-14 | El gerente de la sucursal podrá configurar la ventana de anticipación de pedidos anticipados. | Adecuar la política a cada comedor escolar. |
+| RN-28 | RF-14 | Un pedido anticipado cuenta como pedido activo de la sucursal para efectos de RN-04. | Evitar saturación por un mismo cliente. |
+| RN-29 | RF-14 | Un pedido anticipado aparecerá en la cola de cocina únicamente cuando la recogida programada esté próxima. | Evitar saturar la cola de cocina. |
+| RN-30 | RF-14 | El cliente podrá cancelar un pedido anticipado mientras esté dentro de la ventana de anticipación; un pedido cancelado no podrá reactivarse. | Flexibilidad para el cliente sin afectar la operación. |
+| RN-31 | RF-14 | El panel de cocina mostrará una pestaña de pedidos anticipados con los pedidos programados a futuro y aún no incorporados a la cola de preparación. | Permitir planificar la preparación. |
