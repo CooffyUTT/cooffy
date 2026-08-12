@@ -32,6 +32,7 @@ export interface Order {
   date: string;
   branch_id: number;
   client_id: number;
+  client_name?: string | null;
   created_at: string;
   prepared_at: string | null;
   picked_up_at: string | null;

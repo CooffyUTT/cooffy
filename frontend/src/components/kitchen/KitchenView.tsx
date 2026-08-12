@@ -66,8 +66,11 @@ function PreOrderRow({ order }: { order: Order }) {
       </div>
 
       <div>
-        <p className="text-base font-bold text-slate-900">
-          {order.comment ? `Cliente: oculto (con comentario)` : `Cliente #${order.client_id}`}
+        <p
+          className="text-base font-bold text-slate-900"
+          data-testid="preorder-client-name"
+        >
+          {order.client_name ?? "Cliente"}
         </p>
         <p className="text-sm text-slate-600 mt-1" data-testid="preorder-products">
           {itemsSummary}
@@ -115,7 +118,7 @@ export function KitchenView() {
     data: upcomingOrders = [],
     isLoading: upcomingLoading,
     isError: upcomingError,
-  } = useUpcomingOrders(15_000);
+  } = useUpcomingOrders(15_000, { enabled: activeTab === "upcoming" });
 
   const currentBranch = useMemo(
     () => branches?.find((b) => b.id === branchId) ?? null,

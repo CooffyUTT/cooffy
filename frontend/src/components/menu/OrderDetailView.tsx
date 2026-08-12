@@ -275,9 +275,9 @@ export function OrderDetailView() {
     );
   }
 
-  const branchName =
-    branches?.find((b) => b.id === order.branch_id)?.name ??
-    `Sucursal #${order.branch_id}`;
+  const branch = branches?.find((b) => b.id === order.branch_id);
+  const branchName = branch?.name ?? `Sucursal #${order.branch_id}`;
+  const minAnticipationMinutes = branch?.min_anticipation_minutes ?? null;
 
   const orderSubtotal = order.order_products.reduce(
     (sum, item) => sum + Number(item.price),
@@ -512,8 +512,11 @@ export function OrderDetailView() {
           <DialogHeader>
             <DialogTitle>¿Cancelar este pedido anticipado?</DialogTitle>
             <DialogDescription>
-              Esta acción no se puede deshacer. El pedido volverá a estar
-              disponible para que otro cliente lo ocupe.
+              {`El pedido se cancelará y no podrá reactivarse. Puedes cancelarlo ${
+                minAnticipationMinutes != null
+                  ? `hasta ${minAnticipationMinutes} minutos antes de la recogida`
+                  : "antes de la hora de recogida"
+              }.`}
             </DialogDescription>
           </DialogHeader>
           {order.scheduled_pickup_at && (

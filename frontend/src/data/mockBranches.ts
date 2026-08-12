@@ -10,7 +10,9 @@ export const INITIAL_BRANCHES: Branch[] = [
     schedule: '09:00 - 19:00',
     dailySales: 9999,
     status: 'open',
-    imageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=600'
+    imageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=600',
+    minAnticipationMinutes: 30,
+    maxAnticipationHours: 24,
   },
   {
     id: '2',
@@ -20,7 +22,9 @@ export const INITIAL_BRANCHES: Branch[] = [
     schedule: '09:00 - 16:00',
     dailySales: 999,
     status: 'open',
-    imageUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80&w=600'
+    imageUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80&w=600',
+    minAnticipationMinutes: 30,
+    maxAnticipationHours: 24,
   }
 ];
 

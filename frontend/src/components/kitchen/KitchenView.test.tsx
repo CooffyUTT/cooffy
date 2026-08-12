@@ -469,4 +469,51 @@ describe("KitchenView — RF-14 pedidos anticipados", () => {
       await screen.findByTestId("kitchen-upcoming-empty"),
     ).toHaveTextContent(/Sin pedidos anticipados pendientes/i);
   });
+
+  it("muestra el nombre del cliente cuando client_name viene en el pre-order", async () => {
+    seedUserWithBranch(1);
+    useBranchesMock.mockReturnValue({
+      data: [BRANCH_ACTIVE],
+      isLoading: false,
+    });
+    useToggleAcceptingOrdersMock.mockReturnValue(buildToggleResult());
+
+    useUpcomingOrdersMock.mockReturnValue({
+      data: [
+        {
+          id: 201,
+          order_number: 502,
+          date: "2026-08-15",
+          branch_id: 1,
+          client_id: 7,
+          client_name: "Ana Lopez",
+          created_at: "2026-08-14T12:00:00Z",
+          prepared_at: null,
+          picked_up_at: null,
+          scheduled_pickup_at: "2026-08-15T13:30:00Z",
+          total: "85.00",
+          iva: "6.30",
+          state: "pending",
+          payment_method: 1,
+          payment_status: "pending",
+          comment: null,
+          updated_at: "2026-08-14T12:00:00Z",
+          order_products: [],
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    const user = userEvent.setup();
+    renderKitchen();
+
+    await user.click(await screen.findByTestId("kitchen-tab-upcoming"));
+
+    const row = await screen.findByTestId("kitchen-preorder-row");
+    expect(
+      within(row).getByTestId("preorder-client-name"),
+    ).toHaveTextContent("Ana Lopez");
+  });
 });

@@ -93,7 +93,11 @@ export function useUpdatePaymentStatus() {
   });
 }
 
-export function useUpcomingOrders(refetchInterval?: number) {
+export function useUpcomingOrders(
+  refetchInterval?: number,
+  options: { enabled?: boolean } = {},
+) {
+  const { enabled = true } = options;
   return useQuery({
     queryKey: ["orders", "upcoming"],
     queryFn: async () => {
@@ -101,6 +105,7 @@ export function useUpcomingOrders(refetchInterval?: number) {
       return data ?? [];
     },
     refetchInterval,
+    enabled,
     select: (data) =>
       Array.isArray(data)
         ? [...data].sort((a, b) =>
@@ -119,6 +124,7 @@ export function useCancelOrder() {
     mutationFn: (orderId: number) => cancelOrder(orderId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["order"] });
     },
   });
 }
