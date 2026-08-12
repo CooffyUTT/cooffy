@@ -95,7 +95,7 @@ Table "public"."users" {
 Table "public"."product_stocks" {
   "branch_id" bigint [not null, note: 'Sucursal donde se controla el stock.', ref: > "public"."branches"."id"]
   "product_id" bigint [not null, note: 'Producto asociado al stock.', ref: > "public"."products"."id"]
-  "stock" int [not null, default: 0, note: 'Cantidad disponible del producto.']
+  "stock" int [not null, default: -1, note: 'Estado: -1 sin control activado, 0 agotado, 1 con stock.']
   "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del stock.']
 
   Indexes {

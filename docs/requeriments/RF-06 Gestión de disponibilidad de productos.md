@@ -37,3 +37,21 @@ Depende de:
 Restricciones:
 
 - RN-12 Cada producto podrá definir un límite máximo de unidades por pedido.
+
+## Contrato de implementación
+
+La relación producto↔sucursal es una fila `ProductStock` (PK compuesta
+branch+product) cuyo estado `stock` es `-1` (sin control activado, disponible),
+`0` (agotado) o `1` (con stock). Sin fila, el producto no pertenece al menú de
+la sucursal.
+
+- Asignar o cambiar estado: `POST /api/menu/manage/products/{id}/stocks/` con
+  `{branch_id, stock?}` (upsert; `stock` por defecto `-1`).
+- Desasignar: `DELETE /api/menu/manage/products/{id}/stocks/?branch_id=X`.
+- Acceso (RN-23): solo gerentes sobre sucursales `active=True` de sus propias
+  empresas (`company.owner == user`); 404 si no; superusuario puede todo. El
+  supervisor queda fuera del MVP (el seed no crea el grupo `supervisor`).
+- En el menú (RF-08), el producto con fila de stock `!= 0` aparece como
+  disponible; con stock `0` sigue visible pero marcado como "Agotado" y su
+  pedido se bloquea (RN-24, `not_offered` = sin fila, `out_of_stock` = fila con
+  stock 0).

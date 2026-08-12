@@ -194,7 +194,7 @@ Control de disponibilidad de productos por sucursal.
 | --- | --- | --- | --- | --- |
 | branch_id | bigint | \-  | PK, NOT NULL, FK | Sucursal donde se controla el stock. |
 | product_id | bigint | \-  | PK, NOT NULL, FK | Producto asociado al stock. |
-| stock | int | 0   | NOT NULL, CHECK (stock >= 0) | Cantidad disponible del producto. |
+| stock | int | \-1 | NOT NULL, CHECK (stock IN (-1, 0, 1)) | Estado: -1 sin control activado, 0 agotado, 1 con stock. |
 | updated_at | timestamp | CURRENT_TIMESTAMP | NOT NULL | Última actualización del stock. |
 
 | Relaciones | Índices |
