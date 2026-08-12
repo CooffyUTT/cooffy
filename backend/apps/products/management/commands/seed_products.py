@@ -237,9 +237,14 @@ class Command(BaseCommand):
             action='store_true',
             help='Elimina todos los productos antes de sembrar.',
         )
+        parser.add_argument(
+            '--allow-non-dev',
+            action='store_true',
+            help='Permite ejecutar el seed fuera del entorno development (ej. demo en producción).',
+        )
 
     def handle(self, *args, **options):
-        if settings.DJANGO_ENV != 'development':
+        if settings.DJANGO_ENV != 'development' and not options.get('allow_non_dev'):
             self.stderr.write(
                 self.style.ERROR(
                     'Este comando solo puede ejecutarse en entorno development '

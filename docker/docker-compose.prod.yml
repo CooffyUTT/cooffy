@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cooffy}
+      POSTGRES_USER: ${POSTGRES_USER:-cooffy-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cooffy-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ../backend
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      POSTGRES_HOST: postgres
+      DJANGO_ENV: ${DJANGO_ENV:-production}
+    depends_on:
+      - postgres
+    volumes:
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - backend
+
+  nginx:
+    build: ./nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - media_data:/usr/share/nginx/media:ro
+      - static_data:/usr/share/nginx/static:ro
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  postgres_data:
+  media_data:
+  static_data:

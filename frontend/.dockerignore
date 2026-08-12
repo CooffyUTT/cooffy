@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.turbo/
+out/
+coverage/
+.env
+.env.*
+.git/
+.gitignore
+README.md
+tsconfig.tsbuildinfo
+*.log

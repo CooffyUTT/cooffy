@@ -71,6 +71,11 @@ class Command(BaseCommand):
             action='store_true',
             help='Elimina todas las sucursales y empresas antes de sembrar.',
         )
+        parser.add_argument(
+            '--allow-non-dev',
+            action='store_true',
+            help='Permite ejecutar el seed fuera del entorno development (ej. demo en producción).',
+        )
 
     def _get_or_create_manager(self, username, school):
         """Devuelve (creando si hace falta) el usuario gerente de una compañía.
@@ -100,7 +105,7 @@ class Command(BaseCommand):
         return manager
 
     def handle(self, *args, **options):
-        if getattr(settings, 'DJANGO_ENV', 'development') != 'development':
+        if getattr(settings, 'DJANGO_ENV', 'development') != 'development' and not options.get('allow_non_dev'):
             self.stderr.write(
                 self.style.ERROR(
                     'Este comando solo puede ejecutarse en entorno desarrollo '
