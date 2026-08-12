@@ -32,6 +32,13 @@ Restricciones:
 - RN-22 Los cambios realizados deberán registrar la fecha y hora de la última modificación.
 - RN-23 El usuario únicamente podrá administrar la información de las sucursales para las que tenga autorización.
 
+## Contrato de implementación
+
+La pertenencia de un producto a una sucursal se gestiona con filas
+`ProductStock` mediante `POST/DELETE /api/menu/manage/products/{id}/stocks/`
+desde el panel del gerente (ver contrato en RF-06). Un producto del catálogo
+global solo aparece en el menú de una sucursal cuando existe su fila de stock.
+
 ## Tareas
 
 |     |     |     |

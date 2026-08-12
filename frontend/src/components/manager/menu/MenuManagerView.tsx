@@ -1,25 +1,37 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Store } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Product, ProductFormValues } from "@/types/product";
+import { api } from "@/lib/api";
 import {
+  assignProductStock,
   createProduct,
   deleteProduct,
   listManageProducts,
+  removeProductStock,
   toggleProductActive,
   updateProduct,
 } from "@/lib/productsApi";
 import { ProductTable } from "./ProductTable";
 import { ProductFormDialog } from "./ProductFormDialog";
 
+interface ManagerBranch {
+  id: number;
+  name: string;
+}
+
 export function MenuManagerView() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+
+  const [branches, setBranches] = useState<ManagerBranch[]>([]);
+  const [isLoadingBranches, setIsLoadingBranches] = useState(true);
+  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -48,6 +60,30 @@ export function MenuManagerView() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadProducts();
   }, [loadProducts]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    api
+      .get<ManagerBranch[]>("/api/branches/")
+      .then(({ data }) => {
+        if (!cancelled) setBranches(data);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          toast.error("No se pudieron cargar las sucursales", {
+            description: "No se pueden gestionar stocks por sucursal.",
+          });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingBranches(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -122,6 +158,41 @@ export function MenuManagerView() {
     }
   };
 
+  const handleAssignStock = async (product: Product, stock?: number) => {
+    if (selectedBranchId === null) return;
+    try {
+      const updated = await assignProductStock(product.id, selectedBranchId, stock);
+      setProducts((prev) =>
+        prev.map((p) => (p.id === updated.id ? updated : p))
+      );
+      toast.success(
+        stock === 0
+          ? "Producto marcado como agotado en la sucursal"
+          : "Producto asignado a la sucursal"
+      );
+    } catch {
+      toast.error("No se pudo actualizar el stock del producto");
+    }
+  };
+
+  const handleRemoveStock = async (product: Product) => {
+    if (selectedBranchId === null) return;
+    try {
+      await removeProductStock(product.id, selectedBranchId);
+      const branchStocks = { ...(product.branchStocks ?? {}) };
+      delete branchStocks[selectedBranchId];
+      const updated: Product = { ...product, branchStocks };
+      setProducts((prev) => prev.map((p) => (p.id === product.id ? updated : p)));
+      toast.success("Producto desasignado de la sucursal");
+    } catch {
+      toast.error("No se pudo desasignar el producto");
+    }
+  };
+
+  const handleToggleStock = async (product: Product, markAsOutOfStock: boolean) => {
+    await handleAssignStock(product, markAsOutOfStock ? 0 : 1);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-stone-200 pb-6">
@@ -141,29 +212,60 @@ export function MenuManagerView() {
         </Button>
       </div>
 
-      <form
-        onSubmit={handleSearchSubmit}
-        className="flex gap-2"
-        style={{ width: "100%", maxWidth: "384px" }}
-      >
-        <Input
-          className="min-w-0"
-          style={{ flex: "1 1 auto", width: "100%" }}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar producto..."
-        />
-        <Button type="submit" variant="outline" className="shrink-0">
-          Buscar
-        </Button>
-      </form>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <form
+          onSubmit={handleSearchSubmit}
+          className="flex gap-2"
+          style={{ width: "100%", maxWidth: "384px" }}
+        >
+          <Input
+            className="min-w-0"
+            style={{ flex: "1 1 auto", width: "100%" }}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar producto..."
+          />
+          <Button type="submit" variant="outline" className="shrink-0">
+            Buscar
+          </Button>
+        </form>
+
+        <div className="flex items-center gap-2">
+          <Store className="h-4 w-4 text-stone-500" />
+          <select
+            value={selectedBranchId ?? ""}
+            onChange={(e) =>
+              setSelectedBranchId(e.target.value ? Number(e.target.value) : null)
+            }
+            disabled={isLoadingBranches}
+            data-testid="branch-select"
+            className="text-sm bg-white border border-stone-300 rounded-lg px-3 py-2 text-stone-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-w-[220px]"
+          >
+            <option value="">Todas las sucursales</option>
+            {branches.map((branch) => (
+              <option key={branch.id} value={branch.id}>
+                {branch.name}
+              </option>
+            ))}
+          </select>
+          {selectedBranchId !== null && (
+            <p className="text-xs text-stone-500 max-w-[220px] hidden sm:block">
+              Marca qué productos pertenecen a esta sucursal y si están agotados.
+            </p>
+          )}
+        </div>
+      </div>
 
       <ProductTable
         products={products}
         isLoading={isLoading}
+        branchId={selectedBranchId}
         onEdit={handleEditProduct}
         onDelete={handleDelete}
         onToggleActive={handleToggleActive}
+        onAssignStock={handleAssignStock}
+        onRemoveStock={handleRemoveStock}
+        onToggleStock={handleToggleStock}
       />
 
       <ProductFormDialog

@@ -12,6 +12,19 @@ import type {
 
 const BASE_URL = "/api/menu/manage/products/";
 
+type RawProduct = Product & { branch_stocks?: Record<string, number> };
+
+function normalizeProduct(raw: RawProduct): Product {
+  const branchStocks: Record<number, number> = {};
+  for (const [key, stock] of Object.entries(raw.branch_stocks ?? {})) {
+    const branchId = Number(key);
+    if (Number.isInteger(branchId)) branchStocks[branchId] = stock;
+  }
+  const rest = { ...raw };
+  delete rest.branch_stocks;
+  return { ...rest, branchStocks };
+}
+
 function buildFormData(values: Partial<ProductFormValues>): FormData {
   const formData = new FormData();
 
@@ -34,7 +47,7 @@ export async function listManageProducts(
   const { data } = await api.get<PaginatedResponse<Product>>(BASE_URL, {
     params: search ? { search } : undefined,
   });
-  return data;
+  return { ...data, results: data.results.map(normalizeProduct) };
 }
 
 export async function createProduct(
@@ -43,7 +56,7 @@ export async function createProduct(
   const { data } = await api.post<Product>(BASE_URL, buildFormData(values), {
     headers: { "Content-Type": "multipart/form-data" },
   });
-  return data;
+  return normalizeProduct(data);
 }
 
 export async function updateProduct(
@@ -55,7 +68,7 @@ export async function updateProduct(
     buildFormData(values),
     { headers: { "Content-Type": "multipart/form-data" } }
   );
-  return data;
+  return normalizeProduct(data);
 }
 
 export async function deleteProduct(id: number): Promise<void> {
@@ -66,5 +79,26 @@ export async function toggleProductActive(id: number): Promise<Product> {
   const { data } = await api.patch<Product>(
     `${BASE_URL}${id}/toggle-active/`
   );
-  return data;
+  return normalizeProduct(data);
+}
+
+export async function assignProductStock(
+  id: number,
+  branchId: number,
+  stock?: number
+): Promise<Product> {
+  const { data } = await api.post<Product>(`${BASE_URL}${id}/stocks/`, {
+    branch_id: branchId,
+    ...(stock !== undefined ? { stock } : {}),
+  });
+  return normalizeProduct(data);
+}
+
+export async function removeProductStock(
+  id: number,
+  branchId: number
+): Promise<void> {
+  await api.delete(`${BASE_URL}${id}/stocks/`, {
+    params: { branch_id: branchId },
+  });
 }
