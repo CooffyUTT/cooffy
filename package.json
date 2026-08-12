@@ -21,6 +21,7 @@
         "init:all": "cross-env-shell \"pnpm install:all && docker compose up -d && pnpm back:manage migrate && pnpm back:manage seed && pnpm dev\"",
         "docker:build": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml --env-file .env build\"",
         "docker:up": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml --env-file .env up -d\"",
+        "docker:release": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml --env-file .env\"",
         "docker:down": "cross-env-shell \"docker compose -f docker/docker-compose.prod.yml --env-file .env down\""
     },
     "devDependencies": {
