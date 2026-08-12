@@ -22,11 +22,13 @@ export default function CartSheet() {
     subtotal,
     tax,
     total,
+    branchId,
+    branchName,
     isCartOpen,
-    setIsCartOpen
+    setIsCartOpen,
   } = useCart();
 
-  const handleGoToCheckout = () => {
+  const handleCheckout = () => {
     setIsCartOpen(false);
     router.push("/menu/checkout");
   };
@@ -39,6 +41,11 @@ export default function CartSheet() {
             <SheetTitle className="font-headline-md text-2xl font-bold text-on-surface flex items-center gap-2">
               <ShoppingBag className="text-primary h-6 w-6" /> Tu carrito
             </SheetTitle>
+            {branchId && (
+              <p className="text-xs text-on-surface-variant">
+                {branchName ?? `Sucursal #${branchId}`}
+              </p>
+            )}
           </SheetHeader>
 
           {cart.length === 0 ? (
@@ -87,7 +94,7 @@ export default function CartSheet() {
                 <span>${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm text-on-surface-variant">
-                <span>Impuesto (8%)</span>
+                <span>IVA incluido (8%)</span>
                 <span>${tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-lg font-bold text-on-surface pt-2 border-t border-dashed border-outline-variant/20">
@@ -97,8 +104,10 @@ export default function CartSheet() {
             </div>
             <SheetFooter>
               <Button
-                onClick={handleGoToCheckout}
-                className="w-full h-auto bg-primary text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:bg-on-primary-fixed-variant"
+                className="w-full bg-primary text-white py-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:bg-on-primary-fixed-variant"
+                onClick={handleCheckout}
+                disabled={branchId === null}
+                title={branchId === null ? "Selecciona una sucursal para continuar" : undefined}
               >
                 Continuar al pago <ArrowRight className="h-4 w-4" />
               </Button>

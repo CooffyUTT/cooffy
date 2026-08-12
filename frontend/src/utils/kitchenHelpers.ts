@@ -4,3 +4,15 @@ export const getTimeBadgeColor = (mins: number): string => {
   if (mins <= 15) return 'bg-orange-100 text-orange-900 border-orange-300';
   return 'bg-red-100 text-red-900 border-red-300 animate-pulse';
 };
+
+export const getServiceTypeBadge = (type: string) => {
+  switch (type) {
+    case 'takeaway':
+      return { label: 'Para llevar', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' };
+    case 'dine_in':
+      return { label: 'Consumir aquí', color: 'bg-teal-50 text-teal-700 border-teal-200' };
+    case 'preorder':
+    default:
+      return { label: 'Pedido anticipado', color: 'bg-purple-50 text-purple-700 border-purple-200' };
+  }
+};

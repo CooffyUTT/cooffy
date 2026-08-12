@@ -11,9 +11,35 @@ El personal de cocina tendrá la opción “Pedidos” para ver todos los pedido
 
 Estos pedidos se organizan en 3 columnas (en espera, en proceso y completados) de forma cronológica y actualizándose automáticamente sin que el personal tenga que refrescar la página.
 
-Un pedido puede cambiar al siguiente estado presionando un botón hasta que llegue a “completados”.
+Un pedido puede cambiar al siguiente estado presionando un botón hasta que llegue a “completados” (entregado).
 
 Si hay muchos pedidos acumulados en espera, el personal puede desactivar la entrada de pedidos con un botón.
+
+## Estados canónicos y transiciones
+
+El sistema define cinco estados canónicos de pedido (valores usados por la API y el frontend):
+
+| Valor | Etiqueta |
+|-------|----------|
+| `pending` | En espera |
+| `preparing` | En preparación |
+| `ready` | Listo para entregar |
+| `picked_up` | Entregado |
+| `rejected` | Rechazado |
+
+La secuencia de estados permitida es lineal: `pending` → `preparing` → `ready` → `picked_up`. El personal de cocina también puede rechazar el pedido en cualquier momento antes de la entrega.
+
+Transiciones válidas:
+
+| De | A |
+|----|---|
+| `pending` | `preparing`, `rejected` |
+| `preparing` | `ready`, `rejected` |
+| `ready` | `picked_up` |
+| `picked_up` | — (terminal) |
+| `rejected` | — (terminal) |
+
+Esta tabla es la única fuente de verdad de las transiciones (RN-13) y está implementada en `backend/apps/orders/state_machine.py` (`can_transition`). `picked_up` y `rejected` son estados terminales: un pedido rechazado no vuelve a aceptarse (RN-14) y un pedido entregado no cambia de estado (RN-15).
 
 ## Flujo
 

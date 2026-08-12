@@ -31,12 +31,17 @@
 - Seed groups include `gerente`, `cliente`, `empleado` and `admin_escolar`.
 - Branch manager permissions allow only `gerente`; order views restrict clients
   by `client_id` unless the user is staff.
+- Product management endpoints use `IsManagerOrSupervisor`
+  (`apps/products/permissions.py`), which allows `gerente` or `supervisor`; the seed does not create a `supervisor` group.
 - School endpoints require authentication; school viewset querysets scope
   non-staff users to schools whose `admin_id` matches their user id.
 
 ## Products and seeds
 
 - Product saves convert uploaded images to WEBP at 800x800, quality 85.
+- Product management CRUD lives at `/api/menu/manage/products/`
+  (`ProductManageViewSet`); it includes a `PATCH /{id}/toggle-active/` action
+  to enable/disable products.
 - Seeds are development-only and require `DJANGO_ENV=development`.
 - `pnpm back:manage seed` runs users, branches and products; use `--force` to
   recreate users.
@@ -45,5 +50,5 @@
 ## Constraints
 
 - `.env` is at the repository root; never create `backend/.env`.
-- No backend lint, formatter or meaningful test suite is configured. Do not
-  invent pytest or ruff configuration.
+- No backend lint or formatter is configured. Tests use Django's native runner
+  through `pnpm back:test`; do not invent pytest or ruff configuration.

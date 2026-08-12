@@ -4,7 +4,8 @@ import { OrdersListView } from "@/components/menu/OrdersListView";
 
 export const metadata: Metadata = {
   title: "Mis pedidos",
-  description: "Consulta tus pedidos anteriores y su estado.",
+  description:
+    "Consulta el estado y el seguimiento de tus pedidos de Cooffy en tiempo real.",
 };
 
 export default function OrdersPage() {

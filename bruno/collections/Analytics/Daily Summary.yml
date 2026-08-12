@@ -1,0 +1,46 @@
+info:
+  name: Daily Summary
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://localhost:8000/api/analytics/daily-summary/
+  params:
+    - name: period
+      value: daily
+      type: query
+    - name: start_date
+      value: ""
+      type: query
+      disabled: true
+    - name: end_date
+      value: ""
+      type: query
+      disabled: true
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 200", () => {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should contain KPI fields", () => {
+          expect(res.body).to.have.property("sales_total");
+          expect(res.body).to.have.property("orders_count");
+          expect(res.body).to.have.property("top_product");
+          expect(res.body).to.have.property("avg_operation_minutes");
+          expect(res.body).to.have.property("period");
+          expect(res.body).to.have.property("date");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

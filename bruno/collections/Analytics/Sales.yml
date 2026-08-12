@@ -1,0 +1,35 @@
+info:
+  name: Sales
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: http://localhost:8000/api/analytics/sales/
+  params:
+    - name: period
+      value: weekly
+      type: query
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 200", () => {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return time series data", () => {
+          expect(res.body).to.have.property("period");
+          expect(res.body).to.have.property("data");
+          expect(res.body.data).to.be.an("array");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

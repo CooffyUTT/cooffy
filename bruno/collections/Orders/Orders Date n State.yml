@@ -1,0 +1,24 @@
+info:
+  name: Orders Date n State
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://localhost:8000/api/orders/?date=2026-08-02&state=pending
+  params:
+    - name: date
+      value: 2026-08-02
+      type: query
+    - name: state
+      value: pending
+      type: query
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

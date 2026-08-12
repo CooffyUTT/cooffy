@@ -16,6 +16,11 @@ class Company(models.Model):
         on_delete=models.CASCADE,
         related_name='companies',
     )
+    schools = models.ManyToManyField(
+        'schools.School',
+        through='CompanySchool',
+        related_name='companies',
+    )
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -29,6 +34,46 @@ class Company(models.Model):
         return self.name
 
 
+class CompanySchool(models.Model):
+    """Vincula una compañía con las escuelas donde puede operar."""
+
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name='school_links',
+    )
+    school = models.ForeignKey(
+        'schools.School',
+        on_delete=models.CASCADE,
+        related_name='company_links',
+    )
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'company_schools'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['company', 'school'],
+                name='unique_company_school',
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=['school', 'active'],
+                name='company_sch_school__c2bd5a_idx',
+            ),
+            models.Index(
+                fields=['company', 'active'],
+                name='company_sch_company_8a6f3d_idx',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.company} - {self.school}'
+
+
 class Branch(models.Model):
     """Sucursal operada por una empresa dentro de una escuela."""
 
@@ -38,7 +83,12 @@ class Branch(models.Model):
         on_delete=models.CASCADE,
         related_name='branches',
     )
-    school_id = models.BigIntegerField()
+    school = models.ForeignKey(
+        'schools.School',
+        on_delete=models.PROTECT,
+        related_name='branches',
+        db_column='school_id',
+    )
     location = models.TextField(blank=True, null=True)
     schedule = models.CharField(max_length=100, blank=True, null=True)
     image = models.ImageField(upload_to='branches/', max_length=2048, null=True, blank=True)
@@ -52,7 +102,10 @@ class Branch(models.Model):
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['company']),
-            models.Index(fields=['school_id', 'active']),
+            models.Index(
+                fields=['school', 'active'],
+                name='branches_school__57be82_idx',
+            ),
         ]
         verbose_name_plural = 'Branches'
 

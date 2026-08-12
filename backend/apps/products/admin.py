@@ -1,5 +1,15 @@
 from django.contrib import admin
-from .models import Category, Product
+from .models import Category, Product, ProductStock
+
+
+class ProductStockInline(admin.TabularInline):
+    model = ProductStock
+    extra = 0
+    can_delete = False
+    readonly_fields = ('branch', 'stock', 'updated_at')
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Category)
@@ -16,3 +26,4 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ('active', 'category')
     search_fields = ('name', 'description')
     readonly_fields = ('created_at', 'updated_at')
+    inlines = [ProductStockInline]

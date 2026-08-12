@@ -1,13 +1,16 @@
 import React from "react";
-import { ORDER_STATE_SEQUENCE } from "@/lib/constants";
+import { ORDER_PROGRESS_STATES } from "@/lib/orderUi";
 
 interface OrderProgressBarProps {
   state: string;
 }
 
 export function OrderProgressBar({ state }: OrderProgressBarProps) {
-  const index = Math.max(0, ORDER_STATE_SEQUENCE.indexOf(state as (typeof ORDER_STATE_SEQUENCE)[number]));
-  const percent = ((index + 1) / ORDER_STATE_SEQUENCE.length) * 100;
+  const index = Math.max(
+    0,
+    ORDER_PROGRESS_STATES.indexOf(state as (typeof ORDER_PROGRESS_STATES)[number]),
+  );
+  const percent = ((index + 1) / ORDER_PROGRESS_STATES.length) * 100;
 
   return (
     <div className="h-1.5 w-full rounded-full bg-outline-variant/25 overflow-hidden">

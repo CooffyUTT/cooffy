@@ -53,7 +53,14 @@ class Product(models.Model):
 
     """ Convert image to webp, resize and change name on save """
     def save(self, *args, **kwargs):
-        if self.image and self.image.name:
+        update_fields = kwargs.get('update_fields')
+        # Solo reprocesar la imagen cuando se guarda el campo image.
+        # Si update_fields no la incluye (p. ej. toggle-active con
+        # update_fields=['active', 'updated_at']), respetar la imagen
+        # existente para no generar un archivo huérfano ni perder la URL.
+        should_process_image = update_fields is None or 'image' in update_fields
+
+        if should_process_image and self.image and self.image.name:
             img = Image.open(self.image)
 
             img.thumbnail((800, 800), Image.Resampling.LANCZOS)
@@ -80,3 +87,39 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ProductStock(models.Model):
+    class StockState(models.IntegerChoices):
+        NOT_TRACKED = -1, 'Sin stock activado'
+        OUT_OF_STOCK = 0, 'Sin stock'
+        IN_STOCK = 1, 'Con stock'
+
+    branch = models.ForeignKey(
+        'branches.Branch',
+        on_delete=models.CASCADE,
+        related_name='product_stocks',
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='branch_stocks',
+    )
+    stock = models.IntegerField(
+        choices=StockState.choices,
+        default=StockState.NOT_TRACKED,
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+    pk = models.CompositePrimaryKey('branch_id', 'product_id')
+
+    class Meta:
+        db_table = 'product_stocks'
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(stock__in=[-1, 0, 1]),
+                name='product_stock_valid_state',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.product} - {self.branch}'

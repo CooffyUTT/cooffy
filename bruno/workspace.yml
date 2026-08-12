@@ -6,6 +6,8 @@ info:
 collections:
   - name: "Auth"
     path: "collections/Auth"
+  - name: "Specific User"
+    path: "collections/Specific User"
   - name: "Products"
     path: "collections/Products"
   - name: "Orders"
@@ -14,8 +16,12 @@ collections:
     path: "collections/School"
   - name: "Branches"
     path: "collections/Branches"
+  - name: "User"
+    path: "collections/User"
   - name: "School"
     path: "collections/School"
+  - name: "Analytics"
+    path: "collections/Analytics"
 
 specs:
 

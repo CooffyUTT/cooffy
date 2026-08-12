@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import User
 from django.contrib.auth.models import Group
+from apps.schools.models import School
 import re
 
 class LoginSerializer(serializers.Serializer):
@@ -21,6 +22,9 @@ class LoginSerializer(serializers.Serializer):
         if not user.check_password(password_input):
             raise serializers.ValidationError("Credenciales inválidas")
 
+        if not user.active:
+            raise serializers.ValidationError("La cuenta está desactivada.")
+
         data['user_obj'] = user
         return data
 
@@ -37,13 +41,34 @@ class CreateClientSerializer(serializers.Serializer):
 
     def validate(self, data):
         user = data.get('user')
+        school_id = data.get('school_id')
 
         pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu\.mx$" ## para validar que sea un correo institucional válido
-        if not re.match(pattern, user):
+        if not re.match(pattern, user, re.IGNORECASE):
             raise serializers.ValidationError("Debe utilizar un correo institucional.")
 
         if User.objects.filter(user=user).exists():
             raise serializers.ValidationError("El correo ya se encuentra registrado.")
+
+        # El dominio del correo debe pertenecer a la escuela seleccionada (RF-02)
+        try:
+            school = School.objects.get(pk=school_id)
+        except School.DoesNotExist:
+            raise serializers.ValidationError(
+                {"school_id": "La escuela seleccionada no existe."}
+            )
+
+        school_domain = (school.domain_address or "").strip().lower()
+        if not school_domain:
+            raise serializers.ValidationError(
+                "La escuela seleccionada no tiene un dominio institucional configurado."
+            )
+
+        email_domain = user.rsplit("@", 1)[-1].strip().lower()
+        if email_domain != school_domain:
+            raise serializers.ValidationError(
+                f"El dominio del correo ({email_domain}) no coincide con el dominio institucional de la escuela."
+            )
 
         return data
     
@@ -64,6 +89,28 @@ class CreateClientSerializer(serializers.Serializer):
 
         return new_user
 
+class UpdateUserSerializer(serializers.ModelSerializer):
+    """Serializador para editar un usuario existente."""
+
+    class Meta:
+        model = User
+        fields = [
+            'user',
+            'name',
+            'lastname',
+            'school_id',
+            'active',
+        ]
+
+    def validate_user(self, value):
+        value = value.strip()
+
+        if User.objects.filter(user=value).exclude(pk=self.instance.pk if self.instance else None).exists():
+            raise serializers.ValidationError("El correo ya se encuentra registrado.")
+
+        return value
+
+
 class UserSerializer(serializers.ModelSerializer):
     groups = serializers.SerializerMethodField()
 
@@ -75,6 +122,7 @@ class UserSerializer(serializers.ModelSerializer):
             'name',
             'lastname',
             'school_id',
+            'branch_id',
             'active',
             'groups',
         ]

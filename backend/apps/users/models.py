@@ -35,12 +35,26 @@ class UserManager(BaseUserManager):
 
         return self._create_user(user, password, **extra_fields)
 
-
 class User(AbstractBaseUser, PermissionsMixin):
     user = models.CharField(max_length=254, unique=True)  # email o username
     name = models.CharField(max_length=100)
     lastname = models.CharField(max_length=100, blank=True, null=True)
-    school_id = models.BigIntegerField(blank=True, null=True)
+    school = models.ForeignKey(
+        'schools.School',
+        on_delete=models.SET_NULL,
+        related_name='users',
+        blank=True,
+        null=True,
+        db_column='school_id',
+    )
+    branch = models.ForeignKey(
+        'branches.Branch',
+        on_delete=models.SET_NULL,
+        related_name='users',
+        blank=True,
+        null=True,
+        db_column='branch_id',
+    )
     active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     # is_superuser, groups, user_permissions los aporta PermissionsMixin
