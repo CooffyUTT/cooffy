@@ -52,7 +52,7 @@ jobs:
           tags: |
             type=raw,value=${{ github.ref_name }}
             type=sha,format=short,prefix=sha-
-            type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
+            type=raw,value=latest,enable=${{ github.ref_name == 'main' || github.ref_name == 'devolp' }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
