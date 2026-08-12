@@ -50,6 +50,12 @@ tests hasta reconciliar los requerimientos. No renumeres la regla en silencio.
 | RF-12-01 | RF-12, RN-13 | El cliente ve el estado y detalles sólo de sus propios pedidos | Definir endpoint/respuesta para el cliente y valores canónicos de estado | Integración API; queryset/serializer |
 | RF-12-02 | RF-12 | El cliente ve un tiempo estimado de preparación | Definir origen, unidad, cálculo y comportamiento cuando no existe estimación | Unitario más API/comportamiento frontend |
 | RF-12-03 | RF-12 | El estado del cliente permanece sincronizado con los cambios de cocina | Definir mecanismo de actualización y retraso máximo aceptable antes de considerar los datos obsoletos | Contrato API; E2E sólo si es necesario |
+| RF-14-01 | RF-14, RN-25/RN-26 | La recogida programada se valida contra la ventana de anticipación de la sucursal (mínimo 30 min y máximo hasta el final del día anterior) | Definir dónde se persisten los valores mín/máx, las unidades y la respuesta ante una recogida fuera de la ventana | Unitario más API; serializer/creación de pedido |
+| RF-14-02 | RF-14, RN-27 | El gerente de la sucursal configura la ventana de anticipación | Definir campos en la sucursal, rol autorizado y endpoint de actualización | Integración API; sucursal |
+| RF-14-03 | RF-14, RN-28 | Un pedido anticipado cuenta como pedido activo y bloquea otro pedido del cliente en la misma sucursal | Definir si la restricción de pedido activo considera pedidos programados a futuro y hasta qué estado | Integración API; restricción de creación |
+| RF-14-04 | RF-14, RN-29 | El pedido anticipado entra a la cola de cocina únicamente cuando la recogida programada está próxima | Definir el momento exacto (criterio de tiempo) y el mecanismo para incorporarlo a la cola | Integración API; queryset de cocina |
+| RF-14-05 | RF-14, RN-31 | El panel de cocina muestra una pestaña de pedidos anticipados pendientes | Definir endpoint, campos mostrados (hora de recogida, cliente, productos) y orden | Integración frontend/API; panel de cocina |
+| RF-14-06 | RF-14, RN-30 | El cliente cancela un pedido anticipado dentro de la ventana y no se reactiva | Definir endpoint/acción de cancelación, rol, estado resultante y regla de no reactivación | Integración API; política de estados |
 
 ## Límite del MVP
 
