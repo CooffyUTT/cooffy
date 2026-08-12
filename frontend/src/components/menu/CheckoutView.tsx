@@ -131,6 +131,7 @@ export function CheckoutView() {
       const order = await createOrder.mutateAsync(payload);
       setCreatedOrder(order);
       clearCart();
+      toast.success(`Pedido #${order.order_number} registrado`);
     } catch (error) {
       const message = extractOrderErrorMessage(error);
       toast.error("No se pudo registrar el pedido", { description: message });
