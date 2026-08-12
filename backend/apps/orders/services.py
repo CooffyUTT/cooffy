@@ -7,9 +7,25 @@ either layer.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Iterable
 
+from django.utils import timezone
+
 from apps.products.models import Product, ProductStock
+
+
+PRE_ORDER_KITCHEN_LEAD_MINUTES = 30
+
+
+def pre_order_release_cutoff(now=None):
+    """Instant after which a pre-order joins the kitchen queue (RN-29).
+
+    Pre-orders whose ``scheduled_pickup_at`` is later than this cutoff are
+    still planned and must not appear in the ``pending`` kitchen queue.
+    """
+    now = now if now is not None else timezone.now()
+    return now + timedelta(minutes=PRE_ORDER_KITCHEN_LEAD_MINUTES)
 
 
 @dataclass(frozen=True)

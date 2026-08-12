@@ -6,6 +6,7 @@ export const ORDER_STATE_BADGE_CLASSES: Record<OrderState, string> = {
   ready: "bg-emerald-100 text-emerald-900 border-emerald-300",
   picked_up: "bg-gray-100 text-gray-700 border-gray-300",
   rejected: "bg-red-100 text-red-900 border-red-300",
+  cancelled: "bg-neutral-100 text-neutral-700 border-neutral-300",
 };
 
 export const ORDER_STATE_DOT_CLASSES: Record<OrderState, string> = {
@@ -14,6 +15,7 @@ export const ORDER_STATE_DOT_CLASSES: Record<OrderState, string> = {
   ready: "bg-emerald-500",
   picked_up: "bg-gray-400",
   rejected: "bg-red-500",
+  cancelled: "bg-neutral-400",
 };
 
 export const ORDER_PROGRESS_STATES: OrderState[] = [

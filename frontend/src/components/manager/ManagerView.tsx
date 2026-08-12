@@ -59,9 +59,14 @@ interface BackendBranch {
   schedule: string | null;
   image: string | null;
   active: boolean;
+  min_anticipation_minutes?: number;
+  max_anticipation_hours?: number;
   created_at: string;
   updated_at: string;
 }
+
+const DEFAULT_MIN_ANTICIPATION_MINUTES = 30;
+const DEFAULT_MAX_ANTICIPATION_HOURS = 24;
 
 function toBranch(b: BackendBranch): Branch {
   return {
@@ -73,6 +78,10 @@ function toBranch(b: BackendBranch): Branch {
     dailySales: 0,
     status: b.active ? 'open' : 'closed',
     imageUrl: b.image ? b.image : '',
+    minAnticipationMinutes:
+      b.min_anticipation_minutes ?? DEFAULT_MIN_ANTICIPATION_MINUTES,
+    maxAnticipationHours:
+      b.max_anticipation_hours ?? DEFAULT_MAX_ANTICIPATION_HOURS,
   };
 }
 
@@ -82,6 +91,14 @@ function buildBranchFormData(data: BranchUpdateData): FormData {
   formData.append('location', data.location);
   formData.append('schedule', data.schedule);
   formData.append('active', String(data.active));
+  formData.append(
+    'min_anticipation_minutes',
+    String(data.minAnticipationMinutes),
+  );
+  formData.append(
+    'max_anticipation_hours',
+    String(data.maxAnticipationHours),
+  );
   if (data.imageFile) {
     formData.append('image', data.imageFile);
   }
@@ -158,6 +175,8 @@ export function ManagerView() {
             location: data.location,
             schedule: data.schedule,
             active: data.active,
+            min_anticipation_minutes: data.minAnticipationMinutes,
+            max_anticipation_hours: data.maxAnticipationHours,
           });
 
       setBranches(prev => prev.map(b => (b.id === id ? toBranch(updated) : b)));

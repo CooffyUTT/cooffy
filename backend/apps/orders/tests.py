@@ -486,11 +486,12 @@ class OrderStateMachineTests(SimpleTestCase):
     """RF-07 / RN-13: la tabla canónica de transiciones es la única fuente de verdad."""
 
     VALID = {
-        "pending": {"preparing", "rejected"},
+        "pending": {"preparing", "rejected", "cancelled"},
         "preparing": {"ready", "rejected"},
         "ready": {"picked_up"},
         "picked_up": set(),
         "rejected": set(),
+        "cancelled": set(),
     }
 
     def test_all_state_combinations_are_evaluated(self):

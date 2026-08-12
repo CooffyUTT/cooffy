@@ -7,6 +7,8 @@ export interface Branch {
   dailySales: number;
   status: 'open' | 'closed';
   imageUrl: string;
+  minAnticipationMinutes: number;
+  maxAnticipationHours: number;
 }
 
 export interface BranchUpdateData {
@@ -15,4 +17,6 @@ export interface BranchUpdateData {
   schedule: string;
   active: boolean;
   imageFile?: File | null;
+  minAnticipationMinutes: number;
+  maxAnticipationHours: number;
 }

@@ -1,9 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const pushMock = vi.fn();
 const useOrdersMock = vi.fn();
+const useUpcomingOrdersMock = vi.fn();
 const useUpdateOrderStateMock = vi.fn();
 const useUpdatePaymentStatusMock = vi.fn();
 const useBranchesMock = vi.fn();
@@ -15,6 +16,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/hooks/useOrders", () => ({
   useOrders: (...args: unknown[]) => useOrdersMock(...args),
+  useUpcomingOrders: (...args: unknown[]) => useUpcomingOrdersMock(...args),
   useUpdateOrderState: () => useUpdateOrderStateMock(),
   useUpdatePaymentStatus: () => useUpdatePaymentStatusMock(),
 }));
@@ -43,6 +45,8 @@ const BRANCH_ACTIVE: BranchData = {
   schedule: null,
   company_name: "Co",
   accepting_orders: true,
+  min_anticipation_minutes: 30,
+  max_anticipation_hours: 24,
 };
 
 const BRANCH_SUSPENDED: BranchData = {
@@ -57,6 +61,8 @@ type BranchData = {
   schedule: string | null;
   company_name: string;
   accepting_orders: boolean;
+  min_anticipation_minutes: number;
+  max_anticipation_hours: number;
 };
 
 function buildToggleResult(overrides: Partial<{
@@ -110,6 +116,7 @@ function renderKitchen() {
 beforeEach(() => {
   pushMock.mockReset();
   useOrdersMock.mockReset();
+  useUpcomingOrdersMock.mockReset();
   useUpdateOrderStateMock.mockReset();
   useUpdatePaymentStatusMock.mockReset();
   useBranchesMock.mockReset();
@@ -118,6 +125,12 @@ beforeEach(() => {
   vi.mocked(toast.success).mockReset();
 
   useOrdersMock.mockReturnValue({
+    data: [],
+    isLoading: false,
+    isError: false,
+    error: null,
+  });
+  useUpcomingOrdersMock.mockReturnValue({
     data: [],
     isLoading: false,
     isError: false,
@@ -331,5 +344,176 @@ describe("KitchenView — toggle de recepción de pedidos (RF-07)", () => {
       "Pago confirmado",
       expect.any(Object),
     );
+  });
+});
+
+describe("KitchenView — RF-14 pedidos anticipados", () => {
+  it("muestra las pestañas COLA y PEDIDOS ANTICIPADOS", async () => {
+    seedUserWithBranch(1);
+    useBranchesMock.mockReturnValue({
+      data: [BRANCH_ACTIVE],
+      isLoading: false,
+    });
+    useToggleAcceptingOrdersMock.mockReturnValue(buildToggleResult());
+
+    renderKitchen();
+
+    expect(
+      await screen.findByTestId("kitchen-tab-queue"),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("kitchen-tab-upcoming"),
+    ).toBeInTheDocument();
+  });
+
+  it("al cambiar a PEDIDOS ANTICIPADOS lista los pre-orders con hora de recogida", async () => {
+    seedUserWithBranch(1);
+    useBranchesMock.mockReturnValue({
+      data: [BRANCH_ACTIVE],
+      isLoading: false,
+    });
+    useToggleAcceptingOrdersMock.mockReturnValue(buildToggleResult());
+
+    const pickupISO = "2026-08-15T13:30:00Z";
+    const expectedPickupText = new Intl.DateTimeFormat("es-MX", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(pickupISO));
+
+    useUpcomingOrdersMock.mockReturnValue({
+      data: [
+        {
+          id: 200,
+          order_number: 501,
+          date: "2026-08-15",
+          branch_id: 1,
+          client_id: 7,
+          created_at: "2026-08-14T12:00:00Z",
+          prepared_at: null,
+          picked_up_at: null,
+          scheduled_pickup_at: pickupISO,
+          total: "85.00",
+          iva: "6.30",
+          state: "pending",
+          payment_method: 1,
+          payment_status: "pending",
+          comment: null,
+          updated_at: "2026-08-14T12:00:00Z",
+          order_products: [
+            {
+              id: 11,
+              item_id: 30,
+              quantity: 2,
+              price: "40.00",
+              excluded_modifiers: [],
+              product_name: "Torta de jamon",
+            },
+            {
+              id: 12,
+              item_id: 31,
+              quantity: 1,
+              price: "5.00",
+              excluded_modifiers: [],
+              product_name: "Cafe",
+            },
+          ],
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    const user = userEvent.setup();
+    renderKitchen();
+
+    await user.click(await screen.findByTestId("kitchen-tab-upcoming"));
+
+    const list = await screen.findByTestId("kitchen-upcoming-list");
+    expect(list).toBeInTheDocument();
+
+    const row = await screen.findByTestId("kitchen-preorder-row");
+    expect(row).toHaveTextContent("#501");
+    expect(
+      within(row).getByTestId("preorder-pickup-time").textContent,
+    ).toContain(expectedPickupText);
+    expect(within(row).getByTestId("preorder-products")).toHaveTextContent(
+      /2 x Torta de jamon/,
+    );
+  });
+
+  it("muestra el estado vacío en la pestaña de anticipados cuando no hay pre-orders", async () => {
+    seedUserWithBranch(1);
+    useBranchesMock.mockReturnValue({
+      data: [BRANCH_ACTIVE],
+      isLoading: false,
+    });
+    useToggleAcceptingOrdersMock.mockReturnValue(buildToggleResult());
+
+    useUpcomingOrdersMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    const user = userEvent.setup();
+    renderKitchen();
+
+    await user.click(await screen.findByTestId("kitchen-tab-upcoming"));
+
+    expect(
+      await screen.findByTestId("kitchen-upcoming-empty"),
+    ).toHaveTextContent(/Sin pedidos anticipados pendientes/i);
+  });
+
+  it("muestra el nombre del cliente cuando client_name viene en el pre-order", async () => {
+    seedUserWithBranch(1);
+    useBranchesMock.mockReturnValue({
+      data: [BRANCH_ACTIVE],
+      isLoading: false,
+    });
+    useToggleAcceptingOrdersMock.mockReturnValue(buildToggleResult());
+
+    useUpcomingOrdersMock.mockReturnValue({
+      data: [
+        {
+          id: 201,
+          order_number: 502,
+          date: "2026-08-15",
+          branch_id: 1,
+          client_id: 7,
+          client_name: "Ana Lopez",
+          created_at: "2026-08-14T12:00:00Z",
+          prepared_at: null,
+          picked_up_at: null,
+          scheduled_pickup_at: "2026-08-15T13:30:00Z",
+          total: "85.00",
+          iva: "6.30",
+          state: "pending",
+          payment_method: 1,
+          payment_status: "pending",
+          comment: null,
+          updated_at: "2026-08-14T12:00:00Z",
+          order_products: [],
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    const user = userEvent.setup();
+    renderKitchen();
+
+    await user.click(await screen.findByTestId("kitchen-tab-upcoming"));
+
+    const row = await screen.findByTestId("kitchen-preorder-row");
+    expect(
+      within(row).getByTestId("preorder-client-name"),
+    ).toHaveTextContent("Ana Lopez");
   });
 });

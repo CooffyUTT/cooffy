@@ -21,6 +21,7 @@ class Order(models.Model):
         READY = "ready", "Listo para entregar"
         PICKED_UP = "picked_up", "Entregado"
         REJECTED = "rejected", "Rechazado"
+        CANCELLED = "cancelled", "Cancelado"
 
     class PaymentStatus(models.TextChoices):
         PENDING = "pending", "Pendiente"

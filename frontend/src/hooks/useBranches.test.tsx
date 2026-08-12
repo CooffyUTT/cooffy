@@ -43,6 +43,8 @@ const initialBranches: Branch[] = [
     schedule: null,
     company_name: "Co",
     accepting_orders: true,
+    min_anticipation_minutes: 30,
+    max_anticipation_hours: 24,
   },
   {
     id: 2,
@@ -51,6 +53,8 @@ const initialBranches: Branch[] = [
     schedule: null,
     company_name: "Co",
     accepting_orders: true,
+    min_anticipation_minutes: 30,
+    max_anticipation_hours: 24,
   },
 ];
 
@@ -121,6 +125,8 @@ describe("useToggleAcceptingOrders", () => {
           schedule: null,
           company_name: "Co",
           accepting_orders: false,
+          min_anticipation_minutes: 30,
+          max_anticipation_hours: 24,
         },
       });
     });

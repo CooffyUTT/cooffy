@@ -14,17 +14,19 @@ ALL_STATES = (
     "ready",
     "picked_up",
     "rejected",
+    "cancelled",
 )
 
 VALID_TRANSITIONS: Mapping[str, frozenset[str]] = {
-    "pending": frozenset({"preparing", "rejected"}),
+    "pending": frozenset({"preparing", "rejected", "cancelled"}),
     "preparing": frozenset({"ready", "rejected"}),
     "ready": frozenset({"picked_up"}),
     "picked_up": frozenset(),
     "rejected": frozenset(),
+    "cancelled": frozenset(),
 }
 
-TERMINAL_STATES = frozenset({"picked_up", "rejected"})
+TERMINAL_STATES = frozenset({"picked_up", "rejected", "cancelled"})
 
 
 def _normalize(state) -> str:

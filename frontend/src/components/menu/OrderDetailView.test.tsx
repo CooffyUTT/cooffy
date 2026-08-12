@@ -1,10 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const pushMock = vi.fn();
 const useOrderMock = vi.fn();
 const useBranchesMock = vi.fn();
+const useCancelOrderMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, back: vi.fn() }),
@@ -13,19 +14,36 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/hooks/useOrders", () => ({
   useOrder: (...args: unknown[]) => useOrderMock(...args),
+  useCancelOrder: () => useCancelOrderMock(),
 }));
 
 vi.mock("@/hooks/useBranches", () => ({
   useBranches: () => useBranchesMock(),
 }));
 
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+  },
+}));
+
+import { toast } from "sonner";
 import { OrderDetailView } from "@/components/menu/OrderDetailView";
 
 const makeOrder = (
   overrides: Partial<{
     id: number;
     order_number: number;
-    state: "pending" | "preparing" | "ready" | "picked_up" | "rejected";
+    state:
+      | "pending"
+      | "preparing"
+      | "ready"
+      | "picked_up"
+      | "rejected"
+      | "cancelled";
     total: string;
     iva: string;
     branch_id: number;
@@ -34,6 +52,7 @@ const makeOrder = (
     created_at: string;
     estimated_completion_minutes: number | null;
     comment: string | null;
+    scheduled_pickup_at: string | null;
   }> = {},
 ) => ({
   id: 42,
@@ -74,10 +93,33 @@ const makeOrder = (
   ...overrides,
 });
 
+function buildCancelResult(
+  overrides: Partial<{
+    mutate: (...args: unknown[]) => void;
+    isPending: boolean;
+    reset: () => void;
+  }> = {},
+) {
+  return {
+    mutate: vi.fn(),
+    mutateAsync: vi.fn(),
+    isPending: false,
+    isSuccess: false,
+    isError: false,
+    reset: vi.fn(),
+    data: undefined,
+    error: null,
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   pushMock.mockClear();
   useOrderMock.mockReset();
   useBranchesMock.mockReset();
+  useCancelOrderMock.mockReset();
+  vi.mocked(toast.error).mockReset();
+  vi.mocked(toast.success).mockReset();
   useBranchesMock.mockReturnValue({
     data: [
       {
@@ -87,10 +129,13 @@ beforeEach(() => {
         schedule: null,
         company_name: "Co",
         accepting_orders: true,
+        min_anticipation_minutes: 30,
+        max_anticipation_hours: 24,
       },
     ],
     isLoading: false,
   });
+  useCancelOrderMock.mockReturnValue(buildCancelResult());
 });
 
 describe("OrderDetailView", () => {
@@ -234,5 +279,186 @@ describe("OrderDetailView", () => {
     );
 
     expect(pushMock).toHaveBeenCalledWith("/orders");
+  });
+});
+
+describe("OrderDetailView — RF-14 pedidos anticipados", () => {
+  it("muestra la hora de recogida programada cuando el pedido la incluye", () => {
+    useOrderMock.mockReturnValue({
+      data: makeOrder({
+        state: "pending",
+        scheduled_pickup_at: "2026-08-20T13:30:00Z",
+      }),
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<OrderDetailView />);
+
+    const scheduledRow = screen.getByTestId("scheduled-pickup");
+    expect(scheduledRow).toBeInTheDocument();
+    expect(scheduledRow).toHaveTextContent(/Recogida programada/i);
+  });
+
+  it("oculta la sección de recogida cuando el pedido no es anticipado", () => {
+    useOrderMock.mockReturnValue({
+      data: makeOrder({ scheduled_pickup_at: null }),
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<OrderDetailView />);
+
+    expect(screen.queryByTestId("scheduled-pickup")).not.toBeInTheDocument();
+  });
+
+  it("muestra el botón 'Cancelar pedido' solo cuando hay recogida programada y el estado es pending", () => {
+    useOrderMock.mockReturnValue({
+      data: makeOrder({
+        state: "pending",
+        scheduled_pickup_at: "2026-08-20T13:30:00Z",
+      }),
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<OrderDetailView />);
+
+    expect(
+      screen.getByTestId("cancel-order-button"),
+    ).toBeInTheDocument();
+  });
+
+  it("oculta el botón de cancelar cuando el pedido no es anticipado", () => {
+    useOrderMock.mockReturnValue({
+      data: makeOrder({ state: "pending", scheduled_pickup_at: null }),
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<OrderDetailView />);
+
+    expect(
+      screen.queryByTestId("cancel-order-button"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("oculta el botón de cancelar cuando el pedido anticipado ya está preparing", () => {
+    useOrderMock.mockReturnValue({
+      data: makeOrder({
+        state: "preparing",
+        scheduled_pickup_at: "2026-08-20T13:30:00Z",
+      }),
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<OrderDetailView />);
+
+    expect(
+      screen.queryByTestId("cancel-order-button"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("muestra un banner neutro de cancelación cuando el estado es cancelled", () => {
+    useOrderMock.mockReturnValue({
+      data: makeOrder({ state: "cancelled" }),
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<OrderDetailView />);
+
+    expect(screen.getByTestId("progress-cancelled")).toHaveTextContent(
+      /Pedido cancelado/i,
+    );
+  });
+
+  it("flujo de cancelación exitosa muestra toast y limpia el diálogo", async () => {
+    const mutate = vi.fn((...args: unknown[]) => {
+      const options = args[1] as {
+        onSuccess: () => void;
+      };
+      options.onSuccess();
+    });
+    useCancelOrderMock.mockReturnValue(buildCancelResult({ mutate }));
+
+    useOrderMock.mockReturnValue({
+      data: makeOrder({
+        state: "pending",
+        scheduled_pickup_at: "2026-08-20T13:30:00Z",
+      }),
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    const user = userEvent.setup();
+    render(<OrderDetailView />);
+
+    await user.click(
+      await screen.findByTestId("cancel-order-button"),
+    );
+    await user.click(
+      await screen.findByTestId("confirm-cancel-order"),
+    );
+
+    await waitFor(() => {
+      expect(mutate).toHaveBeenCalledWith(
+        42,
+        expect.objectContaining({ onSuccess: expect.any(Function) }),
+      );
+    });
+    expect(toast.success).toHaveBeenCalledWith("Pedido cancelado");
+  });
+
+  it("muestra toast de error cuando el backend rechaza la cancelación", async () => {
+    const mutate = vi.fn((...args: unknown[]) => {
+      const options = args[1] as {
+        onError: (err: unknown) => void;
+      };
+      options.onError({
+        response: { data: { detail: "Ya no se puede cancelar" } },
+      });
+    });
+    useCancelOrderMock.mockReturnValue(buildCancelResult({ mutate }));
+
+    useOrderMock.mockReturnValue({
+      data: makeOrder({
+        state: "pending",
+        scheduled_pickup_at: "2026-08-20T13:30:00Z",
+      }),
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    const user = userEvent.setup();
+    render(<OrderDetailView />);
+
+    await user.click(
+      await screen.findByTestId("cancel-order-button"),
+    );
+    await user.click(
+      await screen.findByTestId("confirm-cancel-order"),
+    );
+
+    await waitFor(() => {
+      expect(mutate).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        "No se pudo cancelar el pedido",
+        expect.objectContaining({
+          description: "Ya no se puede cancelar",
+        }),
+      );
+    });
   });
 });

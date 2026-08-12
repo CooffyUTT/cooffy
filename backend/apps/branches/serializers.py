@@ -70,6 +70,8 @@ class BranchSerializer(serializers.ModelSerializer):
             'image',
             'active',
             'accepting_orders',
+            'min_anticipation_minutes',
+            'max_anticipation_hours',
             'created_at',
             'updated_at',
         ]
@@ -116,4 +118,31 @@ class BranchCreateSerializer(serializers.ModelSerializer):
 class BranchUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Branch
-        fields = ['name', 'location', 'schedule', 'image', 'active']
+        fields = [
+            'name',
+            'location',
+            'schedule',
+            'image',
+            'active',
+            'min_anticipation_minutes',
+            'max_anticipation_hours',
+        ]
+
+    def validate(self, attrs):
+        min_minutes = attrs.get(
+            'min_anticipation_minutes',
+            getattr(self.instance, 'min_anticipation_minutes', None),
+        )
+        max_hours = attrs.get(
+            'max_anticipation_hours',
+            getattr(self.instance, 'max_anticipation_hours', None),
+        )
+        if (
+            min_minutes is not None
+            and max_hours is not None
+            and min_minutes > max_hours * 60
+        ):
+            raise serializers.ValidationError(
+                'La anticipación mínima no puede exceder la máxima (minutos vs horas).'
+            )
+        return attrs

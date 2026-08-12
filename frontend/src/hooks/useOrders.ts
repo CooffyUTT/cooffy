@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  cancelOrder,
   createOrder,
   getOrders,
   getOrder,
   getOrdersByState,
+  getUpcomingOrders,
   updateOrderState,
   updateOrderPaymentStatus,
 } from "@/lib/ordersApi";
@@ -87,6 +89,42 @@ export function useUpdatePaymentStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["orders", "kitchen"] });
+    },
+  });
+}
+
+export function useUpcomingOrders(
+  refetchInterval?: number,
+  options: { enabled?: boolean } = {},
+) {
+  const { enabled = true } = options;
+  return useQuery({
+    queryKey: ["orders", "upcoming"],
+    queryFn: async () => {
+      const data = await getUpcomingOrders();
+      return data ?? [];
+    },
+    refetchInterval,
+    enabled,
+    select: (data) =>
+      Array.isArray(data)
+        ? [...data].sort((a, b) =>
+            (a.scheduled_pickup_at ?? "").localeCompare(
+              b.scheduled_pickup_at ?? "",
+            ),
+          )
+        : [],
+  });
+}
+
+export function useCancelOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (orderId: number) => cancelOrder(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["order"] });
     },
   });
 }

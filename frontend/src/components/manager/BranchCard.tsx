@@ -22,6 +22,12 @@ export function BranchCard({ branch, onDelete, onSave, onManage }: BranchCardPro
   const [schedule, setSchedule] = useState(branch.schedule);
   const [active, setActive] = useState(branch.status === "open");
   const [newImage, setNewImage] = useState<File | null>(null);
+  const [minAnticipationMinutes, setMinAnticipationMinutes] = useState(
+    branch.minAnticipationMinutes,
+  );
+  const [maxAnticipationHours, setMaxAnticipationHours] = useState(
+    branch.maxAnticipationHours,
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -31,6 +37,8 @@ export function BranchCard({ branch, onDelete, onSave, onManage }: BranchCardPro
     setSchedule(branch.schedule);
     setActive(branch.status === "open");
     setNewImage(null);
+    setMinAnticipationMinutes(branch.minAnticipationMinutes);
+    setMaxAnticipationHours(branch.maxAnticipationHours);
     setIsEditing(true);
   };
 
@@ -48,6 +56,8 @@ export function BranchCard({ branch, onDelete, onSave, onManage }: BranchCardPro
         schedule,
         active,
         imageFile: newImage,
+        minAnticipationMinutes,
+        maxAnticipationHours,
       });
       if (saved) {
         setIsEditing(false);
@@ -167,6 +177,48 @@ export function BranchCard({ branch, onDelete, onSave, onManage }: BranchCardPro
               )}
             </div>
           </div>
+
+          {isEditing && (
+            <div
+              className="grid grid-cols-2 gap-3 pt-3 border-t border-outline-variant/10 mb-4"
+              data-testid="branch-anticipation-window"
+            >
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] font-semibold text-on-surface-variant">
+                  Anticipación mínima (minutos)
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={minAnticipationMinutes}
+                  onChange={(e) =>
+                    setMinAnticipationMinutes(Number(e.target.value))
+                  }
+                  className="text-sm bg-surface-container-low border border-outline-variant/40 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  aria-label="Anticipación mínima en minutos"
+                  data-testid="branch-min-anticipation"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] font-semibold text-on-surface-variant">
+                  Anticipación máxima (horas)
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={maxAnticipationHours}
+                  onChange={(e) =>
+                    setMaxAnticipationHours(Number(e.target.value))
+                  }
+                  className="text-sm bg-surface-container-low border border-outline-variant/40 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  aria-label="Anticipación máxima en horas"
+                  data-testid="branch-max-anticipation"
+                />
+              </label>
+            </div>
+          )}
         </div>
 
         <CardFooter className="pt-3">

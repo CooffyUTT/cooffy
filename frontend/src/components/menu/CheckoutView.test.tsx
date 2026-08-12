@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 
@@ -80,6 +80,8 @@ beforeEach(() => {
         schedule: null,
         company_name: "Co",
         accepting_orders: true,
+        min_anticipation_minutes: 30,
+        max_anticipation_hours: 24,
       },
     ],
     isLoading: false,
@@ -358,5 +360,135 @@ describe("CheckoutView error handling", () => {
     expect(JSON.parse(localStorage.getItem("cooffy_cart") ?? "[]")).toHaveLength(1);
     const retryButton = screen.getByRole("button", { name: "Confirmar pedido" });
     expect(retryButton).not.toBeDisabled();
+  });
+});
+
+function pad(value: number) {
+  return value.toString().padStart(2, "0");
+}
+
+function futureDateISOString(hoursAhead: number, minutesAhead = 0): string {
+  const future = new Date(Date.now() + hoursAhead * 3600_000 + minutesAhead * 60_000);
+  return (
+    `${future.getFullYear()}-${pad(future.getMonth() + 1)}-${pad(future.getDate())}` +
+    `T${pad(future.getHours())}:${pad(future.getMinutes())}`
+  );
+}
+
+async function switchToScheduledMode(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByTestId("mode-scheduled"));
+}
+
+describe("CheckoutView — RF-14 pedidos anticipados", () => {
+  it("muestra el selector de modalidad al cargar la pantalla", () => {
+    seedCart();
+    mutateAsyncMock.mockResolvedValue({});
+    useCreateOrderMock.mockReturnValue(buildMutationResult(undefined));
+
+    render(
+      <Wrapper>
+        <CheckoutView />
+      </Wrapper>,
+    );
+
+    expect(screen.getByTestId("mode-now")).toBeInTheDocument();
+    expect(screen.getByTestId("mode-scheduled")).toBeInTheDocument();
+  });
+
+  it("revela el input de fecha y hora al elegir 'Pedido anticipado'", async () => {
+    seedCart();
+    mutateAsyncMock.mockResolvedValue({});
+    useCreateOrderMock.mockReturnValue(buildMutationResult(undefined));
+
+    const user = userEvent.setup();
+    render(
+      <Wrapper>
+        <CheckoutView />
+      </Wrapper>,
+    );
+
+    expect(screen.queryByTestId("scheduled-pickup-input")).not.toBeInTheDocument();
+
+    await switchToScheduledMode(user);
+
+    expect(await screen.findByTestId("scheduled-pickup-input")).toBeInTheDocument();
+  });
+
+  it("envía scheduled_pickup_at al confirmar con un valor válido dentro de la ventana", async () => {
+    seedCart();
+    const createdOrder = {
+      id: 99,
+      order_number: 12,
+      date: "2026-08-11",
+      branch_id: 1,
+      client_id: 1,
+      created_at: "2026-08-11T15:00:00Z",
+      prepared_at: null,
+      picked_up_at: null,
+      scheduled_pickup_at: null,
+      total: "50.00",
+      iva: "3.70",
+      state: "pending",
+      payment_method: 2,
+      payment_status: "pending",
+      comment: null,
+      updated_at: "2026-08-11T15:00:00Z",
+      order_products: [],
+    };
+    mutateAsyncMock.mockResolvedValue(createdOrder);
+    useCreateOrderMock.mockReturnValue(buildMutationResult(undefined));
+
+    const user = userEvent.setup();
+    render(
+      <Wrapper>
+        <CheckoutView />
+      </Wrapper>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Tarjeta" }));
+    await switchToScheduledMode(user);
+
+    const validValue = futureDateISOString(2);
+    const input = await screen.findByTestId("scheduled-pickup-input");
+    fireEvent.change(input, { target: { value: validValue } });
+
+    await user.click(screen.getByRole("button", { name: "Confirmar pedido" }));
+    await user.click(await screen.findByRole("button", { name: "Confirmar" }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalled();
+    });
+
+    const payloadArg = mutateAsyncMock.mock.calls[0][0] as {
+      scheduled_pickup_at?: string;
+    };
+    expect(payloadArg.scheduled_pickup_at).toBeDefined();
+    expect(() => new Date(payloadArg.scheduled_pickup_at!).toString()).not.toThrow();
+  });
+
+  it("muestra error inline y bloquea la confirmación cuando el valor está fuera de la ventana", async () => {
+    seedCart();
+    mutateAsyncMock.mockResolvedValue({});
+    useCreateOrderMock.mockReturnValue(buildMutationResult(undefined));
+
+    const user = userEvent.setup();
+    render(
+      <Wrapper>
+        <CheckoutView />
+      </Wrapper>,
+    );
+
+    await switchToScheduledMode(user);
+
+    const input = await screen.findByTestId("scheduled-pickup-input");
+    fireEvent.change(input, { target: { value: futureDateISOString(48) } });
+
+    expect(await screen.findByTestId("scheduled-pickup-error")).toBeInTheDocument();
+
+    const confirmButton = screen.getByRole("button", { name: "Confirmar pedido" });
+    expect(confirmButton).toBeDisabled();
+
+    await user.click(confirmButton);
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 });
