@@ -4,7 +4,7 @@ import { CheckoutView } from "@/components/menu/CheckoutView";
 
 export const metadata: Metadata = {
   title: "Confirmar pedido",
-  description: "Selecciona tu método de pago y confirma tu pedido.",
+  description: "Revisa y confirma tu pedido.",
 };
 
 export default function CheckoutPage() {

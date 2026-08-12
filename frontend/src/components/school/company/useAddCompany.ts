@@ -6,7 +6,7 @@ import { SchoolCompany } from "@/types/school";
 
 interface UseAddCompanyProps {
   companies: SchoolCompany[];
-  onLinkCompany: (companyId: number) => void;
+  onLinkCompany: (companyId: number) => Promise<void>;
   onSuccess: () => void;
 }
 
@@ -25,19 +25,29 @@ export function useAddCompany({
     setCompanyId(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit || companyId == null) return;
 
     if (!selectedCompany) return;
 
-    onLinkCompany(companyId);
-    toast.success("Compañía vinculada", {
-      description: `${selectedCompany.name} agregada a la escuela.`,
-    });
-
-    reset();
-    onSuccess();
+    setIsSubmitting(true);
+    try {
+      await onLinkCompany(companyId);
+      toast.success("Compañía vinculada", {
+        description: `${selectedCompany.name} agregada a la escuela.`,
+      });
+      reset();
+      onSuccess();
+    } catch {
+      toast.error("No se pudo vincular la compañía", {
+        description: "La compañía puede haber sido vinculada previamente.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return {
@@ -45,6 +55,7 @@ export function useAddCompany({
     setCompanyId,
     selectedCompany,
     canSubmit,
+    isSubmitting,
     handleSubmit,
     reset,
   };

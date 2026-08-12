@@ -27,6 +27,23 @@ Table "public"."companies" {
   Note: 'Empresas propietarias de una o mas sucursales.'
 }
 
+Table "public"."company_schools" {
+  "id" bigint [pk, not null, increment, note: 'Identificador unico del vinculo.']
+  "company_id" bigint [not null, note: 'Compania vinculada.', ref: > "public"."companies"."id"]
+  "school_id" bigint [not null, note: 'Escuela vinculada.', ref: > "public"."schools"."id"]
+  "active" boolean [not null, default: true, note: 'Indica si la compania puede operar en la escuela.']
+  "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creacion del vinculo.']
+  "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del vinculo.']
+
+  Indexes {
+    (company_id, school_id) [unique, name: "unique_company_school"]
+    (school_id, active) [name: "company_sch_school__c2bd5a_idx"]
+    (company_id, active) [name: "company_sch_company_8a6f3d_idx"]
+  }
+
+  Note: 'Tabla de union (M:M) entre companias y escuelas. Una compania puede operar en varias escuelas y una escuela puede tener varias companias.'
+}
+
 Table "public"."branches" {
   "id" bigint [pk, not null, increment, note: 'Identificador unico de la sucursal.']
   "name" varchar(100) [not null, note: 'Nombre de la sucursal.']

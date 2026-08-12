@@ -9,6 +9,7 @@ Usage:
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from apps.users.models import User
+from apps.schools.models import School
 from django.contrib.auth.models import Group
 
 
@@ -63,15 +64,23 @@ class Command(BaseCommand):
                 'name': 'Admin',
                 'lastname': 'Cooffy',
                 'is_superuser': True,
+                'groups': [],
+            },
+            {
+                'username': 'gerente1',
+                'password': 'admin123',
+                'name': 'Gerente',
+                'lastname': 'UTT',
+                'is_superuser': False,
                 'groups': [groups['gerente']],
             },
             {
-                'username': 'cocina1',
+                'username': 'admin_escolar1',
                 'password': 'admin123',
-                'name': 'Carlos',
-                'lastname': 'Cocinero',
+                'name': 'María',
+                'lastname': 'Escolar',
                 'is_superuser': False,
-                'groups': [groups['empleado']],
+                'groups': [groups['admin_escolar']],
             },
             {
                 'username': 'cliente1',
@@ -82,12 +91,44 @@ class Command(BaseCommand):
                 'groups': [groups['cliente']],
             },
             {
-                'username': 'admin_escolar1',
+                'username': 'cocina1',
                 'password': 'admin123',
-                'name': 'María',
-                'lastname': 'Escolar',
+                'name': 'Carlos',
+                'lastname': 'Cocinero',
+                'is_superuser': False,
+                'groups': [groups['empleado']],
+            },
+            {
+                'username': 'admin2',
+                'password': 'admin123',
+                'name': 'Administrador',
+                'lastname': 'Campus 2',
+                'is_superuser': False,
+                'groups': [groups['gerente']],
+            },
+            {
+                'username': 'admin_escolar2',
+                'password': 'admin123',
+                'name': 'Administrador Escolar',
+                'lastname': 'Campus 2',
                 'is_superuser': False,
                 'groups': [groups['admin_escolar']],
+            },
+            {
+                'username': 'cliente2',
+                'password': 'admin123',
+                'name': 'Cliente',
+                'lastname': 'Campus 2',
+                'is_superuser': False,
+                'groups': [groups['cliente']],
+            },
+            {
+                'username': 'cocina2',
+                'password': 'admin123',
+                'name': 'Cocinero',
+                'lastname': 'Campus 2',
+                'is_superuser': False,
+                'groups': [groups['empleado']],
             },
         ]
 
@@ -101,6 +142,7 @@ class Command(BaseCommand):
 
             if existing:
                 if force:
+                    School.objects.filter(admin=existing).update(admin=None)
                     existing.delete()
                     self.stdout.write(self.style.WARNING(f'Usuario "{username}" eliminado por --force.'))
                 else:

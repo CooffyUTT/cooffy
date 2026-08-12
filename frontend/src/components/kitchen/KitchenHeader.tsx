@@ -1,58 +1,61 @@
 "use client";
 
 import React from 'react';
-import { Wifi, WifiOff, OctagonAlert, Maximize2, Minimize2 } from 'lucide-react';
+import { OctagonAlert, Pause, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface KitchenHeaderProps {
-  isConnected: boolean;
   kitchenActive: boolean;
-  isFullscreen: boolean;
+  isPending?: boolean;
   onToggleActive: () => void;
-  onToggleFullscreen: () => void;
 }
 
 export function KitchenHeader({
-  isConnected,
   kitchenActive,
-  isFullscreen,
+  isPending = false,
   onToggleActive,
-  onToggleFullscreen
 }: KitchenHeaderProps) {
   return (
-    <header className="flex items-center justify-between bg-white px-5 py-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0">
+    <header
+      className={`flex items-center justify-between px-5 py-2.5 rounded-2xl border shadow-xs shrink-0 transition-colors ${
+        kitchenActive
+          ? 'bg-white border-slate-200'
+          : 'bg-slate-900 border-slate-800 text-white'
+      }`}
+    >
       <div className="flex items-center gap-4">
-        <h2 className="text-lg font-extrabold text-[#5C3D2E]">Cocina Central</h2>
-        
-        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
-          isConnected ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
-        }`}>
-          {isConnected ? <Wifi size={13} /> : <WifiOff size={13} />}
-          <span>{isConnected ? 'En Línea (Realtime)' : 'Sin Conexión'}</span>
-        </div>
+        <h2
+          className={`text-lg font-extrabold ${kitchenActive ? 'text-[#5C3D2E]' : 'text-white'}`}
+        >
+          Cocina Central
+        </h2>
+        {!kitchenActive && (
+          <span
+            data-testid="kitchen-suspended-pill"
+            className="inline-flex items-center gap-1 bg-red-500/20 text-red-100 text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border border-red-400/40"
+          >
+            <OctagonAlert size={12} />
+            Recepción suspendida
+          </span>
+        )}
       </div>
 
-      <div className="flex items-center gap-2">
-        <Button 
-          onClick={onToggleActive}
-          size="sm"
-          className={`font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-xs flex items-center gap-1.5 ${
-            kitchenActive ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-slate-700 text-white'
-          }`}
-        >
-          <OctagonAlert size={14} />
-          {kitchenActive ? 'Pausar Pedidos' : 'Reanudar'}
-        </Button>
-
-        <Button 
-          onClick={onToggleFullscreen} 
-          variant="outline" 
-          size="sm" 
-          className="border-slate-200 text-slate-700 hover:bg-slate-100"
-        >
-          {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-        </Button>
-      </div>
+      <Button
+        onClick={onToggleActive}
+        disabled={isPending}
+        size="sm"
+        data-testid="kitchen-toggle-active"
+        data-state={kitchenActive ? 'active' : 'suspended'}
+        aria-pressed={!kitchenActive}
+        className={`font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-xs flex items-center gap-1.5 disabled:opacity-60 ${
+          kitchenActive
+            ? 'bg-amber-500 hover:bg-amber-600 text-white'
+            : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+        }`}
+      >
+        {kitchenActive ? <Pause size={14} /> : <Play size={14} />}
+        {kitchenActive ? 'Pausar Pedidos' : 'Reanudar'}
+      </Button>
     </header>
   );
 }

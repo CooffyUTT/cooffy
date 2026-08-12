@@ -1,18 +1,18 @@
 "use client";
 
 import React from "react";
-import { Store, UserCircle2, User } from "lucide-react";
+import { User } from "lucide-react";
 import { HeaderBase } from "../layout/HeaderBase";
 
 interface ManagerHeaderProps {
-  activeTab: "branches" | "users" | "dashboard";
-  setActiveTab: (tab: "branches" | "users" | "dashboard") => void;
-  userName?: string;
+  activeTab: "branches" | "menu" | "users" | "dashboard";
+  setActiveTab: (tab: "branches" | "menu" | "users" | "dashboard") => void;
 }
 
-export function ManagerHeader({ activeTab, setActiveTab, userName = "Juan" }: ManagerHeaderProps) {
+export function ManagerHeader({ activeTab, setActiveTab }: ManagerHeaderProps) {
   const tabs = [
     { id: "branches", label: "Sucursales" },
+    { id: "menu", label: "Menú" },
     { id: "users", label: "Usuarios" },
     { id: "dashboard", label: "Dashboard" },
   ] as const;

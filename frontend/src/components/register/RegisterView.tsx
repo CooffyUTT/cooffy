@@ -5,8 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion, Variants } from 'framer-motion';
 import { useRegisterForm } from '@/hooks/useRegisterForm';
+import { useActiveSchools } from '@/hooks/useActiveSchools';
 import { Button } from '@/components/ui/button';
-import { User, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, Check } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, Check, School, ChevronDown } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
 
 const containerVariants: Variants = {
@@ -40,6 +41,9 @@ export function RegisterView() {
     handleRegister,
     handleSSORegister,
   } = useRegisterForm();
+
+  const { data: schools = [], isLoading: isLoadingSchools } = useActiveSchools();
+  const selectedSchool = schools.find((s) => s.id === formData.school_id);
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-margin-mobile bg-[#f9f9ff] [background-image:radial-gradient(#d1c5b1_0.5px,transparent_0.5px)] [background-size:24px_24px] font-['Plus_Jakarta_Sans',sans-serif]">
@@ -167,7 +171,51 @@ export function RegisterView() {
                   </div>
                 </div>
                 {errors.user && <p className="text-[11px] font-medium text-destructive ml-1">{errors.user}</p>}
-              </div>
+                </div>
+
+                {/* Campo: Escuela */}
+                <div className="space-y-1">
+                  <label htmlFor="school_id" className="block text-xs font-semibold text-on-surface-variant ml-1">
+                    Escuela
+                  </label>
+                  <div className="relative group">
+                    <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors ${
+                      errors.school_id ? "text-destructive" : isFieldValid('school_id') ? "text-primary" : "text-on-surface-variant/60"
+                    }`}>
+                      <School size={18} />
+                    </div>
+                    <select
+                      id="school_id"
+                      name="school_id"
+                      value={formData.school_id === '' ? '' : String(formData.school_id)}
+                      onChange={handleInputChange}
+                      disabled={isLoading || isLoadingSchools}
+                      className={`block w-full pl-10 pr-10 py-3 border rounded-lg bg-surface-container-lowest text-sm outline-none transition-all text-on-surface appearance-none cursor-pointer ${
+                        errors.school_id ? "border-destructive focus:ring-2 focus:ring-destructive/25" : "border-outline-variant focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      }`}
+                    >
+                      <option value="">
+                        {isLoadingSchools ? "Cargando escuelas..." : "Selecciona tu escuela"}
+                      </option>
+                      {schools.map((school) => (
+                        <option key={school.id} value={school.id}>
+                          {school.full_name} (@{school.domain_address})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      {errors.school_id && <AlertCircle size={16} className="text-destructive mr-1" />}
+                      {isFieldValid('school_id') && <CheckCircle2 size={16} className="text-primary mr-1" />}
+                      <ChevronDown size={18} className="text-on-surface-variant/60" />
+                    </div>
+                  </div>
+                  {errors.school_id && <p className="text-[11px] font-medium text-destructive ml-1">{errors.school_id}</p>}
+                  {selectedSchool && (
+                    <p className="text-[11px] text-on-surface-variant/70 ml-1">
+                      Tu correo debe terminar en <span className="font-semibold">@{selectedSchool.domain_address}</span>
+                    </p>
+                  )}
+                </div>
 
               {/* Campo: Contraseña */}
                 <div className="space-y-1">

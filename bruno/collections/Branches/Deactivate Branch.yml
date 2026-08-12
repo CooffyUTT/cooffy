@@ -1,0 +1,17 @@
+info:
+  name: Deactivate Branch
+  type: http
+  seq: 5
+
+http:
+  method: DELETE
+  url: http://localhost:8000/api/branches/1/deactivate/
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,22 +1,25 @@
 from decimal import Decimal
+from datetime import datetime
 from django.db import transaction
 from django.db.models import Sum
+from django.utils import timezone
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
-from .models import Order, OrderProduct, STATE_SEQUENCE
-from .permissions import IsKitchenStaffPermission
+from .models import Order, OrderProduct
 from .serializers import (
     OrderListSerializer,
     OrderDetailSerializer,
     OrderCreateSerializer,
-    KitchenOrderSerializer,
+    OrderProductCreateSerializer,
 )
+from .services import get_unavailable_products
+from .state_machine import can_transition
 from apps.products.models import Product
-from apps.branches.models import Branch
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -26,6 +29,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     search_fields = ["order_number", "state", "payment_status"]
     ordering_fields = ["created_at", "date", "order_number"]
     ordering = ["-created_at"]
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -40,15 +44,31 @@ class OrderViewSet(viewsets.ModelViewSet):
         qs = super().get_queryset()
         user = getattr(self.request, "user", None)
         client_id = self.request.query_params.get("client_id")
+        state = self.request.query_params.get("state")
+        branch_id = self.request.query_params.get("branch_id")
+        date = self.request.query_params.get("date")  # FIX: Captura de la variable 'date'
 
         if client_id is not None:
             qs = qs.filter(client_id=client_id)
 
-        is_kitchen_staff = bool(
-            user and user.groups.filter(name__in=["empleado", "gerente"]).exists()
-        )
-        if user and not getattr(user, "is_staff", False) and not is_kitchen_staff:
+        if state is not None:
+            qs = qs.filter(state=state)
+
+        is_kitchen_staff = user and user.groups.filter(
+            name__in=["empleado", "gerente"]
+        ).exists()
+
+        if is_kitchen_staff and getattr(user, "branch_id", None):
+            qs = qs.filter(branch_id=user.branch_id)
+        elif user and not getattr(user, "is_staff", False) and not is_kitchen_staff:
             qs = qs.filter(client_id=getattr(user, "id", None))
+
+        if date:
+            try:
+                datetime.strptime(date, "%Y-%m-%d")
+            except ValueError:
+                raise ValidationError({"date": "Formato de fecha inválido. Use YYYY-MM-DD."})
+            qs = qs.filter(date=date)
 
         return qs
 
@@ -56,26 +76,65 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
-        return Response(OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED)
+        return Response(
+            OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED
+        )
+
+    def _is_kitchen_staff(self, user):
+        return user.groups.filter(name__in=["empleado", "gerente"]).exists()
 
     @transaction.atomic
     def update(self, request, *args, **kwargs):
         order = self.get_object()
 
-        if "state" in request.data:
-            order.state = request.data.get("state", order.state)
+        new_state = request.data.get("state")
+
+        if new_state and new_state != order.state:
+            if not self._is_kitchen_staff(request.user):
+                return Response(
+                    {"detail": "Solo el personal de cocina puede cambiar el estado de un pedido."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            if not can_transition(order.state, new_state):
+                return Response(
+                    {"detail": f"No se puede cambiar de '{order.state}' a '{new_state}'."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            order.state = new_state
+
+            if new_state == Order.State.PREPARING:
+                order.prepared_at = timezone.now()
+            elif new_state == Order.State.PICKED_UP:
+                order.picked_up_at = timezone.now()
+
+        allowed_fields = {"payment_method", "comment"}
+        for field in allowed_fields:
+            if field in request.data:
+                setattr(order, field, request.data[field])
+
         if "payment_status" in request.data:
-            order.payment_status = request.data.get("payment_status", order.payment_status)
-        if "payment_method" in request.data:
-            order.payment_method_id = request.data.get("payment_method", order.payment_method_id)
-        if "comment" in request.data:
-            order.comment = request.data.get("comment", order.comment)
-        if "total" in request.data:
-            order.total = Decimal(str(request.data.get("total")))
-        else:
-            order.total = order.order_products.aggregate(total=Sum("price"))["total"] or Decimal("0.00")
+            new_payment_status = request.data["payment_status"]
+            if not self._is_kitchen_staff(request.user):
+                return Response(
+                    {"detail": "Solo el personal de caja puede cambiar el estado de pago."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if not (order.payment_status == Order.PaymentStatus.PENDING and
+                    new_payment_status == Order.PaymentStatus.PAID):
+                return Response(
+                    {"detail": "El pago únicamente puede confirmarse de 'pending' a 'paid'."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if order.payment_method_id != 1:
+                return Response(
+                    {"detail": "Solo los pedidos en efectivo requieren confirmación de pago."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            order.payment_status = new_payment_status
 
         order.save()
+
         return Response(OrderDetailSerializer(order).data)
 
     @action(detail=True, methods=["post"], url_path="add-product")
@@ -83,102 +142,89 @@ class OrderViewSet(viewsets.ModelViewSet):
     def add_product(self, request, pk=None):
         order = self.get_object()
 
+        if str(order.client_id) != str(request.user.id):
+            return Response(
+                {"detail": "No tienes permiso para modificar este pedido."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if order.state != Order.State.PENDING:
+            return Response(
+                {"detail": "No se pueden agregar productos a un pedido que ya no está en espera."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         quantity = int(request.data.get("quantity", 1))
         item_id = request.data.get("item_id")
 
-        if request.data.get("price") is not None:
-            unit_price = Decimal(str(request.data.get("price")))
-        else:
-            product = get_object_or_404(Product, pk=item_id)
-            unit_price = product.price
+        product = get_object_or_404(Product, pk=item_id, active=True)
 
-        line_total = unit_price * quantity
+        if product.max_per_order and quantity > product.max_per_order:
+            return Response(
+                {
+                    "detail": (
+                        f"'{product.name}' tiene un límite de "
+                        f"{product.max_per_order} unidades por pedido."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        OrderProduct.objects.create(
-            order=order,
-            item_id=item_id,
-            quantity=quantity,
-            price=line_total,
-            excluded_modifiers=request.data.get("excluded_modifiers", []),
+        unavailable = get_unavailable_products(
+            order.branch_id, [{"item_id": item_id}]
         )
+        if unavailable:
+            return Response(
+                {
+                    "detail": (
+                        f"'{unavailable[0].product_name}' no está disponible "
+                        "en la sucursal del pedido."
+                    ),
+                    "unavailable": [
+                        {
+                            "item_id": u.product_id,
+                            "name": u.product_name,
+                            "reason": u.reason,
+                            "message": u.message,
+                        }
+                        for u in unavailable
+                    ],
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        order.total = order.order_products.aggregate(total=Sum("price"))["total"] or Decimal("0.00")
+        # 1. Crear o actualizar el producto dentro del pedido
+        existing = order.order_products.filter(item_id=item_id).first()
+        if existing:
+            existing.quantity += quantity
+            existing.price = product.price * existing.quantity
+            existing.save(update_fields=["quantity", "price"])
+        else:
+            line_total = product.price * quantity
+            OrderProduct.objects.create(
+                order=order,
+                item_id=item_id,
+                quantity=quantity,
+                price=line_total,
+                excluded_modifiers=request.data.get("excluded_modifiers", []),
+            )
+
+        # 2. Recalcular el subtotal y total de la orden
+        subtotal = (
+            order.order_products.aggregate(total=Sum("price"))["total"]
+            or Decimal("0.00")
+        )
+        
+        order.total = subtotal
         order.save(update_fields=["total"])
 
         order.refresh_from_db()
-        return Response(OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED)
-
-    @action(
-        detail=False,
-        methods=["get"],
-        url_path="kitchen",
-        permission_classes=[IsAuthenticated, IsKitchenStaffPermission],
-    )
-    def kitchen(self, request):
-        branch_id = request.query_params.get("branch_id")
-        if not branch_id:
-            return Response(
-                {"error": "El parámetro 'branch_id' es obligatorio."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        branch = get_object_or_404(Branch, pk=branch_id)
-
-        orders = (
-            Order.objects.filter(branch_id=branch_id)
-            .exclude(state=STATE_SEQUENCE[-1])
-            .order_by("created_at")
+        return Response(
+            OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED
         )
 
-        return Response({
-            "accepting_orders": branch.accepting_orders,
-            "results": KitchenOrderSerializer(orders, many=True).data,
-        })
-
-    @action(
-        detail=False,
-        methods=["post"],
-        url_path="toggle-accepting",
-        permission_classes=[IsAuthenticated, IsKitchenStaffPermission],
-    )
-    def toggle_accepting(self, request):
-        branch_id = request.data.get("branch_id")
-        if not branch_id:
-            return Response(
-                {"error": "El parámetro 'branch_id' es obligatorio."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        branch = get_object_or_404(Branch, pk=branch_id)
-        branch.accepting_orders = not branch.accepting_orders
-        branch.save(update_fields=["accepting_orders"])
-
-        return Response({"accepting_orders": branch.accepting_orders})
-
-    @action(
-        detail=True,
-        methods=["post"],
-        url_path="advance",
-        permission_classes=[IsAuthenticated, IsKitchenStaffPermission],
-    )
-    @transaction.atomic
-    def advance(self, request, pk=None):
-        order = self.get_object()
-
-        if order.state not in STATE_SEQUENCE:
-            return Response(
-                {"error": f"El pedido tiene un estado desconocido: '{order.state}'."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        current_index = STATE_SEQUENCE.index(order.state)
-        if current_index == len(STATE_SEQUENCE) - 1:
-            return Response(
-                {"error": "El pedido ya está en su estado final y no puede avanzar."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        order.state = STATE_SEQUENCE[current_index + 1]
-        order.save(update_fields=["state"])
-
-        return Response(KitchenOrderSerializer(order).data)
+    @action(detail=False, methods=["get"], url_path="my-orders")
+    def my_orders(self, request):
+        qs = self.get_queryset()
+        serializer = OrderListSerializer(qs, many=True, context={"request": request})
+        return Response(serializer.data)

@@ -43,7 +43,10 @@ Ejemplos: `feature/rf-01-login-endpoint`, `fix/rf-01-token-expiry`, `chore/rf-05
 
 - Un PR resuelve **una sola subtarea**. No mezcles múltiples funcionalidades en un PR.
 - El título sigue [Conventional Commits](#conventional-commits).
-- En la descripción, referencia el issue padre con `Closes #<issue>` o `Relates to #<issue>`.
+- La descripción usa la plantilla de [`.github/pull_request_template.md`](.github/pull_request_template.md), que incluye:
+  - `RF-XX #` con el número del issue de la subtarea.
+  - `Closes #<issue>` (issue padre) o `Related to #<issue>` cuando corresponda.
+  - Las secciones `Descripción`, `Cambios realizados`, `Qué testear?` y `Notas adicionales`.
 
 ### 4. Revisión y merge
 
