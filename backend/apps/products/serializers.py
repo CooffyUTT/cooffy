@@ -66,8 +66,28 @@ class ProductMenuDetailSerializer(serializers.ModelSerializer):
         return self.context.get('branch_id')
 
 
+class ProductStockAssignSerializer(serializers.Serializer):
+    """Body de POST /api/menu/manage/products/{id}/stocks/"""
+
+    branch_id = serializers.IntegerField()
+
+    def validate_branch_id(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("El branch_id debe ser un número positivo.")
+        return value
+
+    stock = serializers.IntegerField(required=False)
+
+    def validate_stock(self, value):
+        if value not in ProductStock.StockState.values:
+            raise serializers.ValidationError("El stock debe ser -1, 0 o 1.")
+        return value
+
+
 class ProductManageSerializer(serializers.ModelSerializer):
     """Serializer para el CRUD de productos del panel de Gerente/Supervisor"""
+
+    branch_stocks = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -81,10 +101,17 @@ class ProductManageSerializer(serializers.ModelSerializer):
             'image',
             'description',
             'modifiers',
+            'branch_stocks',
             'created_at',
             'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_branch_stocks(self, obj):
+        return {
+            stock.branch_id: stock.stock
+            for stock in obj.branch_stocks.all()
+        }
 
     def validate_name(self, value):
         if not value or not value.strip():

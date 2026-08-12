@@ -305,3 +305,207 @@ class ProductStockTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['available_in_branches'], [self.branch.id])
         self.assertIsNone(response.data['branch_id'])
+
+
+class ProductStockManageTests(APITestCase):
+    """RF-06 / RN-23: el gerente gestiona ProductStock por sucursal."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = User.objects.create_user(user='owner@example.com', name='Owner', password='password')
+        cls.manager = User.objects.create_user(user='manager@example.com', name='Manager', password='password')
+        cls.manager.groups.add(Group.objects.create(name='gerente'))
+        cls.supervisor = User.objects.create_user(user='supervisor@example.com', name='Supervisor', password='password')
+        cls.supervisor.groups.add(Group.objects.create(name='supervisor'))
+        cls.client_user = User.objects.create_user(user='client@example.com', name='Client', password='password')
+        cls.superuser = User.objects.create_superuser(user='admin@example.com', name='Admin', password='password')
+
+        cls.other_owner = User.objects.create_user(user='other-owner@example.com', name='Other Owner', password='password')
+        cls.other_school = School.objects.create(full_name='Other School', short_name='OTHER', admin=cls.other_owner)
+        cls.other_company = Company.objects.create(name='Other Company', owner=cls.other_owner)
+        cls.other_branch = Branch.objects.create(
+            name='Other Branch',
+            company=cls.other_company,
+            school=cls.other_school,
+            active=True,
+        )
+
+        cls.school = School.objects.create(full_name='Manage School', short_name='MGMT', admin=cls.owner)
+        cls.company = Company.objects.create(name='Manage Company', owner=cls.manager)
+        cls.branch = Branch.objects.create(
+            name='Manage Branch',
+            company=cls.company,
+            school=cls.school,
+            active=True,
+        )
+        cls.inactive_branch = Branch.objects.create(
+            name='Inactive Branch',
+            company=cls.company,
+            school=cls.school,
+            active=False,
+        )
+
+        cls.product = Product.objects.create(name='Manage Product', price=Decimal('10.00'))
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.manager)
+
+    def stock_url(self):
+        return reverse('product-manage-stocks', args=[self.product.id])
+
+    def test_manager_can_assign_product_to_branch(self):
+        response = self.client.post(self.stock_url(), {'branch_id': self.branch.id}, format='json')
+
+        self.assertEqual(response.status_code, 200)
+        stock = ProductStock.objects.get(branch=self.branch, product=self.product)
+        self.assertEqual(stock.stock, ProductStock.StockState.NOT_TRACKED)
+        self.assertEqual(response.data['branch_stocks'], {self.branch.id: -1})
+
+    def test_post_stock_upserts_existing_row(self):
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=self.product,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+
+        response = self.client.post(
+            self.stock_url(),
+            {'branch_id': self.branch.id, 'stock': ProductStock.StockState.OUT_OF_STOCK},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ProductStock.objects.filter(branch=self.branch, product=self.product).count(), 1)
+        stock = ProductStock.objects.get(branch=self.branch, product=self.product)
+        self.assertEqual(stock.stock, ProductStock.StockState.OUT_OF_STOCK)
+        self.assertEqual(response.data['branch_stocks'], {self.branch.id: 0})
+
+    def test_manager_can_mark_product_available_and_out_of_stock(self):
+        self.client.post(
+            self.stock_url(),
+            {'branch_id': self.branch.id, 'stock': ProductStock.StockState.OUT_OF_STOCK},
+            format='json',
+        )
+        self.client.post(
+            self.stock_url(),
+            {'branch_id': self.branch.id, 'stock': ProductStock.StockState.IN_STOCK},
+            format='json',
+        )
+
+        stock = ProductStock.objects.get(branch=self.branch, product=self.product)
+        self.assertEqual(stock.stock, ProductStock.StockState.IN_STOCK)
+
+    def test_stock_accepts_only_mvp_states(self):
+        response = self.client.post(
+            self.stock_url(),
+            {'branch_id': self.branch.id, 'stock': 2},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('stock', response.data)
+        self.assertFalse(ProductStock.objects.filter(branch=self.branch, product=self.product).exists())
+
+    def test_post_requires_branch_id(self):
+        response = self.client.post(self.stock_url(), {}, format='json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('branch_id', response.data)
+
+    def test_manager_cannot_assign_to_branch_of_another_company(self):
+        response = self.client.post(
+            self.stock_url(),
+            {'branch_id': self.other_branch.id},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(ProductStock.objects.filter(branch=self.other_branch, product=self.product).exists())
+
+    def test_manager_cannot_assign_to_inactive_branch(self):
+        response = self.client.post(
+            self.stock_url(),
+            {'branch_id': self.inactive_branch.id},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(ProductStock.objects.filter(branch=self.inactive_branch, product=self.product).exists())
+
+    def test_client_cannot_manage_stocks(self):
+        self.client.force_authenticate(user=self.client_user)
+
+        response = self.client.post(
+            self.stock_url(),
+            {'branch_id': self.branch.id},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(ProductStock.objects.filter(branch=self.branch, product=self.product).exists())
+
+    def test_supervisor_cannot_manage_stocks(self):
+        self.client.force_authenticate(user=self.supervisor)
+
+        response = self.client.post(
+            self.stock_url(),
+            {'branch_id': self.branch.id},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(ProductStock.objects.filter(branch=self.branch, product=self.product).exists())
+
+    def test_superuser_can_manage_any_branch(self):
+        self.client.force_authenticate(user=self.superuser)
+
+        response = self.client.post(
+            self.stock_url(),
+            {'branch_id': self.other_branch.id, 'stock': ProductStock.StockState.IN_STOCK},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        stock = ProductStock.objects.get(branch=self.other_branch, product=self.product)
+        self.assertEqual(stock.stock, ProductStock.StockState.IN_STOCK)
+
+    def test_manager_can_remove_product_from_branch(self):
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=self.product,
+            stock=ProductStock.StockState.IN_STOCK,
+        )
+
+        response = self.client.delete(
+            f"{self.stock_url()}?branch_id={self.branch.id}",
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(ProductStock.objects.filter(branch=self.branch, product=self.product).exists())
+
+    def test_delete_requires_branch_id(self):
+        response = self.client.delete(self.stock_url(), format='json')
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_delete_missing_row_returns_404(self):
+        response = self.client.delete(
+            f"{self.stock_url()}?branch_id={self.branch.id}",
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_manage_list_exposes_branch_stocks_map(self):
+        ProductStock.objects.create(
+            branch=self.branch,
+            product=self.product,
+            stock=ProductStock.StockState.OUT_OF_STOCK,
+        )
+
+        response = self.client.get(reverse('product-manage-list'))
+
+        self.assertEqual(response.status_code, 200)
+        item = next(i for i in response.data['results'] if i['id'] == self.product.id)
+        self.assertEqual(item['branch_stocks'], {self.branch.id: 0})
