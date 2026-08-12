@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from datetime import timedelta
+
 from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
@@ -119,6 +121,7 @@ class OrderListSerializer(OrderClientNameMixin, serializers.ModelSerializer):
             "payment_method",
             "payment_status",
             "created_at",
+            "scheduled_pickup_at",
             "comment",
             "order_products",
         ]
@@ -227,6 +230,27 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Ya tienes un pedido activo en esta sucursal."
             )
+
+        pickup = attrs.get("scheduled_pickup_at")
+        if pickup is not None and branch_id is not None:
+            branch = Branch.objects.filter(pk=branch_id).first()
+            if branch is not None:
+                now = timezone.now()
+                min_anticipation = timedelta(
+                    minutes=branch.min_anticipation_minutes
+                )
+                max_anticipation = timedelta(hours=branch.max_anticipation_hours)
+                if pickup < now + min_anticipation:
+                    raise serializers.ValidationError(
+                        "La recogida programada debe ser al menos "
+                        f"{branch.min_anticipation_minutes} minutos después de "
+                        "la hora actual."
+                    )
+                if pickup > now + max_anticipation:
+                    raise serializers.ValidationError(
+                        "La recogida programada no puede superar el límite "
+                        f"máximo de anticipación de {branch.max_anticipation_hours} horas."
+                    )
 
         product_ids = [p["item_id"] for p in products_data]
         products = Product.objects.filter(pk__in=product_ids, active=True)

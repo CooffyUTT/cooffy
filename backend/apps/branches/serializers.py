@@ -70,6 +70,8 @@ class BranchSerializer(serializers.ModelSerializer):
             'image',
             'active',
             'accepting_orders',
+            'min_anticipation_minutes',
+            'max_anticipation_hours',
             'created_at',
             'updated_at',
         ]
@@ -116,4 +118,12 @@ class BranchCreateSerializer(serializers.ModelSerializer):
 class BranchUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Branch
-        fields = ['name', 'location', 'schedule', 'image', 'active']
+        fields = [
+            'name',
+            'location',
+            'schedule',
+            'image',
+            'active',
+            'min_anticipation_minutes',
+            'max_anticipation_hours',
+        ]

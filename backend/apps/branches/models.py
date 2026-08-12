@@ -94,6 +94,8 @@ class Branch(models.Model):
     image = models.ImageField(upload_to='branches/', max_length=2048, null=True, blank=True)
     active = models.BooleanField(default=True)
     accepting_orders = models.BooleanField(default=True)
+    min_anticipation_minutes = models.PositiveIntegerField(default=30)
+    max_anticipation_hours = models.PositiveIntegerField(default=24)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

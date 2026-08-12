@@ -1,7 +1,7 @@
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
@@ -17,8 +17,9 @@ from .serializers import (
     OrderCreateSerializer,
     OrderProductCreateSerializer,
 )
-from .services import get_unavailable_products
+from .services import get_unavailable_products, PRE_ORDER_KITCHEN_LEAD_MINUTES, pre_order_release_cutoff
 from .state_machine import can_transition
+from apps.branches.models import Branch
 from apps.products.models import Product
 
 
@@ -47,12 +48,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         state = self.request.query_params.get("state")
         branch_id = self.request.query_params.get("branch_id")
         date = self.request.query_params.get("date")  # FIX: Captura de la variable 'date'
+        upcoming = self.request.query_params.get("upcoming")
 
         if client_id is not None:
             qs = qs.filter(client_id=client_id)
-
-        if state is not None:
-            qs = qs.filter(state=state)
 
         is_kitchen_staff = user and user.groups.filter(
             name__in=["empleado", "gerente"]
@@ -63,12 +62,43 @@ class OrderViewSet(viewsets.ModelViewSet):
         elif user and not getattr(user, "is_staff", False) and not is_kitchen_staff:
             qs = qs.filter(client_id=getattr(user, "id", None))
 
+        if upcoming is not None and upcoming.lower() in ("true", "1", "yes", "on"):
+            # RN-31: pestaña de pedidos anticipados. Solo personal de cocina.
+            if not is_kitchen_staff:
+                self.permission_denied(
+                    self.request,
+                    message=(
+                        "Solo el personal de cocina puede consultar los "
+                        "pedidos anticipados."
+                    ),
+                )
+            cutoff = pre_order_release_cutoff()
+            return qs.filter(
+                scheduled_pickup_at__gt=cutoff,
+                state__in=[
+                    Order.State.PENDING,
+                    Order.State.PREPARING,
+                    Order.State.READY,
+                ],
+            ).order_by("scheduled_pickup_at")
+
+        if state is not None:
+            qs = qs.filter(state=state)
+
         if date:
             try:
                 datetime.strptime(date, "%Y-%m-%d")
             except ValueError:
                 raise ValidationError({"date": "Formato de fecha inválido. Use YYYY-MM-DD."})
-            qs = qs.filter(date=date)
+            # RN-29: un pre-order creado ayer con recogida hoy se ve en la cola de hoy.
+            if is_kitchen_staff:
+                qs = qs.filter(Q(date=date) | Q(scheduled_pickup_at__date=date))
+            else:
+                qs = qs.filter(date=date)
+
+        # RN-29: los pre-orders aún no liberados no entran a la cola pending.
+        if is_kitchen_staff and state == "pending":
+            qs = qs.exclude(scheduled_pickup_at__gt=pre_order_release_cutoff())
 
         return qs
 
@@ -222,6 +252,50 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(
             OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED
         )
+
+    @action(detail=True, methods=["post"], url_path="cancel")
+    def cancel(self, request, pk=None):
+        """RN-30: un cliente cancela su pedido anticipado dentro de la ventana."""
+        order = get_object_or_404(Order, pk=pk)
+
+        if order.client_id != request.user.id:
+            return Response(
+                {"detail": "No tienes permiso para cancelar este pedido."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if order.scheduled_pickup_at is None:
+            return Response(
+                {"detail": "Este pedido no es un pedido anticipado."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if order.state != Order.State.PENDING:
+            return Response(
+                {
+                    "detail": (
+                        "Solo puedes cancelar un pedido anticipado que aún esté en espera."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        branch = Branch.objects.filter(pk=order.branch_id).first()
+        if branch is not None:
+            now = timezone.now()
+            min_anticipation = timedelta(
+                minutes=branch.min_anticipation_minutes
+            )
+            if order.scheduled_pickup_at - now < min_anticipation:
+                return Response(
+                    {"detail": "El pedido ya está fuera de la ventana de cancelación."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        order.state = Order.State.CANCELLED
+        order.save(update_fields=["state", "updated_at"])
+
+        return Response(OrderDetailSerializer(order).data)
 
     @action(detail=False, methods=["get"], url_path="my-orders")
     def my_orders(self, request):
