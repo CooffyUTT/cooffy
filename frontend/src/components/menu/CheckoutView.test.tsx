@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 const mutateAsyncMock = vi.fn();
 const useCreateOrderMock = vi.fn();
 const useBranchesMock = vi.fn();
+const pushMock = vi.fn();
 
 vi.mock("sonner", () => ({
   toast: {
@@ -17,7 +18,7 @@ vi.mock("sonner", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
+  useRouter: () => ({ push: pushMock, back: vi.fn() }),
 }));
 
 vi.mock("@/hooks/useOrders", () => ({
@@ -108,7 +109,7 @@ describe("CheckoutView success flow", () => {
       total: "50.00",
       iva: "3.70",
       state: "pending",
-      payment_method: "card",
+      payment_method: 2,
       payment_status: "pending",
       comment: null,
       updated_at: "2026-08-11T15:00:00Z",
@@ -137,15 +138,13 @@ describe("CheckoutView success flow", () => {
     await user.click(screen.getByRole("button", { name: "Confirmar" }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Pedido confirmado/i)).toBeInTheDocument();
+      expect(toast.success).toHaveBeenCalledWith("Pedido #42 registrado");
     });
-    expect(screen.getByText(/Tu pedido ha sido registrado/i)).toBeInTheDocument();
-    expect(screen.getByText(/Pedido #42/)).toBeInTheDocument();
+    expect(pushMock).toHaveBeenCalledWith("/orders/7");
     expect(JSON.parse(localStorage.getItem("cooffy_cart") ?? "[]")).toHaveLength(0);
-    expect(toast.success).toHaveBeenCalledWith("Pedido #42 registrado");
   });
 
-  it("does not render the empty cart view after a successful order", async () => {
+  it("redirects to the order receipt after a successful order", async () => {
     seedCart();
     const createdOrder = {
       id: 8,
@@ -160,7 +159,7 @@ describe("CheckoutView success flow", () => {
       total: "50.00",
       iva: "3.70",
       state: "pending",
-      payment_method: "card",
+      payment_method: 2,
       payment_status: "pending",
       comment: null,
       updated_at: "2026-08-11T15:00:00Z",
@@ -180,9 +179,9 @@ describe("CheckoutView success flow", () => {
     await user.click(screen.getByRole("button", { name: "Confirmar" }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Pedido confirmado/i)).toBeInTheDocument();
+      expect(pushMock).toHaveBeenCalledWith("/orders/8");
     });
-    expect(screen.queryByText(/Carrito vacío/i)).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem("cooffy_cart") ?? "[]")).toHaveLength(0);
   });
 });
 

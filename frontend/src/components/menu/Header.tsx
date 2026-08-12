@@ -29,7 +29,7 @@ export default function ClientHeader({ searchValue = "", onSearchChange }: Clien
             </Link>
             <Link
               className="text-on-surface-variant hover:text-primary transition-colors py-2 font-semibold text-sm w-full md:w-auto block md:inline-block"
-              href="/menu/orders"
+              href="/orders"
             >
               Mis pedidos
             </Link>

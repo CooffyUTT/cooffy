@@ -113,6 +113,26 @@ class OrderViewSet(viewsets.ModelViewSet):
             if field in request.data:
                 setattr(order, field, request.data[field])
 
+        if "payment_status" in request.data:
+            new_payment_status = request.data["payment_status"]
+            if not self._is_kitchen_staff(request.user):
+                return Response(
+                    {"detail": "Solo el personal de caja puede cambiar el estado de pago."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if not (order.payment_status == Order.PaymentStatus.PENDING and
+                    new_payment_status == Order.PaymentStatus.PAID):
+                return Response(
+                    {"detail": "El pago únicamente puede confirmarse de 'pending' a 'paid'."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if order.payment_method_id != 1:
+                return Response(
+                    {"detail": "Solo los pedidos en efectivo requieren confirmación de pago."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            order.payment_status = new_payment_status
+
         order.save()
 
         return Response(OrderDetailSerializer(order).data)

@@ -122,7 +122,7 @@ class AnalyticsApiTests(APITestCase):
             date=today,
             branch_id=cls.branch.id,
             client_id=cls.client_user.id,
-            payment_method=1,
+            payment_method_id=1,
             state="ready",
             total="60.00",
         )
@@ -137,7 +137,7 @@ class AnalyticsApiTests(APITestCase):
             date=today,
             branch_id=cls.branch.id,
             client_id=cls.client_user.id,
-            payment_method=1,
+            payment_method_id=1,
             state="ready",
             total="35.00",
         )
@@ -152,7 +152,7 @@ class AnalyticsApiTests(APITestCase):
             date=today,
             branch_id=cls.branch.id,
             client_id=cls.client_user.id,
-            payment_method=1,
+            payment_method_id=1,
             state="ready",
             total="85.00",
         )
@@ -170,7 +170,7 @@ class AnalyticsApiTests(APITestCase):
             date=today - timedelta(days=2),
             branch_id=cls.branch.id,
             client_id=cls.client_user.id,
-            payment_method=1,
+            payment_method_id=1,
             state="preparing",
             total="25.00",
         )
@@ -183,7 +183,7 @@ class AnalyticsApiTests(APITestCase):
             date=today - timedelta(days=7),
             branch_id=cls.branch.id,
             client_id=cls.client_user.id,
-            payment_method=1,
+            payment_method_id=1,
             state="ready",
             total="15.00",
         )
@@ -196,7 +196,7 @@ class AnalyticsApiTests(APITestCase):
             date=today,
             branch_id=cls.branch.id,
             client_id=cls.client_user.id,
-            payment_method=1,
+            payment_method_id=1,
             state="pending",
             total="40.00",
         )
@@ -205,7 +205,7 @@ class AnalyticsApiTests(APITestCase):
             date=today,
             branch_id=cls.branch.id,
             client_id=cls.client_user.id,
-            payment_method=1,
+            payment_method_id=1,
             state="rejected",
             total="50.00",
         )
@@ -215,7 +215,7 @@ class AnalyticsApiTests(APITestCase):
             date=today,
             branch_id=cls.other_branch.id,
             client_id=cls.client_user.id,
-            payment_method=1,
+            payment_method_id=1,
             state="ready",
             total="999.00",
         )

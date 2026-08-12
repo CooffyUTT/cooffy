@@ -1,6 +1,19 @@
 from django.db import models
 
 
+class PaymentMethod(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    is_digital = models.BooleanField()
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "payment_methods"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Order(models.Model):
     class State(models.TextChoices):
         PENDING = "pending", "En espera"
@@ -8,10 +21,6 @@ class Order(models.Model):
         READY = "ready", "Listo para entregar"
         PICKED_UP = "picked_up", "Entregado"
         REJECTED = "rejected", "Rechazado"
-
-    class PaymentMethod(models.TextChoices):
-        CASH = "cash", "Efectivo"
-        CARD = "card", "Tarjeta"
 
     class PaymentStatus(models.TextChoices):
         PENDING = "pending", "Pendiente"
@@ -22,6 +31,7 @@ class Order(models.Model):
     branch_id = models.BigIntegerField(default=1)
     client_id = models.BigIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     prepared_at = models.DateTimeField(null=True, blank=True)
     picked_up_at = models.DateTimeField(null=True, blank=True)
     scheduled_pickup_at = models.DateTimeField(null=True, blank=True)
@@ -29,8 +39,10 @@ class Order(models.Model):
     state = models.CharField(
         max_length=20, choices=State.choices, default=State.PENDING
     )
-    payment_method = models.CharField(
-        max_length=10, choices=PaymentMethod.choices
+    payment_method = models.ForeignKey(
+        PaymentMethod,
+        on_delete=models.PROTECT,
+        related_name="orders",
     )
     payment_status = models.CharField(
         max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING

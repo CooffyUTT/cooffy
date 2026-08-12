@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -15,7 +14,6 @@ import {
   Loader2,
   ShoppingBag,
   MapPin,
-  Clock,
   Minus,
   Plus,
   Trash2,
@@ -32,12 +30,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import type { PaymentMethod, Order } from "@/types/order";
+import type { PaymentMethod } from "@/types/order";
 import { PAYMENT_METHOD_LABELS } from "@/types/order";
 
 const PAYMENT_HINTS: Record<PaymentMethod, string> = {
-  card: "Podrás pagar al recoger tu pedido.",
-  cash: "Ten preparado el monto exacto.",
+  1: "Paga al recoger tu pedido en caja.",
+  2: "Pago electrónico (simulado).",
 };
 
 interface OrderProductError {
@@ -102,9 +100,8 @@ export function CheckoutView() {
   const createOrder = useCreateOrder();
   const { data: branches } = useBranches();
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(1);
   const [comment, setComment] = useState("");
-  const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const branch = useMemo(
@@ -129,182 +126,14 @@ export function CheckoutView() {
 
     try {
       const order = await createOrder.mutateAsync(payload);
-      setCreatedOrder(order);
       clearCart();
       toast.success(`Pedido #${order.order_number} registrado`);
+      router.push(`/orders/${order.id}`);
     } catch (error) {
       const message = extractOrderErrorMessage(error);
       toast.error("No se pudo registrar el pedido", { description: message });
     }
   };
-
-  if (createdOrder) {
-    return (
-      <div className="min-h-screen bg-background">
-        <header className="sticky top-0 z-30 bg-surface border-b border-outline-variant/30">
-          <div className="max-w-[600px] mx-auto px-4 h-16 flex items-center gap-3">
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 15 }}
-            >
-              <CheckCircle2 className="h-6 w-6 text-green-600" />
-            </motion.div>
-            <h1 className="text-lg font-bold text-on-surface">Pedido confirmado</h1>
-          </div>
-        </header>
-
-        <main className="max-w-[600px] mx-auto px-4 py-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="bg-surface-container-low rounded-2xl border border-outline-variant/20 p-6 mb-6"
-          >
-            <div className="text-center mb-6">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 200,
-                  damping: 12,
-                  delay: 0.1,
-                }}
-                className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
-              >
-                <motion.div
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                >
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
-                </motion.div>
-              </motion.div>
-              <h2 className="text-xl font-bold text-on-surface mb-1">
-                Tu pedido ha sido registrado
-              </h2>
-              <p className="text-sm text-on-surface-variant">
-                Pedido #{createdOrder.order_number}
-              </p>
-            </div>
-
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 flex items-center gap-3">
-              <Clock className="h-5 w-5 text-primary shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-on-surface">Tiempo estimado</p>
-                <p className="text-lg font-bold text-primary">12 - 18 minutos</p>
-              </div>
-            </div>
-
-            <div className="border-t border-outline-variant/20 pt-4 space-y-3">
-              {branch && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-on-surface-variant">Sucursal</span>
-                  <span className="text-on-surface font-medium text-right max-w-[60%]">
-                    {branch.name}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between text-sm">
-                <span className="text-on-surface-variant">Fecha</span>
-                <span className="text-on-surface font-medium">{createdOrder.date}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-on-surface-variant">Método de pago</span>
-                <span className="text-on-surface font-medium">
-                  {PAYMENT_METHOD_LABELS[createdOrder.payment_method]}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-on-surface-variant">Estado</span>
-                <span className="text-on-surface font-medium">En espera</span>
-              </div>
-              {createdOrder.comment && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-on-surface-variant">Comentario</span>
-                  <span className="text-on-surface font-medium text-right max-w-[60%]">
-                    {createdOrder.comment}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-outline-variant/20 mt-4 pt-4">
-              <h3 className="text-sm font-semibold text-on-surface mb-3">
-                Productos ({createdOrder.order_products.length})
-              </h3>
-              <div className="space-y-3">
-                {createdOrder.order_products.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + index * 0.1 }}
-                    className="flex justify-between items-center bg-surface rounded-xl p-3 border border-outline-variant/10"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-on-surface">
-                        {item.product_name}
-                      </p>
-                      <p className="text-xs text-on-surface-variant">
-                        {item.quantity} x ${(Number(item.price) / item.quantity).toFixed(2)}
-                      </p>
-                    </div>
-                    <span className="text-sm font-semibold text-on-surface">
-                      ${Number(item.price).toFixed(2)}
-                    </span>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-primary/5 border-t border-outline-variant/20 mt-4 pt-4 space-y-2">
-              {(() => {
-                const orderSubtotal = createdOrder.order_products.reduce(
-                  (sum, item) => sum + Number(item.price),
-                  0,
-                );
-                return (
-                  <>
-                    <div className="flex justify-between text-sm text-on-surface-variant">
-                      <span>Subtotal</span>
-                      <span>${orderSubtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-on-surface-variant">
-                      <span>IVA incluido (8%)</span>
-                      <span>${Number(createdOrder.iva).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center pt-2 border-t border-dashed border-outline-variant/20">
-                      <span className="text-lg font-bold text-on-surface">Total</span>
-                      <span className="text-2xl font-extrabold text-primary">
-                        ${Number(createdOrder.total).toFixed(2)}
-                      </span>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="flex flex-col gap-3"
-          >
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={() => router.push("/menu")}
-            >
-              Volver al menú
-            </Button>
-          </motion.div>
-        </main>
-      </div>
-    );
-  }
 
   if (cart.length === 0) {
     return (
@@ -444,9 +273,9 @@ export function CheckoutView() {
           </h2>
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={() => setPaymentMethod("cash")}
+              onClick={() => setPaymentMethod(1)}
               className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
-                paymentMethod === "cash"
+                paymentMethod === 1
                   ? "border-primary bg-primary/5"
                   : "border-outline-variant/20 hover:border-outline-variant/50"
               }`}
@@ -455,9 +284,9 @@ export function CheckoutView() {
               <span className="text-sm font-medium text-on-surface">Efectivo</span>
             </button>
             <button
-              onClick={() => setPaymentMethod("card")}
+              onClick={() => setPaymentMethod(2)}
               className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
-                paymentMethod === "card"
+                paymentMethod === 2
                   ? "border-primary bg-primary/5"
                   : "border-outline-variant/20 hover:border-outline-variant/50"
               }`}

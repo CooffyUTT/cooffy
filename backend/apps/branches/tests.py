@@ -246,7 +246,7 @@ class ToggleAcceptingOrdersTests(APITestCase):
             self._orders_url(),
             {
                 'branch_id': self.branch.id,
-                'payment_method': 'cash',
+                'payment_method': 1,
                 'order_products': [
                     {'item_id': product.id, 'quantity': 1},
                 ],

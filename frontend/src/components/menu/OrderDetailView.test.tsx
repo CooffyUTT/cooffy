@@ -29,7 +29,7 @@ const makeOrder = (
     total: string;
     iva: string;
     branch_id: number;
-    payment_method: "cash" | "card";
+    payment_method: 1 | 2;
     payment_status: "pending" | "paid";
     created_at: string;
     estimated_completion_minutes: number | null;
@@ -48,7 +48,7 @@ const makeOrder = (
   total: "150.00",
   iva: "11.11",
   state: "preparing" as const,
-  payment_method: "card" as const,
+  payment_method: 2 as const,
   payment_status: "paid" as const,
   comment: null,
   updated_at: "2026-01-15T12:30:00Z",
@@ -134,7 +134,7 @@ describe("OrderDetailView", () => {
     expect(screen.getByText(/No se encontró el pedido/i)).toBeInTheDocument();
     const errorLink = screen.getByText(/Volver a mis pedidos/i);
     await user.click(errorLink);
-    expect(pushMock).toHaveBeenCalledWith("/menu/orders");
+    expect(pushMock).toHaveBeenCalledWith("/orders");
   });
 
   it("renders the order number, state and full summary", () => {
@@ -218,7 +218,7 @@ describe("OrderDetailView", () => {
     expect(screen.queryByTestId("estimated-time")).not.toBeInTheDocument();
   });
 
-  it("navigates back to /menu/orders when the header back button is clicked", async () => {
+  it("navigates back to /orders when the header back button is clicked", async () => {
     const user = userEvent.setup();
     useOrderMock.mockReturnValue({
       data: makeOrder(),
@@ -233,6 +233,6 @@ describe("OrderDetailView", () => {
       screen.getByRole("button", { name: "Volver a mis pedidos" }),
     );
 
-    expect(pushMock).toHaveBeenCalledWith("/menu/orders");
+    expect(pushMock).toHaveBeenCalledWith("/orders");
   });
 });

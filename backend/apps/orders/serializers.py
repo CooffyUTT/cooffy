@@ -8,8 +8,15 @@ from rest_framework import serializers
 from apps.branches.models import Branch
 from apps.products.models import Product
 from apps.users.models import User
-from .models import Order, OrderProduct
+from .models import Order, OrderProduct, PaymentMethod
 from .services import get_unavailable_products
+
+
+class PaymentMethodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentMethod
+        fields = ["id", "name", "is_digital", "active"]
+        read_only_fields = ("id",)
 
 
 class OrderProductSerializer(serializers.ModelSerializer):

@@ -27,7 +27,7 @@ const makeOrder = (overrides: Partial<{
   state: "pending" | "preparing" | "ready" | "picked_up" | "rejected";
   total: string;
   branch_id: number;
-  payment_method: "cash" | "card";
+  payment_method: 1 | 2;
   created_at: string;
 }> = {}) => ({
   id: 1,
@@ -42,7 +42,7 @@ const makeOrder = (overrides: Partial<{
   total: "120.00",
   iva: "8.89",
   state: "pending" as const,
-  payment_method: "cash" as const,
+  payment_method: 1 as const,
   payment_status: "pending" as const,
   comment: null,
   updated_at: "2026-01-15T13:00:00Z",
@@ -150,8 +150,8 @@ describe("OrdersListView", () => {
   it("renders one card per order with order number, branch, total, payment method and state", () => {
     useOrdersMock.mockReturnValue({
       data: [
-        makeOrder({ id: 1, order_number: 101, state: "preparing", payment_method: "cash" }),
-        makeOrder({ id: 2, order_number: 102, state: "ready", total: "85.50", payment_method: "card" }),
+        makeOrder({ id: 1, order_number: 101, state: "preparing", payment_method: 1 }),
+        makeOrder({ id: 2, order_number: 102, state: "ready", total: "85.50", payment_method: 2 }),
       ],
       isLoading: false,
       isError: false,
@@ -171,7 +171,7 @@ describe("OrdersListView", () => {
     expect(within(list).getByText("Listo para entregar")).toBeInTheDocument();
   });
 
-  it("navigates to /menu/orders/[id] when an order card is clicked", async () => {
+  it("navigates to /orders/[id] when an order card is clicked", async () => {
     const user = userEvent.setup();
     useOrdersMock.mockReturnValue({
       data: [makeOrder({ id: 42, order_number: 501 })],
@@ -184,7 +184,7 @@ describe("OrdersListView", () => {
 
     await user.click(screen.getByText("Pedido #501"));
 
-    expect(pushMock).toHaveBeenCalledWith("/menu/orders/42");
+    expect(pushMock).toHaveBeenCalledWith("/orders/42");
   });
 
   it("navigates back to /menu when the back button is clicked", async () => {

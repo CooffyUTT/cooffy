@@ -17,7 +17,7 @@ SEED_ORDERS = [
     {
         "branch_id": 1,
         "client_id": 1,
-        "payment_method": 1,
+        "payment_method_id": 1,
         "order_products": [
             {"item_id": 1, "quantity": 1},
         ],
@@ -25,7 +25,7 @@ SEED_ORDERS = [
     {
         "branch_id": 1,
         "client_id": 2,
-        "payment_method": 1,
+        "payment_method_id": 1,
         "order_products": [
             {"item_id": 1, "quantity": 1},
             {"item_id": 2, "quantity": 2},
@@ -34,7 +34,7 @@ SEED_ORDERS = [
     {
         "branch_id": 1,
         "client_id": 3,
-        "payment_method": 1,
+        "payment_method_id": 1,
         "state": "preparing",
         "order_products": [
             {"item_id": 3, "quantity": 2},
@@ -43,7 +43,7 @@ SEED_ORDERS = [
     {
         "branch_id": 1,
         "client_id": 2,
-        "payment_method": 1,
+        "payment_method_id": 1,
         "state": "ready",
         "order_products": [
             {"item_id": 3, "quantity": 1},

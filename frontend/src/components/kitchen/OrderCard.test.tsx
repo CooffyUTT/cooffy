@@ -36,6 +36,7 @@ const ORDER: KitchenOrder = {
   created_at: new Date().toISOString(),
   total: "30.00",
   state: "pending",
+  payment_method: 1,
   payment_status: "pending",
   order_products: [
     {

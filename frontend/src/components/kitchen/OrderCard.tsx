@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Clock, ImageIcon, AlertTriangle } from 'lucide-react';
+import { Clock, ImageIcon, AlertTriangle, Banknote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { KitchenOrder } from '@/types/kitchen';
 import { getTimeBadgeColor } from '@/utils/kitchenHelpers';
@@ -19,6 +19,8 @@ interface OrderCardProps {
   isPulse?: boolean;
   confirmingId: number | null;
   setConfirmingId: (id: number | null) => void;
+  paymentPending?: boolean;
+  onConfirmPayment?: () => void;
 }
 
 export function OrderCard({
@@ -31,7 +33,9 @@ export function OrderCard({
   onSecondaryAction,
   isPulse = false,
   confirmingId,
-  setConfirmingId
+  setConfirmingId,
+  paymentPending = false,
+  onConfirmPayment
 }: OrderCardProps) {
   const [elapsedMinutes, setElapsedMinutes] = useState(0);
   const [confirmingReject, setConfirmingReject] = useState(false);
@@ -137,6 +141,14 @@ export function OrderCard({
         </span>
       </div>
 
+      {/* Pago pendiente en efectivo */}
+      {paymentPending && (
+        <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-bold">
+          <Banknote size={15} className="shrink-0 text-amber-600" />
+          <span>Pago pendiente: confirma el efectivo en caja.</span>
+        </div>
+      )}
+
       {/* Botones de Acción */}
       <div className="pt-2">
         {confirmingReject ? (
@@ -181,6 +193,14 @@ export function OrderCard({
           </div>
         ) : (
           <div className="space-y-2">
+            {paymentPending && onConfirmPayment && (
+              <Button
+                onClick={onConfirmPayment}
+                className="w-full h-10 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl"
+              >
+                <Banknote className="h-4 w-4" /> CONFIRMAR PAGO
+              </Button>
+            )}
             <Button
               onClick={() => setConfirmingId(order.id)}
               className={`w-full h-12 text-white font-extrabold text-sm rounded-xl shadow-xs transition-all ${actionColor}`}

@@ -15,6 +15,7 @@ import {
 import { useOrders } from "@/hooks/useOrders";
 import { useBranches } from "@/hooks/useBranches";
 import { Badge } from "@/components/ui/badge";
+import { OrderProgressBar } from "./OrderProgressBar";
 import {
   ORDER_STATE_BADGE_CLASSES,
   ORDER_STATE_DOT_CLASSES,
@@ -90,7 +91,7 @@ function OrderCardItem({
           </span>
         </div>
         <div className="flex items-center gap-2 text-on-surface-variant">
-          {order.payment_method === "cash" ? (
+          {order.payment_method === 1 ? (
             <Banknote className="h-3.5 w-3.5 shrink-0" />
           ) : (
             <CreditCard className="h-3.5 w-3.5 shrink-0" />
@@ -108,6 +109,9 @@ function OrderCardItem({
         <span className="text-base font-extrabold text-primary">
           {formatCurrency(order.total)}
         </span>
+      </div>
+      <div className="mt-3">
+        <OrderProgressBar state={order.state} />
       </div>
     </button>
   );
@@ -204,7 +208,7 @@ export function OrdersListView() {
                 branchName={
                   branches?.find((b) => b.id === order.branch_id)?.name ?? null
                 }
-                onSelect={() => router.push(`/menu/orders/${order.id}`)}
+                onSelect={() => router.push(`/orders/${order.id}`)}
               />
             ))}
           </div>

@@ -7,7 +7,7 @@ import CartSheet from "@/components/menu/CartSheet";
 export default function MenuLayout({ children }: { children: React.ReactNode }) {
   return (
     <CartProvider>
-      <div className="bg-background text-on-background min-h-screen font-sans antialiased">
+      <div className="w-full bg-background text-on-background min-h-screen font-sans antialiased">
         {children}
         <CartSheet />
       </div>

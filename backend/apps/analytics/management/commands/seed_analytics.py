@@ -214,7 +214,7 @@ class Command(BaseCommand):
                     picked_up_at=picked_up_at,
                     total=0,
                     state=state,
-                    payment_method=random.randint(1, 3),
+                    payment_method_id=random.randint(1, 2),
                     payment_status=payment_status,
                 )
 

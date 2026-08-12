@@ -50,7 +50,7 @@ class OrderBusinessRuleRegressionTests(APITestCase):
             date="2026-01-01",
             branch_id=1,
             client_id=self.user.id,
-            payment_method=1,
+            payment_method_id=1,
         )
 
     def test_unavailable_product_cannot_be_added_to_an_order(self):
@@ -163,7 +163,7 @@ class OrderBusinessRuleRegressionTests(APITestCase):
             date="2026-01-01",
             branch_id=1,
             client_id=self.user.id,
-            payment_method=1,
+            payment_method_id=1,
             state="confirmed",
             comment="Original comment",
         )
@@ -185,7 +185,7 @@ class OrderBusinessRuleRegressionTests(APITestCase):
             date="2026-01-01",
             branch_id=1,
             client_id=self.user.id,
-            payment_method=1,
+            payment_method_id=1,
             state="rejected",
         )
 
@@ -206,7 +206,7 @@ class OrderBusinessRuleRegressionTests(APITestCase):
             date="2026-01-01",
             branch_id=1,
             client_id=self.user.id,
-            payment_method=1,
+            payment_method_id=1,
             state="delivered",
         )
 
@@ -311,7 +311,7 @@ class OrderBranchScopeRegressionTests(APITestCase):
     def _create_payload(self, branch_id, products):
         return {
             "branch_id": branch_id,
-            "payment_method": "cash",
+            "payment_method": 1,
             "order_products": [
                 {"item_id": pid, "quantity": 1} for pid in products
             ],
@@ -383,7 +383,7 @@ class OrderBranchScopeRegressionTests(APITestCase):
             date="2026-01-01",
             branch_id=self.branch_a.id,
             client_id=self.user.id,
-            payment_method="cash",
+            payment_method_id=1,
         )
 
         response = self.client.post(
@@ -405,7 +405,7 @@ class OrderBranchScopeRegressionTests(APITestCase):
             date="2026-01-01",
             branch_id=self.branch_a.id,
             client_id=self.user.id,
-            payment_method="cash",
+            payment_method_id=1,
         )
 
         response = self.client.post(

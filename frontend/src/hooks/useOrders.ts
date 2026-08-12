@@ -5,6 +5,7 @@ import {
   getOrder,
   getOrdersByState,
   updateOrderState,
+  updateOrderPaymentStatus,
 } from "@/lib/ordersApi";
 import type { OrderCreatePayload, OrderState } from "@/types/order";
 
@@ -70,6 +71,19 @@ export function useUpdateOrderState() {
   return useMutation({
     mutationFn: ({ orderId, state }: { orderId: number; state: OrderState }) =>
       updateOrderState(orderId, state),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["orders", "kitchen"] });
+    },
+  });
+}
+
+export function useUpdatePaymentStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ orderId, status }: { orderId: number; status: string }) =>
+      updateOrderPaymentStatus(orderId, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["orders", "kitchen"] });

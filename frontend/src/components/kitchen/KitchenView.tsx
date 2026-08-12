@@ -13,7 +13,7 @@ import { KitchenHeader } from './KitchenHeader';
 import { KitchenSummary } from './KitchenSummary';
 import { KanbanColumn } from './KanbanColumn';
 import { OrderCard } from './OrderCard';
-import { useOrders, useUpdateOrderState } from '@/hooks/useOrders';
+import { useOrders, useUpdateOrderState, useUpdatePaymentStatus } from '@/hooks/useOrders';
 import { useBranches, useToggleAcceptingOrders } from '@/hooks/useBranches';
 
 interface StoredUser {
@@ -35,6 +35,7 @@ function readStoredUser(): StoredUser | null {
 export function KitchenView() {
   const router = useRouter();
   const updateState = useUpdateOrderState();
+  const updatePaymentStatus = useUpdatePaymentStatus();
   const toggleAccepting = useToggleAcceptingOrders();
 
   const [{ isAuthorized, branchId }] = useState(() => {
@@ -94,6 +95,28 @@ export function KitchenView() {
       },
     );
   };
+
+  const handleConfirmPayment = (orderId: number) => {
+    updatePaymentStatus.mutate(
+      { orderId, status: 'paid' },
+      {
+        onSuccess: () => {
+          setConfirmingId(null);
+          toast.success('Pago confirmado', {
+            description: 'El pedido quedó marcado como pagado.',
+          });
+        },
+        onError: () => {
+          toast.error('No se pudo confirmar el pago', {
+            description: 'Intenta nuevamente en unos segundos.',
+          });
+        },
+      },
+    );
+  };
+
+  const isPaymentPending = (order: KitchenOrder) =>
+    order.payment_status === 'pending' && order.payment_method === 1;
 
   const handleToggleActive = () => {
     if (!branchId) {
@@ -194,6 +217,8 @@ export function KitchenView() {
                   secondaryActionLabel="RECHAZAR"
                   secondaryActionColor="bg-red-500 hover:bg-red-600"
                   onSecondaryAction={() => moveOrder(order.id, 'rejected')}
+                  paymentPending={isPaymentPending(order)}
+                  onConfirmPayment={() => handleConfirmPayment(order.id)}
                 />
               ))}
             </AnimatePresence>
@@ -216,6 +241,8 @@ export function KitchenView() {
                   onAction={() => moveOrder(order.id, 'ready')}
                   actionLabel="MARCAR COMO LISTO"
                   actionColor="bg-blue-600 hover:bg-blue-700"
+                  paymentPending={isPaymentPending(order)}
+                  onConfirmPayment={() => handleConfirmPayment(order.id)}
                 />
               ))}
             </AnimatePresence>
@@ -239,6 +266,8 @@ export function KitchenView() {
                   onAction={() => moveOrder(order.id, 'picked_up')}
                   actionLabel="ENTREGADO / RECOGIDO"
                   actionColor="bg-emerald-600 hover:bg-emerald-700"
+                  paymentPending={isPaymentPending(order)}
+                  onConfirmPayment={() => handleConfirmPayment(order.id)}
                 />
               ))}
             </AnimatePresence>

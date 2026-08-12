@@ -52,3 +52,13 @@ export async function updateOrderState(
   });
   return response.data;
 }
+
+export async function updateOrderPaymentStatus(
+  orderId: number,
+  newStatus: string,
+): Promise<Order> {
+  const response = await api.patch<Order>(`/api/orders/${orderId}/`, {
+    payment_status: newStatus,
+  });
+  return response.data;
+}

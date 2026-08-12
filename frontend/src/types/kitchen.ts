@@ -46,6 +46,7 @@ export interface KitchenOrder {
   client_name: string | null;
   total: string;
   state: string;
+  payment_method: number;
   payment_status: string;
   created_at: string;
   comment: string | null;

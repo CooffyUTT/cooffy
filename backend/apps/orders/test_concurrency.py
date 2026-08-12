@@ -18,7 +18,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient, APITransactionTestCase
 
 from apps.branches.models import Branch, Company
-from apps.orders.models import Order
+from apps.orders.models import Order, PaymentMethod
 from apps.products.models import Product, ProductStock
 from apps.schools.models import School
 from apps.users.models import User
@@ -34,6 +34,11 @@ class OrderNumberConcurrencyTests(APITransactionTestCase):
             )
             for i in range(4)
         ]
+        # APITransactionTestCase flushes la BD antes de correr, así que
+        # los métodos de pago sembrados por las migraciones ya no existen.
+        PaymentMethod.objects.get_or_create(
+            id=1, defaults={"name": "Efectivo", "is_digital": False}
+        )
         school = School.objects.create(
             full_name="Concurrency School", short_name="CONC"
         )
@@ -63,7 +68,7 @@ class OrderNumberConcurrencyTests(APITransactionTestCase):
             reverse("orders-list"),
             {
                 "branch_id": self.branch.id,
-                "payment_method": "cash",
+                "payment_method": 1,
                 "order_products": [
                     {"item_id": self.product.id, "quantity": 1}
                 ],
@@ -96,6 +101,8 @@ class OrderNumberConcurrencyTests(APITransactionTestCase):
     def test_two_concurrent_orders_get_distinct_numbers(self):
         responses = self._create_concurrently(2)
 
+        for r in responses:
+            print("DBG:", r.status_code, getattr(r, "data", None))
         self.assertEqual([r.status_code for r in responses], [201, 201])
         self.assertEqual(self._order_numbers(), [1, 2])
 

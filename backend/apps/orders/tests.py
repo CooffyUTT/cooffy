@@ -7,7 +7,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from apps.branches.models import Branch, Company
-from apps.orders.models import Order, OrderProduct
+from apps.orders.models import Order, OrderProduct, PaymentMethod
 from apps.orders.state_machine import (
     ALL_STATES,
     TERMINAL_STATES,
@@ -68,7 +68,7 @@ class OrderApiTests(APITestCase):
             {
                 "branch_id": self.branch.id,
                 "client_id": self.client_user.id,
-                "payment_method": "cash",
+                "payment_method": 1,
                 "order_products": [],
             },
             format="json",
@@ -100,7 +100,7 @@ class OrderApiTests(APITestCase):
             {
                 "branch_id": self.branch.id,
                 "client_id": self.client_user.id,
-                "payment_method": "cash",
+                "payment_method": 1,
                 "order_products": [
                     {"item_id": 10, "quantity": 1, "price": "30.00"},
                     {"item_id": 11, "quantity": 2, "price": "20.00"},
@@ -131,7 +131,7 @@ class OrderApiTests(APITestCase):
             date="2026-01-01",
             branch_id=self.branch.id,
             client_id=self.client_user.id,
-            payment_method=1,
+            payment_method_id=1,
         )
 
         response = self.client.post(
@@ -155,14 +155,14 @@ class OrderApiTests(APITestCase):
             date="2026-01-01",
             branch_id=1,
             client_id=self.client_user.id,
-            payment_method=1,
+            payment_method_id=1,
         )
         Order.objects.create(
             order_number=2,
             date="2026-01-01",
             branch_id=1,
             client_id=self.other_user.id,
-            payment_method=1,
+            payment_method_id=1,
         )
 
         response = self.client.get(reverse("orders-list"))
@@ -176,7 +176,7 @@ class OrderApiTests(APITestCase):
             date="2026-01-01",
             branch_id=1,
             client_id=self.other_user.id,
-            payment_method=1,
+            payment_method_id=1,
         )
 
         response = self.client.get(
@@ -198,14 +198,14 @@ class OrderApiTests(APITestCase):
             date="2026-01-01",
             branch_id=1,
             client_id=self.client_user.id,
-            payment_method=1,
+            payment_method_id=1,
         )
         Order.objects.create(
             order_number=2,
             date="2026-01-01",
             branch_id=1,
             client_id=self.other_user.id,
-            payment_method=1,
+            payment_method_id=1,
         )
 
         response = self.client.get(reverse("orders-my-orders"))
@@ -227,7 +227,7 @@ class OrderApiTests(APITestCase):
             date="2026-01-01",
             branch_id=1,
             client_id=self.client_user.id,
-            payment_method=1,
+            payment_method_id=1,
             state=Order.State.PENDING,
         )
 
@@ -250,7 +250,7 @@ class OrderApiTests(APITestCase):
             reverse("orders-list"),
             {
                 "branch_id": self.branch.id,
-                "payment_method": "cash",
+                "payment_method": 1,
                 "order_products": [
                     {"item_id": inactive.id, "quantity": 1},
                 ],
@@ -277,7 +277,7 @@ class OrderApiTests(APITestCase):
             reverse("orders-list"),
             {
                 "branch_id": self.branch.id,
-                "payment_method": "cash",
+                "payment_method": 1,
                 "order_products": [
                     {"item_id": product.id, "quantity": 5},
                 ],
@@ -311,7 +311,7 @@ class OrderApiTests(APITestCase):
             reverse("orders-list"),
             {
                 "branch_id": closed_branch.id,
-                "payment_method": "cash",
+                "payment_method": 1,
                 "order_products": [
                     {"item_id": 999, "quantity": 1},
                 ],
@@ -338,7 +338,7 @@ class OrderApiTests(APITestCase):
             date="2026-01-01",
             branch_id=self.branch.id,
             client_id=self.client_user.id,
-            payment_method="cash",
+            payment_method_id=1,
             state=Order.State.PENDING,
         )
 
@@ -346,7 +346,7 @@ class OrderApiTests(APITestCase):
             reverse("orders-list"),
             {
                 "branch_id": self.branch.id,
-                "payment_method": "cash",
+                "payment_method": 1,
                 "order_products": [
                     {"item_id": product.id, "quantity": 1},
                 ],
@@ -372,7 +372,7 @@ class OrderApiTests(APITestCase):
             reverse("orders-list"),
             {
                 "branch_id": self.branch.id,
-                "payment_method": "cash",
+                "payment_method": 1,
                 "order_products": [
                     {"item_id": product.id, "quantity": 1},
                 ],
@@ -411,7 +411,7 @@ class OrderApiTests(APITestCase):
             reverse("orders-list"),
             {
                 "branch_id": self.branch.id,
-                "payment_method": "cash",
+                "payment_method": 1,
                 "order_products": [
                     {"item_id": product.id, "quantity": 1},
                 ],
@@ -442,7 +442,7 @@ class OrderApiTests(APITestCase):
             reverse("orders-list"),
             {
                 "branch_id": self.branch.id,
-                "payment_method": "cash",
+                "payment_method": 1,
                 "order_products": [
                     {"item_id": product.id, "quantity": 1},
                 ],
@@ -468,7 +468,7 @@ class OrderApiTests(APITestCase):
             reverse("orders-list"),
             {
                 "branch_id": self.branch.id,
-                "payment_method": "cash",
+                "payment_method": 1,
                 "order_products": [
                     {"item_id": product.id, "quantity": 1},
                 ],
@@ -581,7 +581,7 @@ class OrderStateTransitionApiTests(APITestCase):
             date="2026-01-01",
             branch_id=1,
             client_id=self.client_user.id,
-            payment_method="cash",
+            payment_method_id=1,
             state=state,
         )
 
@@ -697,3 +697,114 @@ class OrderStateTransitionApiTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         order.refresh_from_db()
         self.assertIsNotNone(order.picked_up_at)
+
+
+class OrderPaymentConfirmationApiTests(APITestCase):
+    """RF-11 / RN-19 / RN-20: confirmación de pago en efectivo por el cajero."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.client_user = User.objects.create_user(
+            user="client-pay@school.edu.mx",
+            name="Client Pay",
+            password="password",
+        )
+        cls.cashier_user = User.objects.create_user(
+            user="cashier-pay@school.edu.mx",
+            name="Cashier Pay",
+            password="password",
+        )
+        cls.cashier_group = Group.objects.create(name="empleado")
+        cls.cashier_user.groups.add(cls.cashier_group)
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.cashier_user)
+        self.order_seq = 0
+
+    def create_order(self, payment_method_id=1, payment_status="pending"):
+        self.order_seq += 1
+        return Order.objects.create(
+            order_number=self.order_seq,
+            date="2026-01-01",
+            branch_id=1,
+            client_id=self.client_user.id,
+            payment_method_id=payment_method_id,
+            payment_status=payment_status,
+        )
+
+    def test_cashier_confirms_cash_payment(self):
+        """RN-19: el cajero confirma el pago en efectivo (pending -> paid)."""
+        order = self.create_order()
+
+        response = self.client.patch(
+            reverse("orders-detail", args=[order.id]),
+            {"payment_status": "paid"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, "paid")
+
+    def test_client_cannot_confirm_payment(self):
+        """Solo el personal de caja puede confirmar el pago."""
+        order = self.create_order()
+        self.client.force_authenticate(user=self.client_user)
+
+        response = self.client.patch(
+            reverse("orders-detail", args=[order.id]),
+            {"payment_status": "paid"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, "pending")
+
+    def test_paid_payment_cannot_be_unconfirmed(self):
+        """Un pago confirmado no puede regresar a 'pending'."""
+        order = self.create_order(payment_status="paid")
+
+        response = self.client.patch(
+            reverse("orders-detail", args=[order.id]),
+            {"payment_status": "pending"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, "paid")
+
+    def test_card_payment_does_not_require_cashier_confirmation(self):
+        """RN-19: solo los pedidos en efectivo requieren confirmación de pago."""
+        order = self.create_order(payment_method_id=2)
+
+        response = self.client.patch(
+            reverse("orders-detail", args=[order.id]),
+            {"payment_status": "paid"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, "pending")
+
+    def test_payment_method_serialized_as_pk(self):
+        """La API expone payment_method como el id del método (RF-11)."""
+        order = self.create_order()
+        response = self.client.get(
+            reverse("orders-detail", args=[order.id]), format="json"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["payment_method"], 1)
+        self.assertIsInstance(response.data["payment_method"], int)
+
+    def test_payment_method_catalog_has_cash_and_card(self):
+        """El catálogo sembrado por migración contiene Efectivo y Tarjeta."""
+        methods = PaymentMethod.objects.order_by("id").values_list(
+            "name", "is_digital"
+        )
+        self.assertEqual(
+            list(methods),
+            [("Efectivo", False), ("Tarjeta", True)],
+        )

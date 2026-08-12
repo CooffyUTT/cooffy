@@ -22,6 +22,7 @@ import {
 import { useOrder } from "@/hooks/useOrders";
 import { useBranches } from "@/hooks/useBranches";
 import { Badge } from "@/components/ui/badge";
+import { OrderReceipt } from "./OrderReceipt";
 import {
   ORDER_PROGRESS_STATES,
   ORDER_STATE_BADGE_CLASSES,
@@ -169,7 +170,7 @@ export function OrderDetailView() {
         <header className="sticky top-0 z-30 bg-surface border-b border-outline-variant/30">
           <div className="max-w-[600px] mx-auto px-4 h-16 flex items-center gap-3">
             <button
-              onClick={() => router.push("/menu/orders")}
+              onClick={() => router.push("/orders")}
               className="p-1 -ml-1 text-on-surface hover:text-primary transition-colors"
               aria-label="Volver a mis pedidos"
             >
@@ -192,7 +193,7 @@ export function OrderDetailView() {
         <header className="sticky top-0 z-30 bg-surface border-b border-outline-variant/30">
           <div className="max-w-[600px] mx-auto px-4 h-16 flex items-center gap-3">
             <button
-              onClick={() => router.push("/menu/orders")}
+              onClick={() => router.push("/orders")}
               className="p-1 -ml-1 text-on-surface hover:text-primary transition-colors"
               aria-label="Volver a mis pedidos"
             >
@@ -208,7 +209,7 @@ export function OrderDetailView() {
             {error instanceof Error ? error.message : "Pedido no encontrado"}
           </p>
           <button
-            onClick={() => router.push("/menu/orders")}
+            onClick={() => router.push("/orders")}
             className="mt-6 text-sm font-semibold text-primary hover:underline"
           >
             Volver a mis pedidos
@@ -237,7 +238,7 @@ export function OrderDetailView() {
       <header className="sticky top-0 z-30 bg-surface border-b border-outline-variant/30">
         <div className="max-w-[600px] mx-auto px-4 h-16 flex items-center gap-3">
           <button
-            onClick={() => router.push("/menu/orders")}
+            onClick={() => router.push("/orders")}
             className="p-1 -ml-1 text-on-surface hover:text-primary transition-colors"
             aria-label="Volver a mis pedidos"
           >
@@ -260,6 +261,8 @@ export function OrderDetailView() {
       </header>
 
       <main className="max-w-[600px] mx-auto px-4 py-6 space-y-5">
+        <OrderReceipt order={order} />
+
         {showEstimatedTime && (
           <section
             className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl p-4"
@@ -356,7 +359,7 @@ export function OrderDetailView() {
               </div>
             </div>
             <div className="flex items-start gap-2">
-              {order.payment_method === "cash" ? (
+              {order.payment_method === 1 ? (
                 <Banknote className="h-4 w-4 text-on-surface-variant mt-0.5 shrink-0" />
               ) : (
                 <CreditCard className="h-4 w-4 text-on-surface-variant mt-0.5 shrink-0" />

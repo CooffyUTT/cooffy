@@ -1,4 +1,11 @@
-export type PaymentMethod = "cash" | "card";
+// El id corresponde a la tabla payment_methods del backend
+// (seed_payment_methods garantiza 1 = Efectivo, 2 = Tarjeta).
+export type PaymentMethod = 1 | 2;
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  1: "Efectivo",
+  2: "Tarjeta",
+};
 
 export type OrderState = "pending" | "preparing" | "ready" | "picked_up" | "rejected";
 
@@ -46,11 +53,6 @@ export interface OrderCreatePayload {
   comment?: string;
   order_products: OrderProductInput[];
 }
-
-export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  cash: "Efectivo",
-  card: "Tarjeta",
-};
 
 export const ORDER_STATE_LABELS: Record<OrderState, string> = {
   pending: "En espera",
