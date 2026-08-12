@@ -68,7 +68,16 @@ beforeEach(() => {
   mockState.productResult = null;
   mockState.listData = { count: 0, next: null, results: [] };
   mockState.branches = [
-    { id: 1, name: "Sucursal Centro", location: null, schedule: null, company_name: "Co", accepting_orders: true },
+    {
+      id: 1,
+      name: "Sucursal Centro",
+      location: null,
+      schedule: null,
+      company_name: "Co",
+      accepting_orders: true,
+      min_anticipation_minutes: 30,
+      max_anticipation_hours: 24,
+    },
   ];
 });
 

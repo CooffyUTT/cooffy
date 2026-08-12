@@ -7,7 +7,13 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   2: "Tarjeta",
 };
 
-export type OrderState = "pending" | "preparing" | "ready" | "picked_up" | "rejected";
+export type OrderState =
+  | "pending"
+  | "preparing"
+  | "ready"
+  | "picked_up"
+  | "rejected"
+  | "cancelled";
 
 export type PaymentStatus = "pending" | "paid";
 
@@ -52,6 +58,7 @@ export interface OrderCreatePayload {
   payment_method: PaymentMethod;
   comment?: string;
   order_products: OrderProductInput[];
+  scheduled_pickup_at?: string;
 }
 
 export const ORDER_STATE_LABELS: Record<OrderState, string> = {
@@ -60,4 +67,5 @@ export const ORDER_STATE_LABELS: Record<OrderState, string> = {
   ready: "Listo para entregar",
   picked_up: "Entregado",
   rejected: "Rechazado",
+  cancelled: "Cancelado",
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -19,9 +19,19 @@ import {
   XCircle,
   Loader2,
 } from "lucide-react";
-import { useOrder } from "@/hooks/useOrders";
+import { toast } from "sonner";
+import { useCancelOrder, useOrder } from "@/hooks/useOrders";
 import { useBranches } from "@/hooks/useBranches";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { OrderReceipt } from "./OrderReceipt";
 import {
   ORDER_PROGRESS_STATES,
@@ -45,6 +55,7 @@ const PROGRESS_ICONS: Record<
   ready: Package,
   picked_up: Truck,
   rejected: XCircle,
+  cancelled: XCircle,
 };
 
 const PROGRESS_LABELS: Record<OrderState, string> = {
@@ -53,6 +64,7 @@ const PROGRESS_LABELS: Record<OrderState, string> = {
   ready: "Listo",
   picked_up: "Entregado",
   rejected: "Rechazado",
+  cancelled: "Cancelado",
 };
 
 const PAYMENT_STATUS_LABELS = {
@@ -74,6 +86,31 @@ function formatDateTime(date: string) {
   }).format(new Date(date));
 }
 
+function extractOrderErrorMessage(error: unknown): string {
+  const err = error as {
+    response?: { data?: unknown };
+    message?: string;
+  };
+  const data = err?.response?.data;
+
+  if (data && typeof data === "object") {
+    const dataObj = data as Record<string, unknown>;
+    if (typeof dataObj.detail === "string" && dataObj.detail) {
+      return dataObj.detail;
+    }
+    for (const value of Object.values(dataObj)) {
+      if (Array.isArray(value) && value.length > 0 && typeof value[0] === "string") {
+        return value[0];
+      }
+      if (typeof value === "string" && value) {
+        return value;
+      }
+    }
+  }
+  if (err?.message) return err.message;
+  return "Ocurrió un error inesperado";
+}
+
 function ProgressStepper({ state }: { state: OrderState }) {
   if (state === "rejected") {
     return (
@@ -84,6 +121,20 @@ function ProgressStepper({ state }: { state: OrderState }) {
         <XCircle className="h-5 w-5 text-red-600 shrink-0" />
         <p className="text-sm font-semibold text-red-700">
           Pedido rechazado por la cafetería.
+        </p>
+      </div>
+    );
+  }
+
+  if (state === "cancelled") {
+    return (
+      <div
+        className="flex items-center gap-2 bg-neutral-100 border border-neutral-300 rounded-xl p-3"
+        data-testid="progress-cancelled"
+      >
+        <XCircle className="h-5 w-5 text-neutral-600 shrink-0" />
+        <p className="text-sm font-semibold text-neutral-700">
+          Pedido cancelado.
         </p>
       </div>
     );
@@ -163,6 +214,11 @@ export function OrderDetailView() {
     POLLING_INTERVAL_MS,
   );
   const { data: branches } = useBranches();
+  const cancelOrder = useCancelOrder();
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+
+  const canCancel =
+    Boolean(order?.scheduled_pickup_at) && order?.state === "pending";
 
   if (isLoading) {
     return (
@@ -397,6 +453,19 @@ export function OrderDetailView() {
                 </dd>
               </div>
             </div>
+            {order.scheduled_pickup_at && (
+              <div className="flex items-start gap-2" data-testid="scheduled-pickup">
+                <CalendarDays className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <dt className="text-xs text-on-surface-variant">
+                    Recogida programada
+                  </dt>
+                  <dd className="text-on-surface font-medium">
+                    {formatDateTime(order.scheduled_pickup_at)}
+                  </dd>
+                </div>
+              </div>
+            )}
             {order.comment && (
               <div className="flex items-start gap-2">
                 <Receipt className="h-4 w-4 text-on-surface-variant mt-0.5 shrink-0" />
@@ -408,7 +477,92 @@ export function OrderDetailView() {
             )}
           </dl>
         </section>
+
+        {canCancel && (
+          <section className="bg-surface-container-low rounded-2xl border border-outline-variant/20 p-5">
+            <h2 className="text-sm font-semibold text-on-surface mb-3">
+              ¿Necesitas cancelar?
+            </h2>
+            <p className="text-xs text-on-surface-variant mb-4">
+              Solo puedes cancelar pedidos anticipados antes de la hora de
+              recogida.
+            </p>
+            <Button
+              variant="destructive"
+              data-testid="cancel-order-button"
+              disabled={cancelOrder.isPending}
+              onClick={() => setShowCancelDialog(true)}
+              className="w-full"
+            >
+              {cancelOrder.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Cancelando...
+                </>
+              ) : (
+                "Cancelar pedido"
+              )}
+            </Button>
+          </section>
+        )}
       </main>
+
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>¿Cancelar este pedido anticipado?</DialogTitle>
+            <DialogDescription>
+              Esta acción no se puede deshacer. El pedido volverá a estar
+              disponible para que otro cliente lo ocupe.
+            </DialogDescription>
+          </DialogHeader>
+          {order.scheduled_pickup_at && (
+            <p className="text-sm text-on-surface">
+              Recogida programada:{" "}
+              <span className="font-semibold">
+                {formatDateTime(order.scheduled_pickup_at)}
+              </span>
+            </p>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelDialog(false)}
+              disabled={cancelOrder.isPending}
+            >
+              No cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              data-testid="confirm-cancel-order"
+              disabled={cancelOrder.isPending}
+              onClick={() => {
+                cancelOrder.mutate(order.id, {
+                  onSuccess: () => {
+                    setShowCancelDialog(false);
+                    toast.success("Pedido cancelado");
+                  },
+                  onError: (err) => {
+                    setShowCancelDialog(false);
+                    toast.error("No se pudo cancelar el pedido", {
+                      description: extractOrderErrorMessage(err),
+                    });
+                  },
+                });
+              }}
+            >
+              {cancelOrder.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Cancelando...
+                </>
+              ) : (
+                "Sí, cancelar"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

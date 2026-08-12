@@ -9,6 +9,8 @@ export interface Branch {
   schedule: string | null;
   company_name: string;
   accepting_orders: boolean;
+  min_anticipation_minutes: number;
+  max_anticipation_hours: number;
 }
 
 interface PaginatedBranches {

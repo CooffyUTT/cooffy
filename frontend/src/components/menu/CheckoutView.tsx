@@ -17,6 +17,8 @@ import {
   Minus,
   Plus,
   Trash2,
+  Clock,
+  CalendarClock,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCreateOrder } from "@/hooks/useOrders";
@@ -37,6 +39,8 @@ const PAYMENT_HINTS: Record<PaymentMethod, string> = {
   1: "Paga al recoger tu pedido en caja.",
   2: "Pago electrónico (simulado).",
 };
+
+type CheckoutMode = "now" | "scheduled";
 
 interface OrderProductError {
   name?: string;
@@ -84,6 +88,27 @@ function extractOrderErrorMessage(error: unknown): string {
   return "Ocurrió un error inesperado";
 }
 
+function pad(value: number) {
+  return value.toString().padStart(2, "0");
+}
+
+function toLocalInputValue(date: Date): string {
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  );
+}
+
+function formatPickupSummary(iso: string): string {
+  return new Intl.DateTimeFormat("es-MX", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+
 export function CheckoutView() {
   const router = useRouter();
   const {
@@ -103,14 +128,60 @@ export function CheckoutView() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(1);
   const [comment, setComment] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
+  const [mode, setMode] = useState<CheckoutMode>("now");
+  const [scheduledAt, setScheduledAt] = useState("");
 
   const branch = useMemo(
     () => branches?.find((b) => b.id === branchId),
     [branches, branchId],
   );
 
+  const minAnticipationMinutes =
+    branch?.min_anticipation_minutes ?? 30;
+  const maxAnticipationHours = branch?.max_anticipation_hours ?? 24;
+
+  const pickupWindow = useMemo(() => {
+    const now = new Date();
+    const min = new Date(now.getTime() + minAnticipationMinutes * 60_000);
+    const max = new Date(now.getTime() + maxAnticipationHours * 60 * 60_000);
+    return {
+      min,
+      max,
+      minValue: toLocalInputValue(min),
+      maxValue: toLocalInputValue(max),
+    };
+  }, [minAnticipationMinutes, maxAnticipationHours]);
+
+  const scheduledError = useMemo<string | null>(() => {
+    if (mode !== "scheduled") return null;
+    if (!scheduledAt) {
+      return "Selecciona la fecha y hora de recogida.";
+    }
+    const value = new Date(scheduledAt);
+    if (Number.isNaN(value.getTime())) {
+      return "Formato de fecha y hora inválido.";
+    }
+    if (value < pickupWindow.min) {
+      return `La recogida debe ser al menos ${minAnticipationMinutes} min después de ahora.`;
+    }
+    if (value > pickupWindow.max) {
+      return `La recogida no puede ser más allá de ${maxAnticipationHours} h después de ahora.`;
+    }
+    return null;
+  }, [
+    mode,
+    scheduledAt,
+    pickupWindow.min,
+    pickupWindow.max,
+    minAnticipationMinutes,
+    maxAnticipationHours,
+  ]);
+
   const handleConfirm = async () => {
     if (!paymentMethod || !branchId) return;
+    if (mode === "scheduled" && (scheduledError || !scheduledAt)) {
+      return;
+    }
 
     setShowConfirm(false);
 
@@ -122,6 +193,10 @@ export function CheckoutView() {
         item_id: item.id,
         quantity: item.quantity,
       })),
+      scheduled_pickup_at:
+        mode === "scheduled" && scheduledAt
+          ? new Date(scheduledAt).toISOString()
+          : undefined,
     };
 
     try {
@@ -269,6 +344,73 @@ export function CheckoutView() {
 
         <section className="bg-surface-container-low rounded-2xl border border-outline-variant/20 p-5">
           <h2 className="text-sm font-semibold text-on-surface mb-4">
+            Modalidad de recogida
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              data-testid="mode-now"
+              onClick={() => setMode("now")}
+              className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+                mode === "now"
+                  ? "border-primary bg-primary/5"
+                  : "border-outline-variant/20 hover:border-outline-variant/50"
+              }`}
+            >
+              <ShoppingBag className="h-5 w-5 text-on-surface-variant" />
+              <span className="text-sm font-medium text-on-surface">
+                Recoger ahora
+              </span>
+            </button>
+            <button
+              type="button"
+              data-testid="mode-scheduled"
+              onClick={() => setMode("scheduled")}
+              className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+                mode === "scheduled"
+                  ? "border-primary bg-primary/5"
+                  : "border-outline-variant/20 hover:border-outline-variant/50"
+              }`}
+            >
+              <CalendarClock className="h-5 w-5 text-on-surface-variant" />
+              <span className="text-sm font-medium text-on-surface">
+                Pedido anticipado
+              </span>
+            </button>
+          </div>
+          {mode === "scheduled" && (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-start gap-2 bg-primary/5 rounded-lg p-3">
+                <Clock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <p className="text-xs text-on-surface-variant">
+                  Puedes agendar entre {minAnticipationMinutes} minutos y{" "}
+                  {maxAnticipationHours} horas desde este momento.
+                </p>
+              </div>
+              <input
+                type="datetime-local"
+                data-testid="scheduled-pickup-input"
+                value={scheduledAt}
+                min={pickupWindow.minValue}
+                max={pickupWindow.maxValue}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                className="w-full text-sm bg-surface border border-outline-variant rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+              {scheduledError && (
+                <p
+                  className="text-xs text-error font-medium"
+                  data-testid="scheduled-pickup-error"
+                  role="alert"
+                >
+                  {scheduledError}
+                </p>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section className="bg-surface-container-low rounded-2xl border border-outline-variant/20 p-5">
+          <h2 className="text-sm font-semibold text-on-surface mb-4">
             Método de pago
           </h2>
           <div className="grid grid-cols-2 gap-3">
@@ -348,8 +490,17 @@ export function CheckoutView() {
           <Button
             className="w-full"
             size="lg"
-            disabled={!paymentMethod || createOrder.isPending}
-            onClick={() => setShowConfirm(true)}
+            disabled={
+              !paymentMethod ||
+              createOrder.isPending ||
+              (mode === "scheduled" && Boolean(scheduledError))
+            }
+            onClick={() => {
+              if (mode === "scheduled" && (scheduledError || !scheduledAt)) {
+                return;
+              }
+              setShowConfirm(true);
+            }}
           >
             Confirmar pedido
           </Button>
@@ -372,6 +523,23 @@ export function CheckoutView() {
                 ${total.toFixed(2)}
               </span>
             </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-on-surface-variant">Modalidad</span>
+              <span className="text-on-surface font-medium">
+                {mode === "scheduled" ? "Pedido anticipado" : "Recoger ahora"}
+              </span>
+            </div>
+            {mode === "scheduled" && scheduledAt && (
+              <div className="flex justify-between text-sm">
+                <span className="text-on-surface-variant">Recogida</span>
+                <span
+                  className="text-on-surface font-medium"
+                  data-testid="confirm-scheduled-pickup"
+                >
+                  {formatPickupSummary(new Date(scheduledAt).toISOString())}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between text-sm">
               <span className="text-on-surface-variant">Método</span>
               <span className="text-on-surface font-medium">
