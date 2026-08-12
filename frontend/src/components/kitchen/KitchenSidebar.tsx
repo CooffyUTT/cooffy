@@ -3,8 +3,11 @@
 import React from 'react';
 import { LayoutDashboard, BookOpen, History, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLogout } from '@/hooks/useLogout';
 
 export function KitchenSidebar() {
+  const { logout } = useLogout();
+
   return (
     <aside className="w-56 bg-[#5C3D2E] text-white flex flex-col justify-between p-4 shrink-0 shadow-lg">
       <div className="space-y-6">
@@ -25,7 +28,13 @@ export function KitchenSidebar() {
         </nav>
       </div>
 
-      <Button variant="destructive" className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 text-xs rounded-xl">
+      <Button
+        type="button"
+        onClick={logout}
+        variant="destructive"
+        data-testid="logout-button"
+        className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 text-xs rounded-xl"
+      >
         <LogOut size={16} className="mr-2" /> Cerrar sesión
       </Button>
     </aside>

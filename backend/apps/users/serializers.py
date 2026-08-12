@@ -4,6 +4,10 @@ from django.contrib.auth.models import Group
 from apps.schools.models import School
 import re
 
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField(write_only=True, required=True)
+
+
 class LoginSerializer(serializers.Serializer):
     user = serializers.CharField(max_length=254)
     password = serializers.CharField(max_length=255, write_only=True)

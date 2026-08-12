@@ -245,7 +245,7 @@ export function MenuView() {
             <p className="text-on-surface font-semibold text-lg mb-1">
               Selecciona una sucursal
             </p>
-            <p className="text-sm text-on-surface-variant max-w-sm">
+            <p className="text-sm text-on-surface-variant">
               Elige la sucursal donde recogerás tu pedido para ver el menú disponible.
             </p>
           </div>

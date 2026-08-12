@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-import { User } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { HeaderBase } from "../layout/HeaderBase";
+import { UserMenu } from "../layout/UserMenu";
 
 interface ManagerHeaderProps {
   activeTab: "branches" | "menu" | "users" | "dashboard";
@@ -10,6 +10,22 @@ interface ManagerHeaderProps {
 }
 
 export function ManagerHeader({ activeTab, setActiveTab }: ManagerHeaderProps) {
+  const [userName, setUserName] = useState("Gerente");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem("userData");
+      if (raw) {
+        const userData = JSON.parse(raw) as { name?: string; user?: string };
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setUserName(userData.name || userData.user || "Gerente");
+      }
+    } catch {
+      // ignore malformed userData
+    }
+  }, []);
+
   const tabs = [
     { id: "branches", label: "Sucursales" },
     { id: "menu", label: "Menú" },
@@ -38,11 +54,7 @@ export function ManagerHeader({ activeTab, setActiveTab }: ManagerHeaderProps) {
         </>
       }
       // Badge del usuario Manager a la derecha
-      actions={
-        <button className="w-10 h-10 rounded-full bg-primary-container/20 border border-outline-variant/30 flex items-center justify-center cursor-pointer">
-              <User className="h-5 w-5 text-primary" />
-            </button>
-      }
+      actions={<UserMenu userName={userName} />}
     />
   );
 }
