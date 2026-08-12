@@ -22,10 +22,15 @@ class Command(BaseCommand):
             action='store_true',
             help='Re-crea los usuarios aunque ya existan.',
         )
+        parser.add_argument(
+            '--allow-non-dev',
+            action='store_true',
+            help='Permite ejecutar el seed fuera del entorno development (ej. demo en producción).',
+        )
 
     def handle(self, *args, **options):
         # Guard: only run in development
-        if getattr(settings, 'DJANGO_ENV', 'development') != 'development':
+        if getattr(settings, 'DJANGO_ENV', 'development') != 'development' and not options.get('allow_non_dev'):
             self.stderr.write(
                 self.style.ERROR(
                     'Este comando solo puede ejecutarse en entorno desarrollo '
