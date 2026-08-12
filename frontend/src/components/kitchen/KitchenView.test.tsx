@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 const pushMock = vi.fn();
 const useOrdersMock = vi.fn();
 const useUpdateOrderStateMock = vi.fn();
+const useUpdatePaymentStatusMock = vi.fn();
 const useBranchesMock = vi.fn();
 const useToggleAcceptingOrdersMock = vi.fn();
 
@@ -15,6 +16,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/hooks/useOrders", () => ({
   useOrders: (...args: unknown[]) => useOrdersMock(...args),
   useUpdateOrderState: () => useUpdateOrderStateMock(),
+  useUpdatePaymentStatus: () => useUpdatePaymentStatusMock(),
 }));
 
 vi.mock("@/hooks/useBranches", () => ({
@@ -109,6 +111,7 @@ beforeEach(() => {
   pushMock.mockReset();
   useOrdersMock.mockReset();
   useUpdateOrderStateMock.mockReset();
+  useUpdatePaymentStatusMock.mockReset();
   useBranchesMock.mockReset();
   useToggleAcceptingOrdersMock.mockReset();
   vi.mocked(toast.error).mockReset();
@@ -121,6 +124,7 @@ beforeEach(() => {
     error: null,
   });
   useUpdateOrderStateMock.mockReturnValue(buildUpdateResult());
+  useUpdatePaymentStatusMock.mockReturnValue(buildUpdateResult());
 });
 
 describe("KitchenView — toggle de recepción de pedidos (RF-07)", () => {
@@ -260,6 +264,71 @@ describe("KitchenView — toggle de recepción de pedidos (RF-07)", () => {
     });
     expect(toast.error).toHaveBeenCalledWith(
       "No se pudo cambiar el estado de la sucursal",
+      expect.any(Object),
+    );
+  });
+
+  it("confirma el pago en efectivo pendiente (RF-11)", async () => {
+    seedUserWithBranch(1);
+    useBranchesMock.mockReturnValue({
+      data: [BRANCH_ACTIVE],
+      isLoading: false,
+    });
+    useToggleAcceptingOrdersMock.mockReturnValue(buildToggleResult());
+    const mutate = vi.fn((...args: unknown[]) => {
+      const options = args[1] as { onSuccess?: () => void };
+      options.onSuccess?.();
+    });
+    useUpdatePaymentStatusMock.mockReturnValue({
+      mutate,
+      mutateAsync: vi.fn(),
+      isPending: false,
+      isSuccess: false,
+      isError: false,
+      reset: vi.fn(),
+      data: undefined,
+      error: null,
+    });
+    useOrdersMock.mockReturnValue({
+      data: [
+        {
+          id: 1,
+          order_number: 101,
+          date: "2026-08-12",
+          branch_id: 1,
+          client_id: 1,
+          client_name: "Cliente A",
+          total: "50.00",
+          state: "pending",
+          payment_method: 1,
+          payment_status: "pending",
+          created_at: new Date().toISOString(),
+          comment: null,
+          order_products: [],
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    const user = userEvent.setup();
+    renderKitchen();
+
+    const buttons = await screen.findAllByRole("button", {
+      name: /CONFIRMAR PAGO/i,
+    });
+    expect(buttons.length).toBeGreaterThan(0);
+    await user.click(buttons[0]);
+
+    await waitFor(() => {
+      expect(mutate).toHaveBeenCalledWith(
+        { orderId: 1, status: "paid" },
+        expect.any(Object),
+      );
+    });
+    expect(toast.success).toHaveBeenCalledWith(
+      "Pago confirmado",
       expect.any(Object),
     );
   });

@@ -175,10 +175,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart([]);
   }, []);
 
-  const clearCart = () => {
-    setCart([]);
-  };
-
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   // Product prices already include IVA; this extracts its portion for display.
