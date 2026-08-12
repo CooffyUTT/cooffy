@@ -13,6 +13,8 @@ export interface Product {
   image: string | null;
   description: string | null;
   modifiers: string[] | null;
+  /** Mapa branch_id -> estado ProductStock (-1 sin control, 0 agotado, 1 con stock). */
+  branchStocks?: Record<number, number>;
   created_at: string;
   updated_at: string;
 }
