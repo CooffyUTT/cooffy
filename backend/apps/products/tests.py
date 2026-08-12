@@ -97,6 +97,37 @@ class ProductAvailabilityTests(APITestCase):
         self.active_product.refresh_from_db()
         self.assertFalse(self.active_product.active)
 
+    def test_toggle_does_not_regenerate_image(self):
+        """El toggle no debe reprocesar la imagen (bug: desaparecía hasta re-render)."""
+        import base64
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        # PNG real de 1x1 px (el save del modelo lo convierte a WEBP)
+        png_1px = base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+        )
+        product = Product.objects.create(
+            name="Con imagen",
+            price=Decimal("20.00"),
+            category=self.category,
+            image=SimpleUploadedFile("foto.png", png_1px, content_type="image/png"),
+        )
+        original_name = product.image.name
+
+        self.client.force_authenticate(user=self.manager)
+        response = self.client.patch(
+            reverse("product-manage-toggle-active", args=[product.id]),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        product.refresh_from_db()
+        # La imagen no debe regenerarse: mismo nombre de archivo
+        self.assertEqual(product.image.name, original_name)
+        # La respuesta debe incluir la imagen
+        self.assertTrue(response.data.get("image"))
+
 
 class ProductStockTests(APITestCase):
     @classmethod
