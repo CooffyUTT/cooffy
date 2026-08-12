@@ -1,0 +1,17 @@
+info:
+  name: Toggle Accepting Orders
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: http://localhost:8000/api/branches/1/toggle-accepting/
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

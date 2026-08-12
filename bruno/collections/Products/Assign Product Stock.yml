@@ -1,0 +1,24 @@
+info:
+  name: Assign Product Stock
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: http://localhost:8000/api/menu/manage/products/1/stocks/
+  body:
+    type: json
+    data: |-
+      {
+        "branch_id": 1,
+        "stock": 1
+      }
+  auth:
+    type: bearer
+    token: "{{access_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
