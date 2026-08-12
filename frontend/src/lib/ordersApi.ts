@@ -62,3 +62,20 @@ export async function updateOrderPaymentStatus(
   });
   return response.data;
 }
+
+export async function getUpcomingOrders(): Promise<Order[]> {
+  const response = await api.get<Order[] | { results: Order[] }>(
+    "/api/orders/",
+    { params: { upcoming: true } },
+  );
+
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  return response.data?.results ?? [];
+}
+
+export async function cancelOrder(orderId: number): Promise<Order> {
+  const response = await api.post<Order>(`/api/orders/${orderId}/cancel/`);
+  return response.data;
+}
