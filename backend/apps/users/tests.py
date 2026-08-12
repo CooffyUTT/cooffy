@@ -273,3 +273,112 @@ class UserPermissionsTests(APITestCase):
     def test_unauthenticated_cannot_list(self):
         response = self.client.get(reverse("user-list"))
         self.assertEqual(response.status_code, 401)
+
+
+class LogoutTests(APITestCase):
+    """Cierre de sesión: blacklist del refresh token."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            user="client@school.edu.mx",
+            name="Client",
+            password="correct-password",
+        )
+        cls.client_group = Group.objects.create(name="cliente")
+        cls.user.groups.add(cls.client_group)
+
+    def _login(self):
+        response = self.client.post(
+            reverse("login"),
+            {"user": self.user.user, "password": "correct-password"},
+            format="json",
+        )
+        return response.data["refresh"]
+
+    def test_logout_requires_authentication(self):
+        response = self.client.post(
+            reverse("logout"),
+            {"refresh": "irrelevant"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_logout_blacklists_refresh_token(self):
+        refresh = self._login()
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            reverse("logout"),
+            {"refresh": refresh},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["message"], "Sesión cerrada correctamente.")
+
+        response = self.client.post(
+            reverse("logout"),
+            {"refresh": refresh},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_logout_rejects_invalid_refresh(self):
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            reverse("logout"),
+            {"refresh": "not-a-valid-token"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.data)
+
+    def test_logout_rejects_missing_refresh(self):
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            reverse("logout"),
+            {},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("refresh", response.data)
+
+    def test_logout_works_for_each_role(self):
+        """El logout debe funcionar para todos los roles disponibles."""
+        roles = [
+            ("gerente@school.edu.mx", "gerente", "Gerente"),
+            ("cliente_role@school.edu.mx", "cliente", "Cliente"),
+            ("empleado@school.edu.mx", "empleado", "Empleado"),
+            ("admin@school.edu.mx", "admin_escolar", "Admin"),
+        ]
+
+        for email, role_name, full_name in roles:
+            with self.subTest(role=role_name):
+                user = User.objects.create_user(
+                    user=email,
+                    name=full_name,
+                    password="password",
+                )
+                group, _ = Group.objects.get_or_create(name=role_name)
+                user.groups.add(group)
+
+                login_response = self.client.post(
+                    reverse("login"),
+                    {"user": email, "password": "password"},
+                    format="json",
+                )
+                self.assertEqual(login_response.status_code, 200)
+                refresh = login_response.data["refresh"]
+
+                self.client.force_authenticate(user=user)
+                logout_response = self.client.post(
+                    reverse("logout"),
+                    {"refresh": refresh},
+                    format="json",
+                )
+                self.assertEqual(logout_response.status_code, 200)

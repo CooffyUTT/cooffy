@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, Bell, ShoppingCart, User } from "lucide-react";
+import { Search, Bell, ShoppingCart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Input } from "@/components/ui/input";
 import { HeaderBase } from "../layout/HeaderBase";
+import { UserMenu } from "../layout/UserMenu";
 
 interface ClientHeaderProps {
   searchValue?: string;
@@ -14,6 +15,21 @@ interface ClientHeaderProps {
 
 export default function ClientHeader({ searchValue = "", onSearchChange }: ClientHeaderProps) {
   const { totalItems, setIsCartOpen } = useCart();
+  const [userName, setUserName] = useState("Cliente");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem("userData");
+      if (raw) {
+        const userData = JSON.parse(raw) as { name?: string; user?: string };
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setUserName(userData.name || userData.user || "Cliente");
+      }
+    } catch {
+      // ignore malformed userData
+    }
+  }, []);
 
   return (
     <div className="w-full">
@@ -69,9 +85,10 @@ export default function ClientHeader({ searchValue = "", onSearchChange }: Clien
                 )}
               </button>
 
-              <button aria-label="Perfil de usuario" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary-container/20 border border-outline-variant/30 flex items-center justify-center cursor-pointer hover:bg-primary-container/30 transition-colors">
-                <User className="h-5 w-5 text-primary" />
-              </button>
+              <UserMenu
+                userName={userName}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary-container/20 border border-outline-variant/30 flex items-center justify-center cursor-pointer hover:bg-primary-container/30 transition-colors"
+              />
             </div>
           </div>
         }
