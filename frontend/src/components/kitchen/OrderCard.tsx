@@ -191,7 +191,7 @@ export function OrderCard({
               <Button
                 onClick={() => setConfirmingReject(true)}
                 variant="outline"
-                className={`w-full h-10 font-bold text-xs rounded-xl ${secondaryActionColor}`}
+                className={`w-full h-10 font-bold text-xs rounded-xl text-white ${secondaryActionColor}`}
               >
                 {secondaryActionLabel}
               </Button>

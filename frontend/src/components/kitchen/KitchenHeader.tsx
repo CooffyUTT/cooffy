@@ -8,12 +8,14 @@ interface KitchenHeaderProps {
   kitchenActive: boolean;
   isPending?: boolean;
   onToggleActive: () => void;
+  branchName?: string;
 }
 
 export function KitchenHeader({
   kitchenActive,
   isPending = false,
   onToggleActive,
+  branchName = 'Cocina Central',
 }: KitchenHeaderProps) {
   return (
     <header
@@ -27,7 +29,7 @@ export function KitchenHeader({
         <h2
           className={`text-lg font-extrabold ${kitchenActive ? 'text-[#5C3D2E]' : 'text-white'}`}
         >
-          Cocina Central
+          {branchName}
         </h2>
         {!kitchenActive && (
           <span

@@ -145,6 +145,7 @@ export function KitchenView() {
           kitchenActive={kitchenActive}
           isPending={toggleAccepting.isPending}
           onToggleActive={handleToggleActive}
+          branchName={currentBranch?.name}
         />
 
         {!branchesLoading && !kitchenActive && (
