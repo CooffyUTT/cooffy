@@ -9,6 +9,7 @@
 @theme inline {
   /* Colores de cooffy y otros elementos */
   --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
   --color-primary-container: var(--primary-container);
   --color-on-primary-container: var(--on-primary-container);
   --color-secondary: var(--secondary);
@@ -59,55 +60,62 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-
-  /* 3. Definición de espaciados y gaps del diseño original */
-  --spacing-base: 4px;
-  --spacing-xs: 8px;
-  --spacing-sm: 16px;
-  --spacing-md: 24px;
-  --spacing-lg: 32px;
-  --spacing-xl: 48px;
-  --spacing-margin-mobile: 16px;
 }
 
 :root {
   /* Fondo y Superficies en Oklch (Tonos crema e institucional del original) */
-  --background: oklch(0.985 0.005 240);       /* #f9f9ff */
-  --foreground: oklch(0.18 0.03 240);          /* #111c2c */
-  --card: oklch(0.985 0.005 240);              /* #f9f9ff */
+  --background: oklch(0.985 0.005 240);
+  /* #f9f9ff */
+  --foreground: oklch(0.18 0.03 240);
+  /* #111c2c */
+  --card: oklch(0.985 0.005 240);
+  /* #f9f9ff */
   --card-foreground: oklch(0.18 0.03 240);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.03 240);
 
   /* Cooffy Brand Colors (Traducidos a Oklch de manera exacta) */
-  --primary: oklch(0.45 0.12 85);              /* #785a00 - Color Café Primario */
+  --primary: oklch(0.45 0.12 85);
+  /* #785a00 - Color Café Primario */
   --primary-foreground: oklch(1 0 0);
-  --primary-container: oklch(0.68 0.15 85);    /* #c59d3f - Dorado Botón */
-  --on-primary-container: oklch(0.28 0.08 85); /* #4a3600 - Texto Botón */
-  
-  --secondary: oklch(0.44 0.06 245);           /* #456082 - Azul botón secundario */
+  --primary-container: oklch(0.68 0.15 85);
+  /* #c59d3f - Dorado Botón */
+  --on-primary-container: oklch(0.28 0.08 85);
+  /* #4a3600 - Texto Botón */
+
+  --secondary: oklch(0.44 0.06 245);
+  /* #456082 - Azul botón secundario */
   --secondary-foreground: oklch(1 0 0);
 
   /* Superficies y variaciones */
-  --surface: oklch(0.985 0.005 240);           /* #f9f9ff */
-  --surface-container-high: oklch(0.92 0.02 240); /* #dee8ff */
-  --surface-container-low: oklch(0.96 0.01 240);  /* #f0f3ff */
-  --surface-container-lowest: oklch(1 0 0);    /* #ffffff */
-  --on-surface: oklch(0.18 0.03 240);          /* #111c2c */
-  --on-surface-variant: oklch(0.38 0.02 85);   /* #4e4637 */
-  
+  --surface: oklch(0.985 0.005 240);
+  /* #f9f9ff */
+  --surface-container-high: oklch(0.92 0.02 240);
+  /* #dee8ff */
+  --surface-container-low: oklch(0.96 0.01 240);
+  /* #f0f3ff */
+  --surface-container-lowest: oklch(1 0 0);
+  /* #ffffff */
+  --on-surface: oklch(0.18 0.03 240);
+  /* #111c2c */
+  --on-surface-variant: oklch(0.38 0.02 85);
+  /* #4e4637 */
+
   /* Bordes */
-  --border: oklch(0.82 0.02 85);               /* #d1c5b1 - outline-variant original */
-  --outline-variant: oklch(0.82 0.02 85);      /* #d1c5b1 */
+  --border: oklch(0.82 0.02 85);
+  /* #d1c5b1 - outline-variant original */
+  --outline-variant: oklch(0.82 0.02 85);
+  /* #d1c5b1 */
   --input: oklch(0.82 0.02 85);
-  --ring: oklch(0.45 0.12 85);                 /* #785a00 */
+  --ring: oklch(0.45 0.12 85);
+  /* #785a00 */
 
   /* Muted e Inactivos */
   --muted: oklch(0.96 0.01 240);
   --muted-foreground: oklch(0.38 0.02 85);
 
   --destructive: oklch(0.577 0.245 27.325);
-  
+
   --chart-1: oklch(0.55 0.15 60);
   --chart-2: oklch(0.65 0.12 35);
   --chart-3: oklch(0.50 0.10 90);
@@ -157,9 +165,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
