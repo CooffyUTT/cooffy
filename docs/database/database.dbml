@@ -1,25 +1,11 @@
-Enum "public"."order_state" {
-    "pending"
-    "progress"
-    "ready"
-    "picked_up"
-    "scheduled"
-    "cancelled"
-}
-
-Enum "public"."payment_state" {
-    "pending"
-    "processing"
-    "paid"
-    "failed"
-    "cancelled"
-    "refunded"
-}
+// Cooffy - Documentación de la base de datos
+// Nota: order_state y payment_status NO son enums nativos de PostgreSQL; se
+// implementan como varchar(20) con choices de Django (ver notas en orders).
 
 Table "public"."companies" {
   "id" bigint [pk, not null, note: 'Identificador unico de la empresa.']
   "name" varchar(150) [not null, note: 'Nombre comercial de la empresa.']
-  "owner_id" bigint [not null, note: 'Usuario propietario o administrador principal.']
+  "owner_id" bigint [not null, note: 'Usuario propietario o administrador principal.', ref: > "public"."users"."id"]
   "active" boolean [not null, default: true, note: 'Indica si la empresa esta activa.']
   "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creacion del registro.']
   "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del registro.']
@@ -48,46 +34,57 @@ Table "public"."branches" {
   "id" bigint [pk, not null, increment, note: 'Identificador unico de la sucursal.']
   "name" varchar(100) [not null, note: 'Nombre de la sucursal.']
   "company_id" bigint [not null, note: 'Empresa propietaria de la sucursal.', ref: > "public"."companies"."id"]
-  "school_id" bigint [not null, ref: > "public"."schools"."id"]
+  "school_id" bigint [not null, note: 'Escuela a la que pertenece la sucursal.', ref: > "public"."schools"."id"]
+  "location" text [note: 'Descripcion de la ubicacion fisica dentro de la escuela (ej. Edificio B, planta baja).']
+  "schedule" varchar(100) [note: 'Horario de atencion de la sucursal.']
+  "image" varchar(2048) [note: 'Imagen de la sucursal (se almacena convertida a WEBP).']
   "active" boolean [not null, default: true, note: 'Indica si la sucursal se encuentra operando.']
+  "accepting_orders" boolean [not null, default: true, note: 'Indica si la sucursal acepta pedidos en este momento.']
+  "min_anticipation_minutes" int [not null, default: 30, note: 'Anticipacion minima (en minutos) para pedidos anticipados.']
+  "max_anticipation_hours" int [not null, default: 24, note: 'Antelacion maxima (en horas) para pedidos anticipados.']
   "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creacion del registro.']
   "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del registro.']
-  "location" text [note: 'Descripcion de la ubicacion fisica dentro de la escuela (ej. Edificio B, planta baja).']
 
   Indexes {
-    company_id [name: "index_2"]
-    (school_id, active) [name: "index_3"]
+    company_id
+    (school_id, active) [name: "branches_school__57be82_idx"]
   }
 
-  Note: 'Sucursales operadas por una empresa.'
+  Note: 'Sucursales operadas por una empresa dentro de una escuela.'
 }
 
 Table "public"."schools" {
   "id" bigint [pk, not null, increment, note: 'Identificador unico de la institucion educativa.']
-  "admin" bigint [not null, note: 'Usuario administrador principal de la escuela.']
-  "full_name" varchar(200) [unique, not null, note: 'Nombre oficial completo de la institucion.']
-  "short_name" varchar(50) [unique, not null, note: 'Nombre corto o abreviatura utilizada dentro del sistema.']
+  "admin" bigint [note: 'Usuario administrador principal de la escuela (opcional).', ref: > "public"."users"."id"]
+  "full_name" varchar(200) [not null, note: 'Nombre oficial completo de la institucion.']
+  "short_name" varchar(50) [not null, note: 'Nombre corto o abreviatura utilizada dentro del sistema.']
+  "domain_address" varchar(100) [unique, note: 'Dominio institucional normalizado (minúsculas, sin espacios), ej. ut-tijuana.edu.mx.']
   "address" text [note: 'Direccion fisica principal de la escuela.']
   "active" boolean [not null, default: true, note: 'Indica si la escuela puede utilizar el sistema.']
+  "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creacion del registro.']
+  "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del registro.']
+
+  Indexes {
+    domain_address [unique, name: "schools_domain_address_idx"]
+  }
+
+  Note: 'Instituciones educativas registradas en el sistema.'
 }
 
 Table "public"."users" {
-  "id" bigint [pk, not null, note: 'Identificador unico del usuario.', ref: - "public"."companies"."owner_id", ref: - "public"."schools"."admin"]
+  "id" bigint [pk, not null, note: 'Identificador unico del usuario.']
   "user" varchar(254) [unique, not null, note: 'Nombre de usuario o correo institucional utilizado para iniciar sesion (USERNAME_FIELD).']
   "password" varchar(128) [not null, note: 'Contrasena hasheada (gestionada automaticamente por Django).']
   "name" varchar(100) [not null, note: 'Nombre del usuario.']
   "lastname" varchar(100) [note: 'Apellidos del usuario.']
-  "school_id" bigint [note: 'Sucursal a la que pertenece el usuario.', ref: > "public"."schools"."id"]
+  "school_id" bigint [note: 'Escuela a la que pertenece el usuario (opcional).', ref: > "public"."schools"."id"]
+  "branch_id" bigint [note: 'Sucursal a la que pertenece el usuario (opcional).', ref: > "public"."branches"."id"]
   "active" boolean [not null, default: true, note: 'Indica si la cuenta esta habilitada.']
   "is_staff" boolean [not null, default: false, note: 'Permite acceso al admin de Django.']
   "is_superuser" boolean [not null, default: false, note: 'Otorga todos los permisos sin asignacion explicita (PermissionsMixin).']
   "last_login" timestamp [note: 'Ultimo inicio de sesion (AbstractBaseUser).']
   "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creacion del registro.']
   "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del registro.']
-
-  Indexes {
-    user [unique, name: "users_user_key"]
-  }
 
   Note: 'Representa a toda persona con acceso al sistema. Hereda de AbstractBaseUser + PermissionsMixin.'
 }
@@ -102,10 +99,10 @@ Table "public"."product_stocks" {
     (branch_id, product_id) [pk]
   }
 
-  Note: 'Control de disponibilidad de productos por sucursal.'
+  Note: 'Control de disponibilidad de productos por sucursal. Clave primaria compuesta.'
 
   checks {
-    `stock >= 0`
+    `stock IN (-1, 0, 1)`
   }
 }
 
@@ -126,7 +123,7 @@ Table "public"."products" {
   "category_id" bigint [note: 'Categoria del producto.', ref: > "public"."categories"."id"]
   "active" boolean [not null, default: true, note: 'Determina si el producto puede ser solicitado.']
   "max_per_order" int [note: 'Cantidad maxima permitida por pedido.']
-  "image" varchar(2048) [note: 'URL de la imagen del producto.']
+  "image" varchar(2048) [note: 'Imagen del producto (se almacena convertida a WEBP).']
   "description" text [note: 'Descripcion visible para el cliente.']
   "modifiers" varchar(50)[] [note: 'Ingredientes u opciones que pueden excluirse del producto.']
   "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Fecha de creacion del registro.']
@@ -141,55 +138,42 @@ Table "public"."products" {
 }
 
 Table "public"."order_products" {
+  "id" bigint [pk, not null, increment, note: 'Identificador unico del registro.']
   "order_id" bigint [not null, note: 'Pedido al que pertenece el producto.', ref: > "public"."orders"."id"]
-  "item_id" bigint [not null, note: 'Producto solicitado.', ref: > "public"."products"."id"]
+  "item_id" bigint [not null, note: 'Producto solicitado (id plano, sin FK).']
   "quantity" int [not null, default: 1, note: 'Cantidad solicitada.']
-  "price" numeric(10,2) [not null, note: 'Precio unitario registrado al momento de la compra.']
-  "excluded_modifiers" varchar(50)[] [note: 'Ingredientes u opciones que el cliente solicito excluir.']
-
-  Indexes {
-    (order_id, item_id) [pk]
-  }
+  "price" numeric(10,2) [not null, default: 0, note: 'Precio unitario registrado al momento de la compra.']
+  "excluded_modifiers" jsonb [note: 'Opciones que el cliente solicito excluir (JSON array).']
 
   Note: 'Productos incluidos dentro de un pedido.'
-
-  checks {
-    `quantity > 0`
-    `price > 0`
-  }
 }
 
 Table "public"."orders" {
   "id" bigint [pk, not null, note: 'Identificador unico del pedido.']
   "order_number" bigint [not null, note: 'Numero consecutivo visible para operacion y cliente.']
   "date" date [not null, note: 'Fecha operativa del pedido.']
-  "branch_id" bigint [not null, note: 'Sucursal responsable del pedido.', ref: > "public"."branches"."id"]
-  "client_id" bigint [not null, note: 'Cliente que realizo el pedido.', ref: > "public"."users"."id"]
+  "branch_id" bigint [not null, default: 1, note: 'Sucursal responsable del pedido (id plano, sin FK).']
+  "client_id" bigint [not null, note: 'Cliente que realizo el pedido (id plano, sin FK).']
   "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Momento en que se registro el pedido.']
+  "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Ultima actualizacion del registro.']
   "prepared_at" timestamp [note: 'Momento en que el pedido fue marcado como listo.']
   "picked_up_at" timestamp [note: 'Momento en que el cliente recibio el pedido.']
   "scheduled_pickup_at" timestamp [note: 'Cuando es apartado, fecha y hora programada para recoger el pedido.']
-  "total" numeric(10,2) [not null, note: 'Importe total del pedido.']
-  "state" order_state [not null, default: 'pending', note: 'Estado actual del pedido.']
-  "payment_method" int [not null, note: 'Metodo de pago seleccionado.', ref: > "public"."payment_methods"."id"]
-  "payment_status" payment_state [not null, default: 'pending', note: 'Estado actual del pago.']
+  "total" numeric(10,2) [not null, default: 0, note: 'Importe total del pedido.']
+  "state" varchar(20) [not null, default: 'pending', note: 'Estado del pedido (choices Django): pending, preparing, ready, picked_up, rejected, cancelled.']
+  "payment_method" bigint [not null, note: 'Metodo de pago seleccionado.', ref: > "public"."payment_methods"."id"]
+  "payment_status" varchar(20) [not null, default: 'pending', note: 'Estado del pago (choices Django): pending, paid.']
   "comment" text [note: 'Comentarios extras del usuario del pedido.']
 
   Indexes {
-    client_id [name: "index_3_1"]
-    (branch_id, state) [name: "index_4"]
-    (order_number, date, branch_id) [unique, name: "index_2_2"]
+    (order_number, date, branch_id) [unique, name: "unique_order_number_per_branch_date"]
   }
 
-  Note: 'Pedidos realizados por los clientes.'
-
-  checks {
-    `total >= 0`
-  }
+  Note: 'Pedidos realizados por los clientes. branch_id y client_id son ids planos, sin FK.'
 }
 
 Table "public"."payment_methods" {
-  "id" int [pk, not null, note: 'Identificador unico del metodo de pago.']
+  "id" bigint [pk, not null, note: 'Identificador unico del metodo de pago.']
   "name" varchar(50) [unique, not null, note: 'Nombre del metodo de pago.']
   "is_digital" boolean [not null, note: 'Indica si requiere procesamiento electronico.']
   "active" boolean [not null, default: true, note: 'Determina si el metodo esta disponible.']
